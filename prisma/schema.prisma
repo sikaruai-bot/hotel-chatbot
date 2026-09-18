@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Staff {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  name         String
+  role         String         @default("FRONT_DESK") // ADMIN, MANAGER, FRONT_DESK
+  passwordHash String
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  leads        Lead[]
+  conversations Conversation[]
+}
+
+model Customer {
+  id           String         @id @default(cuid())
+  name         String?
+  phone        String?        @unique
+  email        String?
+  whatsappId   String?        @unique
+  messengerId  String?        @unique
+  instagramId  String?        @unique
+  firstChannel String         @default("WEBSITE")
+  notes        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  leads        Lead[]
+  conversations Conversation[]
+  reservations Reservation[]
+}
+
+model Lead {
+  id                 String    @id @default(cuid())
+  customerId         String
+  customer           Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name               String?
+  phone              String?
+  email              String?
+  channel            String    @default("WEBSITE") // WHATSAPP, MESSENGER, INSTAGRAM, WEBSITE, META_LEAD_ADS
+  source             String?   @default("Direct")
+  campaign           String?
+  campaignId         String?
+  adset              String?
+  adsetId            String?
+  ad                 String?
+  adId               String?
+  firstContactAt     DateTime  @default(now())
+  lastContactAt      DateTime  @default(now())
+  checkIn            String?
+  checkOut           String?
+  adults             Int?      @default(0)
+  children           Int?      @default(0)
+  roomType           String?
+  roomsRequested     Int?      @default(1)
+  estimatedValue     Float?    @default(0)
+  leadStatus         String    @default("NEW") // NEW, CONTACTED, QUALIFIED, HIGH_INTENT, BOOKING_REQUEST, CONFIRMED, LOST, CLOSED
+  conversationStatus String    @default("NEW") // NEW, OPEN, WAITING_FOR_GUEST, HIGH_INTENT, HUMAN_REQUIRED, BOOKING_REQUEST, CONFIRMED, CLOSED
+  assignedStaffId    String?
+  assignedStaff      Staff?    @relation(fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  scoreReason        String?
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([leadStatus])
+  @@index([channel])
+}
+
+model Conversation {
+  id               String             @id @default(cuid())
+  customerId       String
+  customer         Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  channel          String             @default("WEBSITE") // WHATSAPP, MESSENGER, INSTAGRAM, WEBSITE
+  externalThreadId String?
+  status           String             @default("OPEN") // NEW, OPEN, WAITING_FOR_GUEST, HIGH_INTENT, HUMAN_REQUIRED, BOOKING_REQUEST, CONFIRMED, CLOSED
+  mode             String             @default("BOT") // BOT, HUMAN
+  language         String             @default("en") // en, ne, hi
+  lastMessageAt    DateTime           @default(now())
+  unreadStaff      Boolean            @default(false)
+  unreadGuest      Boolean            @default(false)
+  assignedStaffId  String?
+  assignedStaff    Staff?             @relation(fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  summary          String?
+  notes            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  messages         Message[]
+  state            ConversationState?
+
+  @@index([status])
+  @@index([mode])
+  @@index([channel])
+}
+
+model Message {
+  id                String       @id @default(cuid())
+  conversationId    String
+  conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  customerId        String?
+  channel           String       @default("WEBSITE")
+  direction         String       @default("INBOUND") // INBOUND, OUTBOUND
+  messageType       String       @default("TEXT") // TEXT, BUTTON, QUICK_REPLY, TEMPLATE, SYSTEM
+  content           String
+  rawPayload        String?
+  status            String       @default("SENT") // SENT, DELIVERED, READ, FAILED
+  externalMessageId String?      @unique // For Meta deduplication & idempotency
+  isStaffReply      Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([externalMessageId])
+}
+
+model ConversationState {
+  id               String       @id @default(cuid())
+  conversationId   String       @unique
+  conversation     Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  checkIn          String?
+  checkOut         String?
+  adults           Int?         @default(0)
+  children         Int?         @default(0)
+  roomType         String?
+  roomsCount       Int?         @default(1)
+  guestName        String?
+  phone            String?
+  email            String?
+  specialRequests  String?
+  currentStep      String       @default("GREETING") // GREETING, AWAITING_DATES, AWAITING_GUESTS, AWAITING_ROOM_SELECTION, CONFIRMING_SUMMARY, HANDOVER, COMPLETE
+  lastIntent       String?
+  intentConfidence Float?       @default(1.0)
+  updatedAt        DateTime     @updatedAt
+}
+
+model RoomType {
+  id           String        @id @default(cuid())
+  code         String        @unique // DELUXE, BUDGET_FAMILY, FAMILY
+  name         String
+  description  String
+  basePriceUsd Float
+  maxAdults    Int
+  maxChildren  Int
+  isActive     Boolean       @default(true)
+  rooms        Room[]
+  reservations Reservation[]
+}
+
+model Room {
+  id              String        @id @default(cuid())
+  roomNumber      String        @unique // 201, 202, 203, 301, 302, 303, 102
+  floor           Int           // 1, 2, 3
+  isSellable      Boolean       @default(true) // false for 102
+  isSharedKitchen Boolean       @default(false) // true for 102
+  roomTypeId      String?
+  roomType        RoomType?     @relation(fields: [roomTypeId], references: [id], onDelete: SetNull)
+  status          String        @default("AVAILABLE") // AVAILABLE, OCCUPIED, CLEANING, MAINTENANCE
+  notes           String?
+  reservations    Reservation[]
+}
+
+model Reservation {
+  id            String    @id @default(cuid())
+  bookingCode   String    @unique
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  roomId        String?
+  room          Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  roomTypeId    String
+  roomType      RoomType  @relation(fields: [roomTypeId], references: [id])
+  guestName     String
+  guestPhone    String?
+  guestEmail    String?
+  checkInDate   DateTime
+  checkOutDate  DateTime
+  adults        Int       @default(1)
+  children      Int       @default(0)
+  totalPriceUsd Float     @default(0)
+  status        String    @default("PENDING_REQUEST") // PENDING_REQUEST, CONFIRMED, CHECKED_IN, CHECKED_OUT, CANCELLED
+  source        String    @default("CHATBOT")
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([checkInDate, checkOutDate])
+}
+
+model KnowledgeBase {
+  id        String   @id @default(cuid())
+  category  String   // HOTEL_INFO, ROOM_INFO, PRICING, FACILITIES, LOCATION, POLICIES, CHECKIN_OUT, LONG_STAY, SHARED_KITCHEN, ATTRACTIONS, TRANSPORT, FAQ
+  topic     String
+  question  String
+  answer    String
+  keywords  String?  // comma-separated search keywords
+  isActive  Boolean  @default(true)
+  priority  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
+
+model HotelSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  category    String   @default("GENERAL") // GENERAL, PRICING, CHATBOT, HANDOVER, CONTACT, LINKS
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model FollowUpSchedule {
+  id             String    @id @default(cuid())
+  conversationId String
+  leadId         String?
+  step           Int       @default(1)
+  scheduledFor   DateTime
+  status         String    @default("PENDING") // PENDING, SENT, CANCELLED
+  createdAt      DateTime  @default(now())
+}
