@@ -48,6 +48,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error('Website chat API error:', err);
-    return NextResponse.json({ error: 'Failed to process message' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process message', detail: err?.message || String(err), stack: err?.stack }, { status: 500 });
   }
 }
