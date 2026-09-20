@@ -27,13 +27,13 @@ export async function processConversationStep(
   const rates = knowledge.roomPrices;
 
   // Merge newly extracted entities into state
-  if (intentResult.entities.checkIn && !state.checkIn) {
+  if (intentResult.entities.checkIn) {
     state.checkIn = intentResult.entities.checkIn;
   }
-  if (intentResult.entities.checkOut && !state.checkOut) {
+  if (intentResult.entities.checkOut) {
     state.checkOut = intentResult.entities.checkOut;
   }
-  if (intentResult.entities.adults && (!state.adults || state.adults === 0)) {
+  if (intentResult.entities.adults) {
     state.adults = intentResult.entities.adults;
   }
   if (intentResult.entities.children !== undefined && state.children === null) {

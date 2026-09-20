@@ -52,19 +52,92 @@ export function extractEntities(text: string): ExtractedEntities {
     entities.roomType = 'Deluxe Room';
   }
 
-  // Date ranges extraction (e.g., "12 to 15 oct", "oct 12 - oct 15", "12th oct - 15th oct", "from 10 oct to 14 oct")
-  const dateRangePattern =
-    /(?:from\s+)?(\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\s*(?:to|-|until|till)\s*(\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)/i;
-  
-  const rangeMatch = lower.match(dateRangePattern);
-  if (rangeMatch) {
-    entities.checkIn = rangeMatch[1].trim();
-    entities.checkOut = rangeMatch[2].trim();
-  } else {
-    // Single date mentioned
-    const singleDate = lower.match(/(\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(?:\s+\d{4})?)/i);
-    if (singleDate) {
-      entities.checkIn = singleDate[1].trim();
+  // Date ranges extraction (Supports Month First, Date First, Relative dates, Quick replies)
+  const months = '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?';
+
+  // 1. Explicit Month Day to (Month) Day (e.g., 'sep 20 to 22', 'sep.22 to 24', 'from today sep 20 to 22', 'sep 20 - sep 22')
+  const m1 = lower.match(new RegExp('(' + months + ')\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:to|-|until|till)\\s*(?:(' + months + ')\\s*)?(\\d{1,2})(?:st|nd|rd|th)?', 'i'));
+  if (m1) {
+    const startMonth = m1[1].replace('.', '');
+    const startDay = m1[2];
+    const endMonth = m1[3] ? m1[3].replace('.', '') : startMonth;
+    const endDay = m1[4];
+    entities.checkIn = `${startMonth} ${startDay}`;
+    entities.checkOut = `${endMonth} ${endDay}`;
+  }
+
+  // 2. Day Month to Day Month OR Day to Day Month (e.g., '20 sep to 22 sep', '20 to 22 sep')
+  if (!entities.checkIn) {
+    const m2 = lower.match(new RegExp('(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:(' + months + ')\\s*)?(?:to|-|until|till)\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s*(' + months + ')', 'i'));
+    if (m2) {
+      const startDay = m2[1];
+      const endMonth = m2[4].replace('.', '');
+      const startMonth = m2[2] ? m2[2].replace('.', '') : endMonth;
+      const endDay = m2[3];
+      entities.checkIn = `${startMonth} ${startDay}`;
+      entities.checkOut = `${endMonth} ${endDay}`;
+    }
+  }
+
+  // 3. Numeric slash/dash date ranges (e.g. '20/09 to 22/09', '2026-09-20 to 2026-09-22')
+  if (!entities.checkIn) {
+    const m3 = lower.match(/(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\s*(?:to|-|until|till)\s*(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)/i);
+    if (m3) {
+      entities.checkIn = m3[1].trim();
+      entities.checkOut = m3[2].trim();
+    }
+  }
+
+  // 4. Relative dates: 'today - 2 nights', 'today', 'tonight', 'aaja', 'आज'
+  if (!entities.checkIn && (lower.includes('today') || lower.includes('tonight') || lower.includes('aaja') || lower.includes('आज'))) {
+    const today = new Date();
+    entities.checkIn = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const nightsMatch = lower.match(/(\d+)\s*nights?/);
+    const nights = nightsMatch ? parseInt(nightsMatch[1], 10) : 1;
+    const outDate = new Date(today);
+    outDate.setDate(today.getDate() + nights);
+    entities.checkOut = outDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // 5. 'tomorrow', 'bholi', 'भोलि'
+  if (!entities.checkIn && (lower.includes('tomorrow') || lower.includes('bholi') || lower.includes('भोलि'))) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    entities.checkIn = tomorrow.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const nightsMatch = lower.match(/(\d+)\s*nights?/);
+    const nights = nightsMatch ? parseInt(nightsMatch[1], 10) : 1;
+    const outDate = new Date(tomorrow);
+    outDate.setDate(tomorrow.getDate() + nights);
+    entities.checkOut = outDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // 6. 'this weekend'
+  if (!entities.checkIn && lower.includes('weekend')) {
+    entities.checkIn = 'This Friday';
+    entities.checkOut = 'This Sunday';
+  }
+
+  // 7. Duration only: e.g. '2 nights', 'for 2 nights', 'two nights', '2 days'
+  if (!entities.checkIn) {
+    const durationMatch = lower.match(/(?:for\s+)?(\d+|one|two|three|four|five)\s*(?:nights?|days?|रात|दिन)/i);
+    if (durationMatch) {
+      const w2n: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+      const nights = w2n[durationMatch[1].toLowerCase()] ?? parseInt(durationMatch[1], 10);
+      if (!isNaN(nights) && nights > 0) {
+        const today = new Date();
+        entities.checkIn = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const outDate = new Date(today);
+        outDate.setDate(today.getDate() + nights);
+        entities.checkOut = outDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    }
+  }
+
+  // 8. Single date mentioned fallback
+  if (!entities.checkIn) {
+    const single = lower.match(new RegExp('(?:on\\s+)?(' + months + '\\s*\\d{1,2}|\\d{1,2}\\s*' + months + '|\\d{1,2}[/-]\\d{1,2})', 'i'));
+    if (single) {
+      entities.checkIn = single[1].trim();
     }
   }
 
