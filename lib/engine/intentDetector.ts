@@ -142,24 +142,30 @@ export function detectIntent(text: string): IntentResult {
     return { intent: 'PAYMENT', confidence: 0.90, language, entities };
   }
 
-  // 5. Booking Intent (High Intent)
+  // 5. Booking Intent (Progressive)
   if (
-    lower.includes('i want to book') ||
-    lower.includes('want to reserve') ||
-    lower.includes('can i book') ||
+    lower.includes('book') ||
+    lower.includes('reservation') ||
+    lower.includes('reserve') ||
+    lower.match(/(need|want|looking for|require)\s+(a\s+|some\s+)?(room|rooms|bed|stay)/i) ||
+    lower.match(/room.*(?:for\s+\d+\s*night)/i) ||
     lower.includes('how to book') ||
     lower.includes('how can i reserve') ||
     lower.includes('book this room') ||
     lower.includes('reserve a room') ||
     lower.includes('make a reservation') ||
     lower.includes('need a room') ||
+    lower.includes('need room') ||
+    lower.includes('need some room') ||
     lower.includes('want a room') ||
+    lower.includes('want room') ||
     lower.includes('looking for a room') ||
     lower.includes('send request') ||
     lower.includes('yes, send') ||
     lower.includes('बुक गर्न चाहन्छु') ||
     lower.includes('कोठा बुक') ||
     lower.includes('कोठा चाहियो') ||
+    lower.includes('कोठा चाहिन्छ') ||
     lower.includes('बुक करना है') ||
     (entities.checkIn && (lower.includes('room') || lower.includes('bed') || lower.includes('stay') || lower.includes('बस्न')))
   ) {
