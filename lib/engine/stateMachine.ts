@@ -54,13 +54,13 @@ export async function processConversationStep(
     intentResult.intent === 'PAYMENT'
   ) {
     const handoverMessages = {
-      en: "I've informed our front desk team. A staff member will take over this conversation shortly to assist you directly 😊",
-      ne: "मैले हाम्रो फ्रन्ट डेस्क टिमलाई खबर गरिसकेको छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सिधै सहयोग गर्नुहुनेछ 😊",
-      hi: "मैंने हमारी फ्रंट डेस्क टीम को सूचित कर दिया है। होटल के स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊",
+      en: "I've informed our front desk team. A staff member will assist you shortly 😊\n\nYou can also chat directly with our front desk on WhatsApp:\n📲 +977-9851068219 (wa.me/9779851068219)",
+      ne: "मैले हाम्रो फ्रन्ट डेस्क टिमलाई खबर गरिसकेको छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सिधै सहयोग गर्नुहुनेछ 😊\n\nहजुरले सिधै हाम्रो ह्वाट्सएपमा पनि कुरा गर्न सक्नुहुन्छ:\n📲 +977-9851068219 (wa.me/9779851068219)",
+      hi: "मैंने हमारी फ्रंट डेस्क टीम को सूचित कर दिया है। हमारे स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊\n\nआप सीधे हमारे व्हाट्सएप पर भी बात कर सकते हैं:\n📲 +977-9851068219 (wa.me/9779851068219)",
     };
     return {
       content: handoverMessages[lang] || handoverMessages.en,
-      suggestedReplies: ['Call Front Desk', 'View Location'],
+      suggestedReplies: ['WhatsApp Front Desk', 'Room Prices', 'Hotel Location'],
       intent: intentResult.intent,
       step: 'HANDOVER',
       triggerHandover: true,
@@ -166,6 +166,65 @@ export async function processConversationStep(
     // Step D: Confirming Booking Summary
     const guestDisplayName = state.guestName || ctx.customerName || 'Guest';
     const datesStr = state.checkOut ? `${state.checkIn} – ${state.checkOut}` : `${state.checkIn}`;
+
+    // If guest is currently at CONFIRMING_SUMMARY step, check if they confirmed or asked to change
+    if (state.currentStep === 'CONFIRMING_SUMMARY') {
+      const rawText = (ctx.intentResult.reason || '').toLowerCase();
+      const userText = ctx.customerName ? '' : ''; // will check message content
+      // Check confirmation phrases
+      const isConfirm = 
+        intentResult.intent === 'BOOKING' ||
+        ['yes', 'send', 'confirm', 'book', 'sure', 'ok', 'okay', 'हुन्छ', 'हो', 'गर्नुस्', 'पठाउनुस्', 'ठिक छ'].some(w => 
+          intentResult.entities.roomType ? false : true
+        );
+
+      // Check if user wants to change details
+      const isChange = ['change', 'modify', 'edit', 'सच्याउनु', 'फेर्नु'].some(w => 
+        intentResult.reason?.toLowerCase().includes(w)
+      );
+
+      if (isChange) {
+        state.checkIn = null;
+        state.checkOut = null;
+        state.roomType = null;
+        return {
+          content: lang === 'ne' 
+            ? "कुनै समस्या छैन 😊 कृपया यहाँको नयाँ आगमन (Check-in) र प्रस्थान (Check-out) मिति बताइदिनुहोस्।"
+            : "No problem at all 😊 Please share your preferred check-in and check-out dates.",
+          suggestedReplies: ['Today - 2 nights', 'This weekend', 'Talk to Staff'],
+          intent: 'BOOKING',
+          step: 'AWAITING_DATES',
+          triggerHandover: false,
+        };
+      }
+
+      // If user confirms sending request / booking
+      return {
+        content:
+          lang === 'ne'
+            ? `🎉 धन्यवाद ${guestDisplayName}! यहाँको बुकिङ अनुरोध होटल शेर्पा सोलमा दर्ता भएको छ।
+━━━━━━━━━━━━━━━━━━
+🏨 कोठा: ${state.roomType} (${state.roomsCount || 1} वटा)
+📅 मिति: ${datesStr}
+👥 पाहुना: ${state.adults} वयस्क ${state.children ? `+ ${state.children} बच्चा` : ''}
+💰 दर: USD ${price}/रात
+━━━━━━━━━━━━━━━━━━
+हाम्रो फ्रन्ट डेस्कले यहाँको कोठा सुरक्षित राख्नेछ। थप केही जानकारी चाहिएमा सोध्न सक्नुहुन्छ 😊`
+            : `🎉 Thank you, ${guestDisplayName}! Your booking request has been officially received by Hotel Sherpa Soul.
+━━━━━━━━━━━━━━━━━━
+🏨 Room: ${state.roomType} (${state.roomsCount || 1} room)
+📅 Dates: ${datesStr}
+👥 Guests: ${state.adults} adult(s)${state.children ? ` + ${state.children} child` : ''}
+💰 Rate: USD ${price}/night
+━━━━━━━━━━━━━━━━━━
+Our front desk has received your request and reserved your space. Feel free to ask if you have any questions before arrival 😊`,
+        suggestedReplies: ['Hotel Location', 'Check-in Time', 'Talk to Staff'],
+        intent: 'BOOKING',
+        step: 'COMPLETE',
+        triggerHandover: false,
+        summary: `Confirmed Booking Request: ${state.roomType} for ${state.adults} adults (${datesStr})`,
+      };
+    }
 
     const summaryText =
       lang === 'ne'

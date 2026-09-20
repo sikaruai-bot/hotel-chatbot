@@ -8,7 +8,7 @@ export interface SendWhatsAppOptions {
 
 export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const phoneNumberId = options.phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID || '1280352581833442';
 
   if (!token || !phoneNumberId || token.startsWith('mock_') || phoneNumberId.startsWith('mock_')) {
     console.log(`[WHATSAPP MOCK DISPATCH] To: ${options.to} | Text: "${options.text}" | Buttons: ${options.buttons?.join(', ')}`);

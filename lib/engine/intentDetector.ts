@@ -152,10 +152,16 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('book this room') ||
     lower.includes('reserve a room') ||
     lower.includes('make a reservation') ||
+    lower.includes('need a room') ||
+    lower.includes('want a room') ||
+    lower.includes('looking for a room') ||
     lower.includes('send request') ||
+    lower.includes('yes, send') ||
     lower.includes('बुक गर्न चाहन्छु') ||
     lower.includes('कोठा बुक') ||
-    lower.includes('बुक करना है')
+    lower.includes('कोठा चाहियो') ||
+    lower.includes('बुक करना है') ||
+    (entities.checkIn && (lower.includes('room') || lower.includes('bed') || lower.includes('stay') || lower.includes('बस्न')))
   ) {
     return { intent: 'BOOKING', confidence: 0.98, language, entities, reason: 'High-intent booking request.' };
   }

@@ -232,6 +232,70 @@ export async function processInboundMessage(
     lastContactAt: new Date(),
   };
 
+  // Automated Booking Creation if step is COMPLETE
+  if (outbound.step === 'COMPLETE') {
+    leadStatus = 'CONFIRMED';
+    conversationStatus = 'CONFIRMED';
+    scoreReason = `AUTOMATED BOOKING CONFIRMED — Room: ${currentState.roomType || 'Deluxe Room'}`;
+
+    const roomTypeCode = currentState.roomType?.toUpperCase().includes('BUDGET')
+      ? 'BUDGET_FAMILY'
+      : currentState.roomType?.toUpperCase().includes('FAMILY')
+      ? 'FAMILY'
+      : 'DELUXE';
+
+    let matchedRoomType = await prisma.roomType.findFirst({
+      where: { code: roomTypeCode },
+    });
+    if (!matchedRoomType) {
+      matchedRoomType = await prisma.roomType.findFirst();
+    }
+
+    let checkInDate = new Date();
+    let checkOutDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    if (currentState.checkIn) {
+      const parsedIn = new Date(currentState.checkIn);
+      if (!isNaN(parsedIn.getTime())) checkInDate = parsedIn;
+    }
+    if (currentState.checkOut) {
+      const parsedOut = new Date(currentState.checkOut);
+      if (!isNaN(parsedOut.getTime())) checkOutDate = parsedOut;
+    }
+
+    const pricePerNight = matchedRoomType?.basePriceUsd || 20;
+    const roomsCount = currentState.roomsCount || 1;
+    const nights = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))) || 1;
+    const totalPriceUsd = pricePerNight * nights * roomsCount;
+    const bookingCode = `HSS-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    if (matchedRoomType) {
+      await prisma.reservation.create({
+        data: {
+          bookingCode,
+          customerId: customer.id,
+          roomTypeId: matchedRoomType.id,
+          guestName: currentState.guestName || customer.name || 'Guest',
+          guestPhone: currentState.phone || customer.phone || (msg.channel === 'WHATSAPP' ? msg.senderId : null),
+          guestEmail: currentState.email || customer.email,
+          checkInDate,
+          checkOutDate,
+          adults: currentState.adults || 1,
+          children: currentState.children || 0,
+          totalPriceUsd,
+          status: 'PENDING_REQUEST',
+          source: msg.channel,
+          notes: `Automated booking created via ${msg.channel} Chatbot`,
+        },
+      });
+
+      // Embed booking code into the outbound confirmation response
+      outbound.content = outbound.content.replace(
+        '━━━━━━━━━━━━━━━━━━',
+        `━━━━━━━━━━━━━━━━━━\n📌 Booking Reference: ${bookingCode}`
+      );
+    }
+  }
+
   if (existingLead) {
     await prisma.lead.update({
       where: { id: existingLead.id },
