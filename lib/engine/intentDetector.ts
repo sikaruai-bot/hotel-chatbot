@@ -21,25 +21,40 @@ export function detectLanguage(text: string): SupportedLanguage {
   return 'en';
 }
 
+function normalizeDigits(str: string): string {
+  const devanagariDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+  return str.replace(/[०-९]/g, (char) => String(devanagariDigits.indexOf(char)));
+}
+
 // Entity extraction from free text
 export function extractEntities(text: string): ExtractedEntities {
   const entities: ExtractedEntities = {};
-  const lower = text.toLowerCase();
+  const normalized = normalizeDigits(text);
+  const lower = normalized.toLowerCase();
 
   // Adults extraction
   const adultsMatch =
-    lower.match(/(\d+)\s*(adult|adults|grown|people|person|persons|guests?|jana|जना)/i) ||
-    lower.match(/(two|three|four|one|1|2|3|4)\s*(adult|adults|guests?|people)/i);
+    lower.match(/(\d+)\s*(adult|adults|grown|people|person|persons|guests?|jana|जना|वयस्क|मान्छे)/i) ||
+    lower.match(/(two|three|four|one|1|2|3|4|एक|दुई|तीन|चार|पाँच)\s*(adult|adults|guests?|people|जना|वयस्क)/i);
   if (adultsMatch) {
-    const wordToNum: Record<string, number> = { one: 1, two: 2, three: 3, four: 4 };
+    const wordToNum: Record<string, number> = {
+      one: 1, two: 2, three: 3, four: 4,
+      'एक': 1, 'दुई': 2, 'तीन': 3, 'चार': 4, 'पाँच': 5
+    };
     const val = wordToNum[adultsMatch[1].toLowerCase()] ?? parseInt(adultsMatch[1], 10);
     if (!isNaN(val)) entities.adults = val;
   }
 
   // Children extraction
-  const childMatch = lower.match(/(\d+)\s*(child|children|kid|kids|bachha|बच्चा)/i);
+  const childMatch =
+    lower.match(/(\d+)\s*(child|children|kid|kids|bachha|बच्चा|बालबालिका)/i) ||
+    lower.match(/(one|two|three|four|1|2|3|4|एक|दुई|तीन|चार|पाँच)\s*(child|children|kid|kids|bachha|बच्चा|बालबालिका)/i);
   if (childMatch) {
-    const val = parseInt(childMatch[1], 10);
+    const wordToNum: Record<string, number> = {
+      one: 1, two: 2, three: 3, four: 4,
+      'एक': 1, 'दुई': 2, 'तीन': 3, 'चार': 4, 'पाँच': 5
+    };
+    const val = wordToNum[childMatch[1].toLowerCase()] ?? parseInt(childMatch[1], 10);
     if (!isNaN(val)) entities.children = val;
   }
 
@@ -264,6 +279,9 @@ export function detectIntent(text: string): IntentResult {
 
   // 5. Booking Intent (Progressive)
   if (
+    Boolean(entities.adults) ||
+    entities.children !== undefined ||
+    lower.match(/\b(we are|for|total|about)?\s*(\d+|one|two|three|four|five)\s*(adult|adults|guests?|people|persons?|child|children|kids?|jana|जना)\b/i) ||
     lower.match(/(need|want|looking for|require)\s+(a\s+|some\s+)?(room|rooms|bed|stay)/i) ||
     lower.match(/room.*(?:for\s+\d+\s*night)/i) ||
     lower.includes('book this room') ||
@@ -281,6 +299,7 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('कोठा बुक') ||
     lower.includes('कोठा चाहियो') ||
     lower.includes('कोठा चाहिन्छ') ||
+    lower.includes('बुक गर्न') ||
     lower.includes('बुक करना है') ||
     lower.match(/^(book|reserve|reservation|booking|confirm book|yes)$/i) ||
     (entities.checkIn && (lower.includes('room') || lower.includes('bed') || lower.includes('stay') || lower.includes('बस्न')))

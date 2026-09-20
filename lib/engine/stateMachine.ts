@@ -226,26 +226,42 @@ Would you like to check room availability for your dates?`;
       rawLower.includes('नयाँ बुक') ||
       rawLower.includes('नयाँ बुकिङ');
 
-    if (isNewBooking) {
+    const hasNewDetails =
+      Boolean(intentResult.entities.adults) ||
+      intentResult.entities.children !== undefined ||
+      Boolean(intentResult.entities.checkIn);
+
+    if (isNewBooking || hasNewDetails) {
       state.currentStep = 'AWAITING_DATES';
-      state.checkIn = null;
-      state.checkOut = null;
-      state.adults = null;
-      state.children = null;
-      state.roomType = null;
-      return {
-        content:
+      state.checkIn = intentResult.entities.checkIn || null;
+      state.checkOut = intentResult.entities.checkOut || null;
+      state.adults = intentResult.entities.adults || null;
+      state.children = intentResult.entities.children !== undefined ? intentResult.entities.children : null;
+      state.roomType = intentResult.entities.roomType || null;
+
+      if (!state.checkIn) {
+        const guestsText = state.adults
+          ? (lang === 'ne'
+              ? `${state.adults} वयस्क${state.children && state.children > 0 ? ` + ${state.children} बालबालिका` : ''}`
+              : `${state.adults} adult(s)${state.children && state.children > 0 ? ` + ${state.children} child${state.children > 1 ? 'ren' : ''}` : ''}`)
+          : '';
+
+        const replyContent =
           lang === 'ne'
-            ? "हजुर 😊 नयाँ कोठाको लागि यहाँको आगमन (Check-in) र प्रस्थान (Check-out) मिति कहिले हो?"
-            : "Certainly! 😊 For your new booking, what are your preferred check-in and check-out dates?",
-        suggestedReplies: ['Today - 2 nights', 'This weekend', 'Talk to Staff'],
-        intent: 'BOOKING',
-        step: 'AWAITING_DATES',
-        triggerHandover: false,
-      };
+            ? `धन्यवाद! ${guestsText ? `${guestsText}को लागि ` : ''}यहाँको आगमन (Check-in) र प्रस्थान (Check-out) मिति कहिले हो?`
+            : `Thank you! ${guestsText ? `For ${guestsText}, ` : ''}what are your preferred check-in and check-out dates?`;
+
+        return {
+          content: replyContent,
+          suggestedReplies: ['Today - 2 nights', 'This weekend', 'Talk to Staff'],
+          intent: 'BOOKING',
+          step: 'AWAITING_DATES',
+          triggerHandover: false,
+        };
+      }
     }
 
-    // If guest asks "confirm", "confirm book", "is it confirmed?", "status", "book"
+    // If guest asks "confirm", "confirm book", "is it confirmed?", "status"
     const isConfirmOrStatus =
       rawLower.includes('confirm') ||
       rawLower.includes('status') ||
@@ -253,7 +269,7 @@ Would you like to check room availability for your dates?`;
       rawLower.includes('done') ||
       rawLower.includes('पक्का') ||
       rawLower.includes('पुष्टि') ||
-      intentResult.intent === 'BOOKING';
+      rawLower.match(/^(yes|ok|okay|fine|done)$/i);
 
     if (isConfirmOrStatus) {
       const datesStr = state.checkOut ? `${state.checkIn} – ${state.checkOut}` : `${state.checkIn}`;
@@ -284,17 +300,27 @@ Would you like to check room availability for your dates?`;
     state.currentStep === 'AWAITING_DATES' ||
     state.currentStep === 'AWAITING_GUESTS' ||
     state.currentStep === 'AWAITING_ROOM_SELECTION' ||
-    state.currentStep === 'CONFIRMING_SUMMARY'
+    state.currentStep === 'CONFIRMING_SUMMARY' ||
+    Boolean(intentResult.entities.adults) ||
+    Boolean(intentResult.entities.checkIn)
   ) {
     // Step A: Missing travel dates
     if (!state.checkIn) {
+      const guestsText = state.adults
+        ? (lang === 'ne'
+            ? `${state.adults} वयस्क${state.children && state.children > 0 ? ` + ${state.children} बालबालिका` : ''}`
+            : `${state.adults} adult(s)${state.children && state.children > 0 ? ` + ${state.children} child${state.children > 1 ? 'ren' : ''}` : ''}`)
+        : '';
+
+      const content =
+        lang === 'ne'
+          ? `धन्यवाद! ${guestsText ? `${guestsText}को लागि ` : ''}यहाँको आगमन (Check-in) र प्रस्थान (Check-out) मिति कहिले हो?`
+          : `Thank you! ${guestsText ? `For ${guestsText}, ` : ''}what are your check-in and check-out dates?`;
+
       return {
-        content:
-          lang === 'ne'
-            ? "हजुर 😊 यहाँको आगमन मिति (Check-in) र प्रस्थान मिति (Check-out) कहिले हो?"
-            : "Sure 😊 What are your check-in and check-out dates?",
-        suggestedReplies: ['Today - 2 nights', 'This weekend', 'Talk to Staff'],
-        intent: intentResult.intent,
+        content,
+        suggestedReplies: ['Today - 2 nights', 'This weekend', 'Room Prices', 'Talk to Staff'],
+        intent: 'BOOKING',
         step: 'AWAITING_DATES',
         triggerHandover: false,
       };
