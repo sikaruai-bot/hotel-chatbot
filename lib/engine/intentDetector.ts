@@ -18,6 +18,19 @@ export function detectLanguage(text: string): SupportedLanguage {
 
     return 'ne'; // Default to Nepali in Kathmandu hotel context
   }
+
+  // Romanized Nepali and Hindi detection
+  const lower = text.toLowerCase();
+  const romanNepaliStrong = /\b(chha|chhaina|cha|chaina|tapai|tapaiko|hamro|saman|rakhna|milchha|milla|kasto|hunchha|hune|paryo|parchha|kotha|jana|dinus|garnus|gardinus|garne|bhane|pauchha|kati baje|tada)\b/i;
+  if (romanNepaliStrong.test(lower)) {
+    return 'ne';
+  }
+
+  const romanHindiStrong = /\b(chahiye|kitna|karein|baat karni|humko|aapka kamra|kiraya kitna)\b/i;
+  if (romanHindiStrong.test(lower)) {
+    return 'hi';
+  }
+
   return 'en';
 }
 
@@ -432,14 +445,127 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('address') ||
     lower.includes('map') ||
     lower.includes('thamel') ||
-    lower.includes('where is hotel') ||
     lower.includes('कहाँ छ') ||
     lower.includes('ठेगाना')
   ) {
     return { intent: 'LOCATION', confidence: 0.94, language, entities };
   }
 
-  // 12. Facilities (Strict Anti-Hallucination checks for restaurant, parking, gym, pool)
+  // 11.5. Luggage Storage
+  if (
+    lower.includes('luggage') ||
+    lower.includes('storage') ||
+    lower.includes('store bag') ||
+    lower.includes('baggage') ||
+    lower.includes('keep bag') ||
+    lower.includes('leave bag') ||
+    lower.includes('trek luggage') ||
+    lower.includes('लगेज') ||
+    lower.includes('सामान') ||
+    lower.includes('झोला') ||
+    lower.includes('राख्न') ||
+    lower.includes('राख्ने')
+  ) {
+    return { intent: 'LUGGAGE', confidence: 0.96, language, entities, reason: 'Guest inquiring about luggage storage.' };
+  }
+
+  // 11.6. Trekking, Permits & Guides
+  if (
+    lower.includes('trek') ||
+    lower.includes('trekking') ||
+    lower.includes('permit') ||
+    lower.includes('permits') ||
+    lower.includes('guide') ||
+    lower.includes('sherpa') ||
+    lower.includes('everest') ||
+    lower.includes('annapurna') ||
+    lower.includes('langtang') ||
+    lower.includes('lukla') ||
+    lower.includes('hike') ||
+    lower.includes('hiking') ||
+    lower.includes('himalaya') ||
+    lower.includes('tims') ||
+    lower.includes('ट्रेकिङ') ||
+    lower.includes('गाइड') ||
+    lower.includes('पर्मिट') ||
+    lower.includes('अनुमतिपत्र') ||
+    lower.includes('सगरमाथा') ||
+    lower.includes('लुक्ला')
+  ) {
+    return { intent: 'TREKKING', confidence: 0.95, language, entities, reason: 'Guest inquiring about trekking, permits, or guides.' };
+  }
+
+  // 11.7. Rooftop Terrace & Views
+  if (
+    lower.includes('rooftop') ||
+    lower.includes('terrace') ||
+    lower.includes('roof') ||
+    lower.includes('valley view') ||
+    lower.includes('mountain view') ||
+    lower.includes('छत') ||
+    lower.includes('रुफटप') ||
+    lower.includes('भ्यू')
+  ) {
+    return { intent: 'ROOFTOP', confidence: 0.95, language, entities, reason: 'Guest inquiring about rooftop terrace.' };
+  }
+
+  // 11.8. 24/7 Hot Water & Power Backup
+  if (
+    lower.includes('hot water') ||
+    lower.includes('hot shower') ||
+    lower.includes('solar') ||
+    lower.includes('power backup') ||
+    lower.includes('electricity') ||
+    lower.includes('generator') ||
+    lower.includes('load shedding') ||
+    lower.includes('तातो पानी') ||
+    lower.includes('नुहाउने') ||
+    lower.includes('बिजुली') ||
+    lower.includes('बत्ती') ||
+    lower.includes('ब्याकअप')
+  ) {
+    return { intent: 'HOT_WATER', confidence: 0.95, language, entities, reason: 'Guest inquiring about hot water or power backup.' };
+  }
+
+  // 11.9. High-Speed Wi-Fi
+  if (
+    lower.includes('wifi') ||
+    lower.includes('wi-fi') ||
+    lower.includes('internet') ||
+    lower.includes('fiber') ||
+    lower.includes('वाइफाइ') ||
+    lower.includes('इन्टरनेट') ||
+    lower.includes('नेट')
+  ) {
+    return { intent: 'WIFI', confidence: 0.95, language, entities, reason: 'Guest inquiring about Wi-Fi or internet.' };
+  }
+
+  // 11.10. Direct Booking Discount & Offers
+  if (
+    lower.includes('discount') ||
+    lower.includes('10%') ||
+    lower.includes('offer') ||
+    lower.includes('deal') ||
+    lower.includes('special rate') ||
+    lower.includes('best rate') ||
+    lower.includes('छुट') ||
+    lower.includes('१०%')
+  ) {
+    return { intent: 'DISCOUNT', confidence: 0.95, language, entities, reason: 'Guest inquiring about discounts or deals.' };
+  }
+
+  // 11.11. Safety & Security
+  if (
+    lower.includes('safe') ||
+    lower.includes('safety') ||
+    lower.includes('security') ||
+    lower.includes('solo traveler') ||
+    lower.includes('female') ||
+    lower.includes('सुरक्षा') ||
+    lower.includes('सुरक्षित')
+  ) {
+    return { intent: 'SAFETY', confidence: 0.94, language, entities, reason: 'Guest inquiring about safety or security.' };
+  }
   if (
     lower.includes('restaurant') ||
     lower.includes('food') ||

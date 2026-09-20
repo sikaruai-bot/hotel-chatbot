@@ -464,8 +464,17 @@ Would you like me to send this request to our front desk?`;
     };
   }
 
-  // 7. Location / Transport / Check-in / Policy Info
+  // 7. Hotel Knowledge Base Queries (Location, Luggage, Trekking, Rooftop, Hot Water, Wi-Fi, Transport, Policies, etc.)
+  const rawQuery = ctx.rawMessage || intentResult.reason || '';
+
   if (
+    intentResult.intent === 'LUGGAGE' ||
+    intentResult.intent === 'TREKKING' ||
+    intentResult.intent === 'ROOFTOP' ||
+    intentResult.intent === 'HOT_WATER' ||
+    intentResult.intent === 'WIFI' ||
+    intentResult.intent === 'DISCOUNT' ||
+    intentResult.intent === 'SAFETY' ||
     intentResult.intent === 'LOCATION' ||
     intentResult.intent === 'CHECK_IN' ||
     intentResult.intent === 'CHECK_OUT' ||
@@ -473,72 +482,33 @@ Would you like me to send this request to our front desk?`;
     intentResult.intent === 'POLICY' ||
     intentResult.intent === 'HOTEL_INFORMATION'
   ) {
-    const kbAnswer = await searchKnowledgeBase(intentResult.intent.toLowerCase(), intentResult.intent);
+    const kbAnswer = await searchKnowledgeBase(rawQuery, lang, intentResult.intent);
     if (kbAnswer) {
       return {
         content: kbAnswer,
         suggestedReplies: ['Check Room Availability', 'Room Prices', 'Talk to Staff'],
         intent: intentResult.intent,
         step: state.currentStep,
-        triggerHandover: intentResult.intent === 'TRANSPORTATION',
-        handoverReason: intentResult.intent === 'TRANSPORTATION' ? 'Guest inquiring about airport pickup' : undefined,
+        triggerHandover: false,
       };
     }
+  }
 
-    // High quality default responses
-    let defaultMsg = '';
-    if (intentResult.intent === 'LOCATION') {
-      defaultMsg =
-        lang === 'ne'
-          ? "होटल शेर्पा सोल ठमेलको मुटु, २६ ठमेल भगवती मार्ग, काठमाडौँ ४४६०० मा अवस्थित छ। यहाँबाट प्रख्यात क्याफे, रेस्टुरेन्ट र पसलहरू हिँडेरै पुग्न सकिने दूरीमा छन् भने कोठा शान्त र कोलाहलरहित छ 😊"
-          : "Hotel Sherpa Soul is located at 26 Thamel Bhagwati Marg, Thamel, Kathmandu 44600, Nepal — right in the vibrant heart of Thamel, within easy walking distance to top restaurants and shops, while keeping your room peaceful and quiet 😊";
-    } else if (intentResult.intent === 'CHECK_IN' || intentResult.intent === 'CHECK_OUT') {
-      defaultMsg =
-        lang === 'ne'
-          ? "हाम्रो नियमित चेक-इन (Check-in) समय मध्यान्ह १२:०० बजे र चेक-आउट (Check-out) समय बिहान ११:०० बजे हो।\n\nयदि यहाँ चाँडै आउनुभयो भने कोठा उपलब्धता अनुसार अर्ली चेक-इन वा लगेज राख्ने निःशुल्क व्यवस्था छ 😊"
-          : "Our standard check-in time is 12:00 PM (Noon) and check-out time is 11:00 AM.\n\nEarly check-in and complimentary luggage storage are provided based on room availability 😊";
-    } else if (intentResult.intent === 'POLICY') {
-      defaultMsg =
-        lang === 'ne'
-          ? "होटल शेर्पा सोलको मुख्य नीति 'No Restaurant. No Noise. Sleep Well.' हो। होटल भित्र कोठाहरू धूम्रपानरहित (Non-smoking) छन्। बालबालिका सम्बन्धी: १२ वर्ष मुनिका बच्चा बाबुआमासँग एउटै ओछ्यानमा निःशुल्क बस्न सक्छन्।"
-          : "Hotel Sherpa Soul follows our 'No Restaurant. No Noise. Sleep Well.' policy. All rooms are non-smoking, and we maintain a quiet, peaceful atmosphere. Children under 12 stay free when using existing beds.";
-    } else if (intentResult.intent === 'HOTEL_INFORMATION') {
-      defaultMsg =
-        lang === 'ne'
-          ? "होटल शेर्पा सोल ठमेल, काठमाडौँमा अवस्थित एक शान्त र आरामदायी बुटिक होटल हो। हाम्रो आदर्श वाक्य 'No Restaurant. No Noise. Sleep Well.' हो—जहाँ यहाँले शान्त निद्रा, सफा कोठा, २४ सै घण्टा तातो पानी र द्रुत गतिको वाइफाइ पाउनुहुनेछ 😊"
-          : "Hotel Sherpa Soul is a peaceful retreat in the heart of Thamel, Kathmandu. Guided by our motto 'No Restaurant. No Noise. Sleep Well.', we offer restful sleep, spotless rooms, 24/7 hot water, and high-speed Wi-Fi 😊";
-    } else if (intentResult.intent === 'TRANSPORTATION') {
-      defaultMsg =
-        lang === 'ne'
-          ? "हामी त्रिभुवन अन्तर्राष्ट्रिय विमानस्थल (TIA) बाट होटलसम्म भरपर्दो एयरपोर्ट पिकअप/ड्रप सेवा उपलब्ध गराउँछौँ। यसको लागि हाम्रो फ्रन्ट डेस्क टिमले यहाँलाई थप समन्वय गर्न मद्दत गर्नेछ 😊"
-          : "We arrange reliable airport pick-up and drop-off services to and from Tribhuvan International Airport (TIA). Our front desk team will happily coordinate the details for you 😊";
-    }
-
-    if (defaultMsg) {
+  // 8. General Knowledge Base Fallback using Raw User Message
+  if (rawQuery) {
+    const generalAnswer = await searchKnowledgeBase(rawQuery, lang);
+    if (generalAnswer) {
       return {
-        content: defaultMsg,
+        content: generalAnswer,
         suggestedReplies: ['Check Room Availability', 'Room Prices', 'Talk to Staff'],
-        intent: intentResult.intent,
+        intent: intentResult.intent !== 'OTHER' ? intentResult.intent : 'HOTEL_INFORMATION',
         step: state.currentStep,
-        triggerHandover: intentResult.intent === 'TRANSPORTATION',
-        handoverReason: intentResult.intent === 'TRANSPORTATION' ? 'Guest inquiring about airport pickup' : undefined,
+        triggerHandover: false,
       };
     }
   }
 
-  // 8. General Knowledge Base Fallback
-  const generalAnswer = await searchKnowledgeBase(intentResult.intent);
-  if (generalAnswer) {
-    return {
-      content: generalAnswer,
-      suggestedReplies: ['Check Room Availability', 'Room Prices', 'Talk to Staff'],
-      intent: intentResult.intent,
-      step: state.currentStep,
-      triggerHandover: false,
-    };
-  }
-
-  // 8. Greeting Fallback
+  // 8.5. Greeting Fallback
   if (intentResult.intent === 'GREETING') {
     const greetings = {
       en: "Hi! Welcome to Hotel Sherpa Soul 😊\nHow can I help you today?",
@@ -556,9 +526,9 @@ Would you like me to send this request to our front desk?`;
 
   // 9. Unknown / Unsure Question -> Safe Front Desk Handover
   const fallbackMessages = {
-    en: "I don't want to give you incorrect information. Let me check that with our front desk team and have someone assist you shortly 😊",
-    ne: "म यहाँलाई गलत जानकारी दिन चाहन्नँ। म हाम्रो फ्रन्ट डेस्क टिमसँग यो बुझेर छिट्टै यहाँलाई जानकारी उपलब्ध गराउनेछु 😊",
-    hi: "मैं आपको गलत जानकारी नहीं देना चाहता। मैं हमारी फ्रंट डेस्क टीम से यह पुष्टि करके जल्द ही आपको बताता हूँ 😊",
+    en: "I don't want to give you incorrect information. Let me check that with our front desk team and have someone assist you shortly 😊\n\nYou can also chat directly with our front desk on WhatsApp:\n📲 +977-9851068219 (wa.me/9779851068219)",
+    ne: "म यहाँलाई गलत जानकारी दिन चाहन्नँ। म हाम्रो फ्रन्ट डेस्क टिमसँग यो बुझेर छिट्टै यहाँलाई जानकारी उपलब्ध गराउनेछु 😊\n\nयहाँले सिधै हाम्रो ह्वाट्सएपमा पनि कुरा गर्न सक्नुहुन्छ:\n📲 +९७७-९८५१०६८२१९ (wa.me/9779851068219)",
+    hi: "मैं आपको गलत जानकारी नहीं देना चाहता। मैं हमारी फ्रंट डेस्क टीम से यह पुष्टि करके जल्द ही आपको बताता हूँ 😊\n\nआप सीधे हमारे व्हाट्सएप पर भी बात कर सकते हैं:\n📲 +977-9851068219 (wa.me/9779851068219)",
   };
 
   return {
