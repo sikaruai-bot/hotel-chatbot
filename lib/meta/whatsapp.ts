@@ -7,8 +7,14 @@ export interface SendWhatsAppOptions {
 }
 
 export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = options.phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID || '1280352581833442';
+  const token =
+    process.env.WHATSAPP_ACCESS_TOKEN ||
+    'EAAPYfDRHIYcBSv0NZA7YLZCnGHavnC0idR1D1OunDqYWZCxeYJLrbDqtIMgY16AzK2QsPxpLdmMUnRnXsPfybmOjAmrOYbJn4PIJJuiI00ALWGuWqRnIKl0M5e2cAWpyXOHmKJoEAMg4Dwj5SLyUa4RPDzLW78CLU7oCiXQmejgVbU7gFA0JUxYL0BZBlZCHs';
+  const phoneNumberId =
+    options.phoneNumberId ||
+    (process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_PHONE_NUMBER_ID !== '1187660574439714'
+      ? process.env.WHATSAPP_PHONE_NUMBER_ID
+      : '1280352581833442');
 
   if (!token || !phoneNumberId || token.startsWith('mock_') || phoneNumberId.startsWith('mock_')) {
     console.log(`[WHATSAPP MOCK DISPATCH] To: ${options.to} | Text: "${options.text}" | Buttons: ${options.buttons?.join(', ')}`);
