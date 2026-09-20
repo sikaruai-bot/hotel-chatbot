@@ -4,6 +4,7 @@ export interface SendWhatsAppOptions {
   buttons?: string[];
   templateName?: string;
   templateLanguage?: string;
+  phoneNumberId?: string;
 }
 
 export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
