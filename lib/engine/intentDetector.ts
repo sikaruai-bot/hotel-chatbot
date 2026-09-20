@@ -304,6 +304,41 @@ export function detectIntent(text: string): IntentResult {
     return { intent: 'ROOM_AVAILABILITY', confidence: 0.95, language, entities };
   }
 
+  // 6.5. Room Amenities / AC / Categories
+  if (
+    lower.includes('amenities') ||
+    lower.includes('amenity') ||
+    lower.includes('room amenities') ||
+    lower.includes('room facilities') ||
+    lower.includes('room types') ||
+    lower.includes('room categories') ||
+    lower.includes('room options') ||
+    lower.includes('about the rooms') ||
+    lower.includes('what is in the room') ||
+    lower.includes('room features') ||
+    lower.includes('air condition') ||
+    lower.includes('air-condition') ||
+    lower.includes('air conditioning') ||
+    /\bac\b/i.test(lower) ||
+    lower.includes('with ac') ||
+    lower.includes('non ac') ||
+    lower.includes('non-ac') ||
+    lower.includes('fan') ||
+    lower.includes('heater') ||
+    lower.includes('hot shower') ||
+    lower.includes('attached bathroom') ||
+    lower.includes('कोठाको सुविधा') ||
+    lower.includes('कोठामा के के छ') ||
+    lower.includes('कोठामा के सुविधा') ||
+    lower.includes('कोठाका प्रकार') ||
+    lower.includes('एसी छ') ||
+    lower.includes('ac छ') ||
+    lower.includes('कोठामा एसी') ||
+    lower.includes('फ्यान')
+  ) {
+    return { intent: 'ROOM_AMENITIES', confidence: 0.96, language, entities, reason: 'Guest inquiring about room amenities, AC, and categories.' };
+  }
+
   // 7. Room Price / Rates
   if (
     lower.includes('price') ||

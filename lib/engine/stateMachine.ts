@@ -127,12 +127,65 @@ export async function processConversationStep(
     };
   }
 
-  // 4.6. Shared Kitchen / Long Stay Query (STRICT: Room 102, Stays >= 2 weeks, NOT a restaurant)
+  // 4.6. Room Amenities, AC & Categories Query
+  if (intentResult.intent === 'ROOM_AMENITIES') {
+    const amenitiesMsg =
+      lang === 'ne'
+        ? `होटल शेर्पा सोलका कोठाका प्रकार र उपलब्ध सुविधाहरू (Room Amenities) यस प्रकार छन्:
+
+🏨 १. डिलक्स कोठा (Deluxe Room) — सुरुवाती USD ${rates.deluxe}/रात
+• एयर कन्डिसनिङ (AC) सहित
+• २४ सै घण्टा तातो पानीसहितको आधुनिक निजी बाथरुम (Attached Bathroom)
+• द्रुत गतिको वाइफाइ (High-speed Wi-Fi), आरामदायी ओछ्यान र शान्त वातावरण
+
+👨‍👩‍👧 २. फेमिली कोठा (Family Room) — सुरुवाती USD ${rates.family}/रात
+• एयर कन्डिसनिङ (AC) सहितको ठूलो तथा फराकिलो कोठा (३ वयस्क + १ बच्चा सम्म)
+• २४ सै घण्टा तातो पानीसहितको निजी बाथरुम र द्रुत वाइफाइ
+
+🌿 ३. बजेट फेमिली कोठा (Budget Family Room) — सुरुवाती USD ${rates.budgetFamily}/रात
+• Non-AC (यसमा एसी छैन, फ्यानको राम्रो व्यवस्था छ)
+• एसी बाहेक अरू सबै सुविधा (निजी बाथरुम, २४ सै घण्टा तातो पानी, द्रुत वाइफाइ) डिलक्स र फेमिली सरह समान छन्!
+
+✨ लामो समय बस्ने पाहुनाका लागि विशेष उपहार (FREE Shared Kitchen):
+२ हप्ता (१४ दिन) वा सोभन्दा बढी बस्ने पाहुनाहरूका लागि हामी कोठा १०२ (Room 102) मा पूर्ण सुविधायुक्त साझा भान्सा (Shared Kitchen) बिल्कुल निःशुल्क उपलब्ध गराउँछौँ! यसमा २ वटा मिनी फ्रिज, १ ओभन, २ र्‍याक, टेबल, कुर्सी, पानीको बेसिन र खाना पकाउने ठाउँ उपलब्ध छ।
+
+के यहाँ आफ्नो यात्रा मितिको लागि उपलब्धता हेर्न चाहनुहुन्छ?`
+        : `Here are the room categories and amenities at Hotel Sherpa Soul:
+
+🏨 1. Deluxe Room — Starting USD ${rates.deluxe}/night
+• Equipped with Air Conditioning (AC)
+• Private attached modern bathroom with 24/7 hot shower
+• High-speed Wi-Fi, comfortable queen/twin bed, quiet peaceful atmosphere
+
+👨‍👩‍👧 2. Family Room — Starting USD ${rates.family}/night
+• Equipped with Air Conditioning (AC)
+• Spacious family layout accommodating up to 3 adults + 1 child
+• Private attached bathroom with 24/7 hot shower & high-speed Wi-Fi
+
+🌿 3. Budget Family Room — Starting USD ${rates.budgetFamily}/night
+• Non-AC (Equipped with fan instead of AC)
+• Note: Aside from AC, all other amenities (private attached bath, 24/7 hot shower, high-speed Wi-Fi, comfortable beds) are identical to our Deluxe and Family rooms!
+
+✨ Special Long-Stay Highlight (FREE Self-Sharing Kitchen):
+For guests staying 2 weeks (14 nights) or more, we provide Room 102 as a fully equipped Shared Kitchen completely FREE of charge! It comes with 2 mini fridges, 1 microwave/oven, 2 storage racks, dining tables, chairs, cooking area, and wash basin.
+
+Would you like to check room availability for your dates?`;
+
+    return {
+      content: amenitiesMsg,
+      suggestedReplies: ['Check Availability', 'Room Prices', 'Book a Room', 'Talk to Staff'],
+      intent: 'ROOM_AMENITIES',
+      step: state.currentStep,
+      triggerHandover: false,
+    };
+  }
+
+  // 4.7. Shared Kitchen / Long Stay Query (STRICT: Room 102, Stays >= 2 weeks, FREE of charge)
   if (intentResult.intent === 'SHARED_KITCHEN' || intentResult.intent === 'LONG_STAY') {
     const kitchenMsg =
       lang === 'ne'
-        ? "हाम्रो होटलमा कोठा १०२ (Room 102) मा कम्तिमा २ हप्ता (१४ दिन) वा सोभन्दा बढी बस्ने पाहुनाहरूका लागि साझा भान्सा (Shared Kitchen) को व्यवस्था छ। यसमा २ वटा मिनी फ्रिज, १ ओभन, २ र्‍याक, २ टेबल, ४ कुर्सी र बेसिन उपलब्ध छन्। कृपया ध्यान दिनुहोस्, यो रेस्टुरेन्ट वा डाइनिङ हल होइन—लामो समय बस्ने पाहुनाहरूको व्यक्तिगत खाना पकाउने प्रयोजनका लागि मात्र हो 😊"
-        : "For guests staying for at least 2 weeks (14 nights), we provide Room 102 as a shared kitchen facility. It is equipped with 2 mini fridges, 1 oven, 2 storage racks, 2 dining tables, 4 chairs, wash basin, and wastewater management. Please note this is for long-stay self-cooking and is not a restaurant or dining room 😊";
+        ? "हाम्रो होटलमा २ हप्ता (१४ दिन) वा सोभन्दा बढी लामो समय बस्ने पाहुनाहरूका लागि कोठा १०२ (Room 102) मा पूर्ण सुविधायुक्त साझा भान्सा (Shared Kitchen) बिल्कुल निःशुल्क (FREE) उपलब्ध छ 😊\n\nयसमा २ वटा मिनी फ्रिज, १ ओभन, २ र्‍याक, २ टेबल, ४ कुर्सी र पानीको बेसिन उपलब्ध छन्। पाहुनाहरूले आफ्नै व्यक्तिगत खाना आफैँ पकाएर आनन्द लिन सक्नुहुन्छ। कृपया ध्यान दिनुहोस्, यो रेस्टुरेन्ट वा डाइनिङ हल होइन—लामो समय बस्ने पाहुनाहरूको व्यक्तिगत खाना पकाउने प्रयोजनका लागि मात्र हो।"
+        : "For guests staying for 2 weeks (14 nights) or more, Hotel Sherpa Soul provides Room 102 as a fully equipped Shared Kitchen completely FREE of charge 😊\n\nIt is equipped with 2 mini fridges, 1 microwave/oven, 2 storage racks, 2 dining tables, 4 chairs, wash basin, and wastewater management for your self-cooking comfort. Please note this is for long-stay self-cooking and is not an on-site restaurant or public dining room.";
 
     return {
       content: kitchenMsg,
@@ -144,7 +197,7 @@ export async function processConversationStep(
     };
   }
 
-  // 4.7. Facilities Query (STRICT Anti-Hallucination: No Restaurant, No Private Parking, No Pool)
+  // 4.8. Facilities Query (STRICT Anti-Hallucination: No Restaurant, No Private Parking, No Pool)
   if (intentResult.intent === 'FACILITIES') {
     const kbAnswer = await searchKnowledgeBase('restaurant parking pool wifi facilities', 'FACILITIES');
     return {

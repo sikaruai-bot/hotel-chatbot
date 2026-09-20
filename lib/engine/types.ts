@@ -7,6 +7,7 @@ export type Intent =
   | 'BOOKING'
   | 'BOOKING_INQUIRY'
   | 'ID_REQUIREMENTS'
+  | 'ROOM_AMENITIES'
   | 'HOTEL_INFORMATION'
   | 'LOCATION'
   | 'FACILITIES'
