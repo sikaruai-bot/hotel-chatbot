@@ -16,6 +16,7 @@ export interface StateMachineContext {
   };
   intentResult: IntentResult;
   customerName?: string | null;
+  rawMessage?: string;
 }
 
 export async function processConversationStep(
@@ -36,7 +37,7 @@ export async function processConversationStep(
   if (intentResult.entities.adults) {
     state.adults = intentResult.entities.adults;
   }
-  if (intentResult.entities.children !== undefined && state.children === null) {
+  if (intentResult.entities.children !== undefined) {
     state.children = intentResult.entities.children;
   }
   if (intentResult.entities.roomType) {
@@ -46,12 +47,11 @@ export async function processConversationStep(
     state.guestName = intentResult.entities.guestName;
   }
 
-  // 1. Handover Triggers
+  // 1. Handover Triggers (Staff assistance needed)
   if (
     intentResult.intent === 'HUMAN_REQUEST' ||
     intentResult.intent === 'COMPLAINT' ||
-    intentResult.intent === 'CANCELLATION' ||
-    intentResult.intent === 'PAYMENT'
+    intentResult.intent === 'CANCELLATION'
   ) {
     const handoverMessages = {
       en: "I've informed our front desk team. A staff member will assist you shortly 😊\n\nYou can also chat directly with our front desk on WhatsApp:\n📲 +977-9851068219 (wa.me/9779851068219)",
@@ -79,7 +79,55 @@ export async function processConversationStep(
     };
   }
 
-  // 3. Shared Kitchen / Long Stay Query (STRICT: Room 102, Stays >= 2 weeks, NOT a restaurant)
+  // 3. ID / Documentation Requirements Query
+  if (intentResult.intent === 'ID_REQUIREMENTS') {
+    const idMsg =
+      lang === 'ne'
+        ? "होटल शेर्पा सोलमा अहिले अनलाइन सोधपुछ वा कोठा सुरक्षित गर्न कुनै पनि परिचयपत्र (ID) वा कागजात अपलोड गर्नु पर्दैन 😊\n\nहोटल चेक-इन (Check-in) गर्दा मात्र:\n• विदेशी पाहुनाहरू: मान्य राहदानी (Passport) र भिसा\n• नेपाली तथा भारतीय पाहुनाहरू: कुनै पनि सरकारी परिचयपत्र (नागरिकता, ड्राइभिङ लाइसेन्स, मतदाता परिचयपत्र वा पासपोर्ट)\n\nहोटल आइपुगेपछि फ्रन्ट डेस्कमा देखाए पुग्छ। भुक्तानी पनि चेक-इनकै समयमा गर्न सकिन्छ।"
+        : "For online inquiries or direct reservations with Hotel Sherpa Soul, you do NOT need to upload or submit any ID online right now 😊\n\nDuring check-in upon arrival at the hotel:\n• Foreign guests: Valid Passport & Visa\n• Nepali & Indian guests: Any government-issued photo ID (Citizenship, Driving License, Voter ID, or Passport)\n\nOur front desk will verify your details smoothly upon check-in. Payment is also made directly on arrival!";
+
+    return {
+      content: idMsg,
+      suggestedReplies: ['Check Room Availability', 'Room Prices', 'Hotel Location', 'Talk to Staff'],
+      intent: 'ID_REQUIREMENTS',
+      step: state.currentStep,
+      triggerHandover: false,
+    };
+  }
+
+  // 4. Payment Policy Query
+  if (intentResult.intent === 'PAYMENT') {
+    const payMsg =
+      lang === 'ne'
+        ? "होटल शेर्पा सोलमा सिधै बुक गर्दा कुनै पनि अग्रिम रकम (Advance / Deposit) तिर्नु पर्दैन 😊\n\nयहाँले होटल आगमन (Check-in) को समयमा सजिलै भुक्तानी गर्न सक्नुहुन्छ:\n• नगद (Cash in NPR, USD, EUR)\n• क्रेडिट / डेबिट कार्ड (Visa, Mastercard)\n• फोनपे (Fonepay) / eSewa QR\n\nसाथै, सिधै बुक गर्दा यहाँले तुरुन्त १०% छुट (Direct Booking Discount) पनि पाउनुहुन्छ!"
+        : "At Hotel Sherpa Soul, no advance deposit or prepayment is required for direct bookings 😊\n\nYou can pay easily upon arrival at check-in via:\n• Cash (NPR, USD, EUR)\n• Credit / Debit Cards (Visa, Mastercard)\n• Fonepay / QR payments (for Nepali bank accounts)\n\nPlus, you enjoy an instant 10% discount when booking directly with us!";
+
+    return {
+      content: payMsg,
+      suggestedReplies: ['Check Room Availability', 'Room Prices', 'Hotel Location', 'Talk to Staff'],
+      intent: 'PAYMENT',
+      step: state.currentStep,
+      triggerHandover: false,
+    };
+  }
+
+  // 4.5. Booking Inquiry (How to book / source)
+  if (intentResult.intent === 'BOOKING_INQUIRY') {
+    const inquiryMsg =
+      lang === 'ne'
+        ? "होटल शेर्पा सोलमा कोठा बुक गर्न एकदमै सजिलो छ 😊\n\n१. यहाँ च्याटमा आफ्नो आगमन मिति र पाहुना संख्या बताउनुहोस्।\n२. हाम्रो फ्रन्ट डेस्कले यहाँको कोठा तुरुन्त सुरक्षित राख्नेछ।\n३. कुनै अग्रिम रकम चाहिँदैन—होटल चेक-इन गर्दा भुक्तानी गरे पुग्छ।\n\n✨ सिधै बुक गर्दा १०% छुट पनि प्राप्त हुन्छ! के म यहाँको लागि कोठा बुकिङ प्रक्रिया सुरु गरूँ?"
+        : "Booking directly with Hotel Sherpa Soul is fast and simple 😊\n\n1. Share your travel dates and number of guests right here.\n2. We confirm and reserve your room directly with our front desk.\n3. No advance deposit required—you pay conveniently at check-in.\n\n✨ Direct bookings receive a guaranteed 10% discount! Would you like to check room availability for your dates?";
+
+    return {
+      content: inquiryMsg,
+      suggestedReplies: ['Check Room Availability', 'Room Prices', 'Talk to Staff'],
+      intent: 'BOOKING_INQUIRY',
+      step: state.currentStep,
+      triggerHandover: false,
+    };
+  }
+
+  // 4.6. Shared Kitchen / Long Stay Query (STRICT: Room 102, Stays >= 2 weeks, NOT a restaurant)
   if (intentResult.intent === 'SHARED_KITCHEN' || intentResult.intent === 'LONG_STAY') {
     const kitchenMsg =
       lang === 'ne'
@@ -91,12 +139,12 @@ export async function processConversationStep(
       suggestedReplies: ['Check Availability', 'Room Prices', 'Talk to Staff'],
       intent: 'SHARED_KITCHEN',
       step: state.currentStep,
-      triggerHandover: intentResult.intent === 'LONG_STAY', // Long stay can also notify staff for custom rates
+      triggerHandover: intentResult.intent === 'LONG_STAY',
       handoverReason: intentResult.intent === 'LONG_STAY' ? 'Guest inquiring about long stay / shared kitchen' : undefined,
     };
   }
 
-  // 4. Facilities Query (STRICT Anti-Hallucination: No Restaurant, No Private Parking, No Pool)
+  // 4.7. Facilities Query (STRICT Anti-Hallucination: No Restaurant, No Private Parking, No Pool)
   if (intentResult.intent === 'FACILITIES') {
     const kbAnswer = await searchKnowledgeBase('restaurant parking pool wifi facilities', 'FACILITIES');
     return {
@@ -110,7 +158,73 @@ export async function processConversationStep(
     };
   }
 
-  // 5. Booking Flow & Progressive Inquiries
+  // 5. Post-Booking State Handling (If booking is already COMPLETE)
+  if (state.currentStep === 'COMPLETE') {
+    const rawLower = (ctx.rawMessage || intentResult.reason || '').toLowerCase();
+
+    // Check if guest explicitly wants a NEW booking
+    const isNewBooking =
+      rawLower.includes('new booking') ||
+      rawLower.includes('another room') ||
+      rawLower.includes('book another') ||
+      rawLower.includes('start over') ||
+      rawLower.includes('reset') ||
+      rawLower.includes('अर्को कोठा') ||
+      rawLower.includes('नयाँ बुक') ||
+      rawLower.includes('नयाँ बुकिङ');
+
+    if (isNewBooking) {
+      state.currentStep = 'AWAITING_DATES';
+      state.checkIn = null;
+      state.checkOut = null;
+      state.adults = null;
+      state.children = null;
+      state.roomType = null;
+      return {
+        content:
+          lang === 'ne'
+            ? "हजुर 😊 नयाँ कोठाको लागि यहाँको आगमन (Check-in) र प्रस्थान (Check-out) मिति कहिले हो?"
+            : "Certainly! 😊 For your new booking, what are your preferred check-in and check-out dates?",
+        suggestedReplies: ['Today - 2 nights', 'This weekend', 'Talk to Staff'],
+        intent: 'BOOKING',
+        step: 'AWAITING_DATES',
+        triggerHandover: false,
+      };
+    }
+
+    // If guest asks "confirm", "confirm book", "is it confirmed?", "status", "book"
+    const isConfirmOrStatus =
+      rawLower.includes('confirm') ||
+      rawLower.includes('status') ||
+      rawLower.includes('sure') ||
+      rawLower.includes('done') ||
+      rawLower.includes('पक्का') ||
+      rawLower.includes('पुष्टि') ||
+      intentResult.intent === 'BOOKING';
+
+    if (isConfirmOrStatus) {
+      const datesStr = state.checkOut ? `${state.checkIn} – ${state.checkOut}` : `${state.checkIn}`;
+      const guestsDisplay =
+        lang === 'ne'
+          ? `${state.adults || 1} वयस्क${state.children && state.children > 0 ? ` + ${state.children} बालबालिका` : ''}`
+          : `${state.adults || 1} adult(s)${state.children && state.children > 0 ? ` + ${state.children} child${state.children > 1 ? 'ren' : ''}` : ''}`;
+
+      const reply =
+        lang === 'ne'
+          ? `हजुर, यहाँको बुकिङ अनुरोध होटल शेर्पा सोलमा सुरक्षित दर्ता भइसकेको छ 😊\n\n🏨 कोठा: ${state.roomType || 'Deluxe Room'}\n📅 मिति: ${datesStr}\n👥 पाहुना: ${guestsDisplay}\n\nहाम्रो फ्रन्ट डेस्कले यहाँको कोठा सुरक्षित राखिसकेको छ। अहिले कुनै अग्रिम भुक्तानी वा कागजात पठाउनु पर्दैन—होटल चेक-इन गर्दा देखाए पुग्छ। यहाँलाई अरू केही सहयोग चाहिएको छ कि?`
+          : `Yes, your booking request is already officially registered with Hotel Sherpa Soul 😊\n\n🏨 Room: ${state.roomType || 'Deluxe Room'}\n📅 Dates: ${datesStr}\n👥 Guests: ${guestsDisplay}\n\nOur front desk has your reservation in place. No advance deposit or online ID upload is needed—you can pay directly upon check-in. Feel free to ask if you have any questions before arrival!`;
+
+      return {
+        content: reply,
+        suggestedReplies: ['Hotel Location', 'Check-in Time', 'ID Requirements', 'Talk to Staff'],
+        intent: 'BOOKING',
+        step: 'COMPLETE',
+        triggerHandover: false,
+      };
+    }
+  }
+
+  // 6. Progressive Booking Flow
   if (
     intentResult.intent === 'BOOKING' ||
     intentResult.intent === 'ROOM_AVAILABILITY' ||
@@ -149,10 +263,13 @@ export async function processConversationStep(
 
     // Step C: Determine suitable room
     if (!state.roomType) {
-      if (state.adults <= 2) {
-        state.roomType = 'Deluxe Room';
-      } else {
+      const totalGuests = (state.adults || 1) + (state.children || 0);
+      if (totalGuests > 3) {
         state.roomType = 'Family Room';
+      } else if (state.adults > 2) {
+        state.roomType = 'Family Room';
+      } else {
+        state.roomType = 'Deluxe Room';
       }
     }
 
@@ -164,23 +281,25 @@ export async function processConversationStep(
         : rates.deluxe;
 
     // Step D: Confirming Booking Summary
-    const guestDisplayName = state.guestName || ctx.customerName || 'Guest';
+    const rawName = state.guestName || ctx.customerName || '';
+    const isAnonymous = !rawName || rawName === 'Guest' || rawName === 'Website Visitor';
+    const guestDisplayName = isAnonymous
+      ? (lang === 'ne' ? 'आदरणीय पाहुना' : 'Valued Guest')
+      : rawName;
+
     const datesStr = state.checkOut ? `${state.checkIn} – ${state.checkOut}` : `${state.checkIn}`;
+    const guestsDisplay =
+      lang === 'ne'
+        ? `${state.adults} वयस्क${state.children && state.children > 0 ? ` + ${state.children} बालबालिका` : ''}`
+        : `${state.adults} adult(s)${state.children && state.children > 0 ? ` + ${state.children} child${state.children > 1 ? 'ren' : ''}` : ''}`;
 
     // If guest is currently at CONFIRMING_SUMMARY step, check if they confirmed or asked to change
     if (state.currentStep === 'CONFIRMING_SUMMARY') {
-      const rawText = (ctx.intentResult.reason || '').toLowerCase();
-      const userText = ctx.customerName ? '' : ''; // will check message content
-      // Check confirmation phrases
-      const isConfirm = 
-        intentResult.intent === 'BOOKING' ||
-        ['yes', 'send', 'confirm', 'book', 'sure', 'ok', 'okay', 'हुन्छ', 'हो', 'गर्नुस्', 'पठाउनुस्', 'ठिक छ'].some(w => 
-          intentResult.entities.roomType ? false : true
-        );
+      const rawText = (ctx.rawMessage || intentResult.reason || '').toLowerCase();
 
       // Check if user wants to change details
-      const isChange = ['change', 'modify', 'edit', 'सच्याउनु', 'फेर्नु'].some(w => 
-        intentResult.reason?.toLowerCase().includes(w)
+      const isChange = ['change', 'modify', 'edit', 'सच्याउनु', 'फेर्नु', 'बदल्नु'].some(w =>
+        rawText.includes(w)
       );
 
       if (isChange) {
@@ -188,9 +307,10 @@ export async function processConversationStep(
         state.checkOut = null;
         state.roomType = null;
         return {
-          content: lang === 'ne' 
-            ? "कुनै समस्या छैन 😊 कृपया यहाँको नयाँ आगमन (Check-in) र प्रस्थान (Check-out) मिति बताइदिनुहोस्।"
-            : "No problem at all 😊 Please share your preferred check-in and check-out dates.",
+          content:
+            lang === 'ne'
+              ? "कुनै समस्या छैन 😊 कृपया यहाँको नयाँ आगमन (Check-in) र प्रस्थान (Check-out) मिति बताइदिनुहोस्।"
+              : "No problem at all 😊 Please share your preferred check-in and check-out dates.",
           suggestedReplies: ['Today - 2 nights', 'This weekend', 'Talk to Staff'],
           intent: 'BOOKING',
           step: 'AWAITING_DATES',
@@ -206,40 +326,50 @@ export async function processConversationStep(
 ━━━━━━━━━━━━━━━━━━
 🏨 कोठा: ${state.roomType} (${state.roomsCount || 1} वटा)
 📅 मिति: ${datesStr}
-👥 पाहुना: ${state.adults} वयस्क ${state.children ? `+ ${state.children} बच्चा` : ''}
-💰 दर: USD ${price}/रात
+👥 पाहुना: ${guestsDisplay}
+💰 दर: USD ${price}/रात (चेक-इनमा १०% छुट लागू हुनेछ)
 ━━━━━━━━━━━━━━━━━━
-हाम्रो फ्रन्ट डेस्कले यहाँको कोठा सुरक्षित राख्नेछ। थप केही जानकारी चाहिएमा सोध्न सक्नुहुन्छ 😊`
+हाम्रो फ्रन्ट डेस्कले यहाँको कोठा सुरक्षित राख्नेछ।
+• कुनै अग्रिम भुक्तानी (Advance / Deposit) चाहिँदैन।
+• चेक-इनको समयमा सजिलै नगद, कार्ड वा फोनपेबाट भुक्तानी गर्न सक्नुहुन्छ।
+• होटल चेक-इन गर्दा परिचयपत्र (नागरिकता/राहदानी) देखाए पुग्छ।
+
+थप केही जानकारी चाहिएमा निर्धक्क सोध्न सक्नुहुन्छ 😊`
             : `🎉 Thank you, ${guestDisplayName}! Your booking request has been officially received by Hotel Sherpa Soul.
 ━━━━━━━━━━━━━━━━━━
 🏨 Room: ${state.roomType} (${state.roomsCount || 1} room)
 📅 Dates: ${datesStr}
-👥 Guests: ${state.adults} adult(s)${state.children ? ` + ${state.children} child` : ''}
-💰 Rate: USD ${price}/night
+👥 Guests: ${guestsDisplay}
+💰 Rate: USD ${price}/night (10% Direct Discount applied upon check-in)
 ━━━━━━━━━━━━━━━━━━
-Our front desk has received your request and reserved your space. Feel free to ask if you have any questions before arrival 😊`,
+Our front desk has received your request and reserved your space.
+• No advance deposit is required.
+• Pay comfortably at check-in (Cash / Card / QR).
+• Foreign guests present passport; Nepali/Indian guests present government ID upon arrival.
+
+Feel free to ask if you have any questions before arrival 😊`,
         suggestedReplies: ['Hotel Location', 'Check-in Time', 'Talk to Staff'],
         intent: 'BOOKING',
         step: 'COMPLETE',
         triggerHandover: false,
-        summary: `Confirmed Booking Request: ${state.roomType} for ${state.adults} adults (${datesStr})`,
+        summary: `Confirmed Booking Request: ${state.roomType} for ${guestsDisplay} (${datesStr})`,
       };
     }
 
     const summaryText =
       lang === 'ne'
         ? `यहाँको अनुरोध विवरण यस प्रकार छ:
-• पाहुनाको नाम: ${guestDisplayName}
+• पाहुना: ${guestDisplayName}
 • मिति: ${datesStr}
-• पाहुना संख्या: ${state.adults} वयस्क ${state.children ? `+ ${state.children} बच्चा` : ''}
-• कोठा: ${state.roomType} (USD ${price}/रात, उपलब्धता पुष्टि हुन बाँकी)
+• पाहुना संख्या: ${guestsDisplay}
+• कोठा: ${state.roomType} (USD ${price}/रात, फ्रन्ट डेस्कबाट १०% छुटसहित)
 • कोठा संख्या: ${state.roomsCount || 1}
 
 के म यो अनुरोध हाम्रो फ्रन्ट डेस्कमा पठाऊँ?`
         : `Here is your booking inquiry summary:
 • Guest: ${guestDisplayName}
 • Dates: ${datesStr}
-• Guests: ${state.adults} adult(s)${state.children ? ` + ${state.children} child` : ''}
+• Guests: ${guestsDisplay}
 • Room: ${state.roomType} (Starting from USD ${price}/night, subject to front desk confirmation)
 • Rooms: ${state.roomsCount || 1}
 
@@ -251,26 +381,73 @@ Would you like me to send this request to our front desk?`;
       intent: 'BOOKING',
       step: 'CONFIRMING_SUMMARY',
       triggerHandover: false,
-      summary: `Inquiry: ${state.roomType} for ${state.adults} adults (${datesStr})`,
+      summary: `Inquiry: ${state.roomType} for ${guestsDisplay} (${datesStr})`,
     };
   }
 
-  // 6. Location / Transport / Check-in Info
-  if (intentResult.intent === 'LOCATION' || intentResult.intent === 'CHECK_IN' || intentResult.intent === 'TRANSPORTATION') {
-    const kbAnswer = await searchKnowledgeBase(intentResult.intent.toLowerCase());
+  // 7. Location / Transport / Check-in / Policy Info
+  if (
+    intentResult.intent === 'LOCATION' ||
+    intentResult.intent === 'CHECK_IN' ||
+    intentResult.intent === 'CHECK_OUT' ||
+    intentResult.intent === 'TRANSPORTATION' ||
+    intentResult.intent === 'POLICY' ||
+    intentResult.intent === 'HOTEL_INFORMATION'
+  ) {
+    const kbAnswer = await searchKnowledgeBase(intentResult.intent.toLowerCase(), intentResult.intent);
     if (kbAnswer) {
       return {
         content: kbAnswer,
         suggestedReplies: ['Check Room Availability', 'Room Prices', 'Talk to Staff'],
         intent: intentResult.intent,
         step: state.currentStep,
-        triggerHandover: intentResult.intent === 'TRANSPORTATION', // Airport taxi transfers can be handled by staff
+        triggerHandover: intentResult.intent === 'TRANSPORTATION',
+        handoverReason: intentResult.intent === 'TRANSPORTATION' ? 'Guest inquiring about airport pickup' : undefined,
+      };
+    }
+
+    // High quality default responses
+    let defaultMsg = '';
+    if (intentResult.intent === 'LOCATION') {
+      defaultMsg =
+        lang === 'ne'
+          ? "होटल शेर्पा सोल ठमेलको मुटु, २६ ठमेल भगवती मार्ग, काठमाडौँ ४४६०० मा अवस्थित छ। यहाँबाट प्रख्यात क्याफे, रेस्टुरेन्ट र पसलहरू हिँडेरै पुग्न सकिने दूरीमा छन् भने कोठा शान्त र कोलाहलरहित छ 😊"
+          : "Hotel Sherpa Soul is located at 26 Thamel Bhagwati Marg, Thamel, Kathmandu 44600, Nepal — right in the vibrant heart of Thamel, within easy walking distance to top restaurants and shops, while keeping your room peaceful and quiet 😊";
+    } else if (intentResult.intent === 'CHECK_IN' || intentResult.intent === 'CHECK_OUT') {
+      defaultMsg =
+        lang === 'ne'
+          ? "हाम्रो नियमित चेक-इन (Check-in) समय मध्यान्ह १२:०० बजे र चेक-आउट (Check-out) समय बिहान ११:०० बजे हो।\n\nयदि यहाँ चाँडै आउनुभयो भने कोठा उपलब्धता अनुसार अर्ली चेक-इन वा लगेज राख्ने निःशुल्क व्यवस्था छ 😊"
+          : "Our standard check-in time is 12:00 PM (Noon) and check-out time is 11:00 AM.\n\nEarly check-in and complimentary luggage storage are provided based on room availability 😊";
+    } else if (intentResult.intent === 'POLICY') {
+      defaultMsg =
+        lang === 'ne'
+          ? "होटल शेर्पा सोलको मुख्य नीति 'No Restaurant. No Noise. Sleep Well.' हो। होटल भित्र कोठाहरू धूम्रपानरहित (Non-smoking) छन्। बालबालिका सम्बन्धी: १२ वर्ष मुनिका बच्चा बाबुआमासँग एउटै ओछ्यानमा निःशुल्क बस्न सक्छन्।"
+          : "Hotel Sherpa Soul follows our 'No Restaurant. No Noise. Sleep Well.' policy. All rooms are non-smoking, and we maintain a quiet, peaceful atmosphere. Children under 12 stay free when using existing beds.";
+    } else if (intentResult.intent === 'HOTEL_INFORMATION') {
+      defaultMsg =
+        lang === 'ne'
+          ? "होटल शेर्पा सोल ठमेल, काठमाडौँमा अवस्थित एक शान्त र आरामदायी बुटिक होटल हो। हाम्रो आदर्श वाक्य 'No Restaurant. No Noise. Sleep Well.' हो—जहाँ यहाँले शान्त निद्रा, सफा कोठा, २४ सै घण्टा तातो पानी र द्रुत गतिको वाइफाइ पाउनुहुनेछ 😊"
+          : "Hotel Sherpa Soul is a peaceful retreat in the heart of Thamel, Kathmandu. Guided by our motto 'No Restaurant. No Noise. Sleep Well.', we offer restful sleep, spotless rooms, 24/7 hot water, and high-speed Wi-Fi 😊";
+    } else if (intentResult.intent === 'TRANSPORTATION') {
+      defaultMsg =
+        lang === 'ne'
+          ? "हामी त्रिभुवन अन्तर्राष्ट्रिय विमानस्थल (TIA) बाट होटलसम्म भरपर्दो एयरपोर्ट पिकअप/ड्रप सेवा उपलब्ध गराउँछौँ। यसको लागि हाम्रो फ्रन्ट डेस्क टिमले यहाँलाई थप समन्वय गर्न मद्दत गर्नेछ 😊"
+          : "We arrange reliable airport pick-up and drop-off services to and from Tribhuvan International Airport (TIA). Our front desk team will happily coordinate the details for you 😊";
+    }
+
+    if (defaultMsg) {
+      return {
+        content: defaultMsg,
+        suggestedReplies: ['Check Room Availability', 'Room Prices', 'Talk to Staff'],
+        intent: intentResult.intent,
+        step: state.currentStep,
+        triggerHandover: intentResult.intent === 'TRANSPORTATION',
         handoverReason: intentResult.intent === 'TRANSPORTATION' ? 'Guest inquiring about airport pickup' : undefined,
       };
     }
   }
 
-  // 7. General Knowledge Base Fallback
+  // 8. General Knowledge Base Fallback
   const generalAnswer = await searchKnowledgeBase(intentResult.intent);
   if (generalAnswer) {
     return {

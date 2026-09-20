@@ -144,6 +144,7 @@ export async function processInboundMessage(
     state: currentState,
     intentResult,
     customerName: customer.name,
+    rawMessage: msg.content,
   });
 
   // 7. Update Conversation State in DB
@@ -232,8 +233,9 @@ export async function processInboundMessage(
     lastContactAt: new Date(),
   };
 
-  // Automated Booking Creation if step is COMPLETE
-  if (outbound.step === 'COMPLETE') {
+  // Automated Booking Creation only once when first reaching COMPLETE
+  const isNewlyConfirmed = conversation.state?.currentStep !== 'COMPLETE' && outbound.step === 'COMPLETE';
+  if (isNewlyConfirmed) {
     leadStatus = 'CONFIRMED';
     conversationStatus = 'CONFIRMED';
     scoreReason = `AUTOMATED BOOKING CONFIRMED — Room: ${currentState.roomType || 'Deluxe Room'}`;
@@ -268,13 +270,20 @@ export async function processInboundMessage(
     const totalPriceUsd = pricePerNight * nights * roomsCount;
     const bookingCode = `HSS-${Math.floor(100000 + Math.random() * 900000)}`;
 
+    const guestNameForBooking =
+      currentState.guestName && currentState.guestName !== 'Guest' && currentState.guestName !== 'Website Visitor'
+        ? currentState.guestName
+        : customer.name && customer.name !== 'Guest' && customer.name !== 'Website Visitor'
+        ? customer.name
+        : 'Valued Guest';
+
     if (matchedRoomType) {
       await prisma.reservation.create({
         data: {
           bookingCode,
           customerId: customer.id,
           roomTypeId: matchedRoomType.id,
-          guestName: currentState.guestName || customer.name || 'Guest',
+          guestName: guestNameForBooking,
           guestPhone: currentState.phone || customer.phone || (msg.channel === 'WHATSAPP' ? msg.senderId : null),
           guestEmail: currentState.email || customer.email,
           checkInDate,

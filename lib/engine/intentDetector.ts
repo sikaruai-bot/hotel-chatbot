@@ -205,25 +205,67 @@ export function detectIntent(text: string): IntentResult {
   // 4. Payment Issues or Inquiries
   if (
     lower.includes('payment') ||
+    lower.includes('how to pay') ||
     lower.includes('pay ') ||
+    lower.includes('paying') ||
     lower.includes('credit card') ||
+    lower.includes('debit card') ||
     lower.includes('cash') ||
     lower.includes('deposit') ||
     lower.includes('advance payment') ||
-    lower.includes('भुक्तानी')
+    lower.includes('advance for booking') ||
+    lower.includes('advance') ||
+    lower.includes('prepay') ||
+    lower.includes('fonepay') ||
+    lower.includes('esewa') ||
+    lower.includes('qr') ||
+    lower.includes('भुक्तानी') ||
+    lower.includes('पैसा')
   ) {
-    return { intent: 'PAYMENT', confidence: 0.90, language, entities };
+    return { intent: 'PAYMENT', confidence: 0.90, language, entities, reason: 'Guest inquiring about payment methods or deposit policies.' };
+  }
+
+  // 4.5. ID / Documentation Requirements
+  if (
+    /\b(id|ids|identification|passport|passports|citizenship|visa|document|documents)\b/i.test(lower) ||
+    lower.includes('photo id') ||
+    lower.includes('gov id') ||
+    lower.includes('government id') ||
+    lower.includes('id card') ||
+    lower.includes('need id') ||
+    lower.includes('require id') ||
+    lower.includes('source for booking') ||
+    lower.includes('booking source') ||
+    lower.includes('need source') ||
+    lower.includes('source') ||
+    lower.includes('नागरिकता') ||
+    lower.includes('पासपोर्ट') ||
+    lower.includes('कागजात') ||
+    lower.includes('पहचान पत्र')
+  ) {
+    return { intent: 'ID_REQUIREMENTS', confidence: 0.95, language, entities, reason: 'Guest inquiring about ID or booking documentation requirements.' };
+  }
+
+  // 4.6. How to book / Booking Process Inquiry
+  if (
+    lower.includes('how to book') ||
+    lower.includes('how can i reserve') ||
+    lower.includes('how do i book') ||
+    lower.includes('booking process') ||
+    lower.includes('procedure for booking') ||
+    lower.includes('what do i need to book') ||
+    lower.includes('where to book') ||
+    lower.includes('how to reserve') ||
+    lower.includes('कसरी बुक गर्ने') ||
+    lower.includes('बुक कसरी गर्ने')
+  ) {
+    return { intent: 'BOOKING_INQUIRY', confidence: 0.95, language, entities, reason: 'Guest inquiring about how to book.' };
   }
 
   // 5. Booking Intent (Progressive)
   if (
-    lower.includes('book') ||
-    lower.includes('reservation') ||
-    lower.includes('reserve') ||
     lower.match(/(need|want|looking for|require)\s+(a\s+|some\s+)?(room|rooms|bed|stay)/i) ||
     lower.match(/room.*(?:for\s+\d+\s*night)/i) ||
-    lower.includes('how to book') ||
-    lower.includes('how can i reserve') ||
     lower.includes('book this room') ||
     lower.includes('reserve a room') ||
     lower.includes('make a reservation') ||
@@ -240,6 +282,7 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('कोठा चाहियो') ||
     lower.includes('कोठा चाहिन्छ') ||
     lower.includes('बुक करना है') ||
+    lower.match(/^(book|reserve|reservation|booking|confirm book|yes)$/i) ||
     (entities.checkIn && (lower.includes('room') || lower.includes('bed') || lower.includes('stay') || lower.includes('बस्न')))
   ) {
     return { intent: 'BOOKING', confidence: 0.98, language, entities, reason: 'High-intent booking request.' };

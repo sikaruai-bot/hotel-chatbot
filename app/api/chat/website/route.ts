@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const result = await processInboundMessage({
       channel: 'WEBSITE',
       senderId: resolvedCustomerId || 'web_guest_' + Date.now(),
-      senderName: name || 'Website Visitor',
+      senderName: name || 'Valued Guest',
       senderPhone: phone,
       senderEmail: email,
       content: message,
