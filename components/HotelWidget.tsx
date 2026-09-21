@@ -127,7 +127,7 @@ export default function HotelWidget() {
 
             <div className="flex items-center gap-1.5">
               <a
-                href="https://wa.me/9779851068219"
+                href="https://wa.me/9779818259472"
                 target="_blank"
                 rel="noreferrer"
                 title="Direct WhatsApp"
@@ -148,12 +148,12 @@ export default function HotelWidget() {
           <div className="bg-amber-50 text-amber-950 px-3 py-1.5 text-[11px] flex items-center justify-between border-b border-amber-200/60">
             <span>Prefer WhatsApp?</span>
             <a
-              href="https://wa.me/9779851068219"
+              href="https://wa.me/9779818259472"
               target="_blank"
               rel="noreferrer"
               className="text-emerald-700 font-bold hover:underline flex items-center gap-1"
             >
-              <MessageCircle className="w-3 h-3" /> +977 9851068219
+              <MessageCircle className="w-3 h-3" /> +977 9818259472
             </a>
           </div>
 

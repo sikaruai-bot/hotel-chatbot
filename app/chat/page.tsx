@@ -82,7 +82,7 @@ export default function StandaloneChatPage() {
         {
           id: `err_${Date.now()}`,
           sender: 'bot',
-          text: 'Thank you for reaching out! You can also connect directly with our front desk team on WhatsApp (+977-9851068219).',
+          text: 'Thank you for reaching out! You can also connect directly with our front desk team on WhatsApp (+977-9818259472).',
           buttons: ['Talk to Staff'],
           timestamp: new Date(),
         },
@@ -121,7 +121,7 @@ export default function StandaloneChatPage() {
 
           <div className="flex items-center gap-2">
             <a
-              href="https://wa.me/9779851068219"
+              href="https://wa.me/9779818259472"
               target="_blank"
               rel="noreferrer"
               className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition"

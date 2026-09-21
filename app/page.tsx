@@ -32,7 +32,7 @@ export default function HomePage() {
             <a href="tel:+97714530311" className="hover:text-white transition flex items-center gap-1">
               <Phone className="w-3 h-3" /> +977-1-4530311
             </a>
-            <a href="https://wa.me/9779851068219" target="_blank" rel="noreferrer" className="hover:text-emerald-400 text-emerald-500 font-medium transition flex items-center gap-1">
+            <a href="https://wa.me/9779818259472" target="_blank" rel="noreferrer" className="hover:text-emerald-400 text-emerald-500 font-medium transition flex items-center gap-1">
               <MessageCircle className="w-3 h-3" /> WhatsApp
             </a>
             <Link
@@ -70,7 +70,7 @@ export default function HomePage() {
           </nav>
 
           <a
-            href="https://wa.me/9779851068219"
+            href="https://wa.me/9779818259472"
             target="_blank"
             rel="noreferrer"
             className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5"
@@ -105,7 +105,7 @@ export default function HomePage() {
               Explore 6 Quiet Rooms
             </a>
             <a
-              href="https://wa.me/9779851068219"
+              href="https://wa.me/9779818259472"
               target="_blank"
               rel="noreferrer"
               className="bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold px-5 py-3 rounded-xl transition border border-slate-700 flex items-center gap-1.5"
@@ -209,7 +209,7 @@ export default function HomePage() {
 
             <div className="p-4 bg-slate-50 border-t border-slate-100">
               <a
-                href="https://wa.me/9779851068219?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Deluxe%20Room."
+                href="https://wa.me/9779818259472?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Deluxe%20Room."
                 target="_blank"
                 rel="noreferrer"
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
@@ -249,7 +249,7 @@ export default function HomePage() {
 
             <div className="p-4 bg-slate-50 border-t border-slate-100">
               <a
-                href="https://wa.me/9779851068219?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Budget%20Family%20Room."
+                href="https://wa.me/9779818259472?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Budget%20Family%20Room."
                 target="_blank"
                 rel="noreferrer"
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
@@ -289,7 +289,7 @@ export default function HomePage() {
 
             <div className="p-4 bg-slate-50 border-t border-slate-100">
               <a
-                href="https://wa.me/9779851068219?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Family%20Room."
+                href="https://wa.me/9779818259472?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Family%20Room."
                 target="_blank"
                 rel="noreferrer"
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"

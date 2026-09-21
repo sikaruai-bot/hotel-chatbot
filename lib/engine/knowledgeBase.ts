@@ -49,12 +49,12 @@ export async function getGroundedKnowledge(): Promise<GroundedKnowledge> {
         tagline: settingsMap['hotel_tagline'] || 'No Restaurant. No Noise. Sleep Well.',
         address: settingsMap['hotel_address'] || '26 Thamel Bhagwati Marg, Kathmandu 44600, Nepal',
         phone: settingsMap['hotel_phone'] || '+977-1-4530311',
-        whatsapp: settingsMap['hotel_whatsapp'] || '+977-9851068219',
+        whatsapp: settingsMap['hotel_whatsapp'] || '+977-9818259472',
         email: settingsMap['hotel_email'] || 'info@hotelsherpasoul.com',
       },
       bookingLinks: {
         direct: settingsMap['booking_direct_url'] || 'https://www.hotelsherpasoul.com',
-        whatsapp: settingsMap['whatsapp_direct_url'] || 'https://wa.me/9779851068219',
+        whatsapp: settingsMap['whatsapp_direct_url'] || 'https://wa.me/9779818259472',
         bookingCom: settingsMap['booking_com_url'] || '',
         agoda: settingsMap['agoda_url'] || '',
       },
@@ -68,7 +68,7 @@ export async function getGroundedKnowledge(): Promise<GroundedKnowledge> {
         tagline: 'No Restaurant. No Noise. Sleep Well.',
         address: '26 Thamel Bhagwati Marg, Kathmandu 44600, Nepal',
         phone: '+977-1-4530311',
-        whatsapp: '+977-9851068219',
+        whatsapp: '+977-9818259472',
         email: 'info@hotelsherpasoul.com',
       },
       bookingLinks: { direct: 'https://www.hotelsherpasoul.com' },
@@ -265,9 +265,9 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
       'about', 'story', 'who are you', 'hotel info', 'sherpa soul', 'philosophy',
       'contact', 'phone', 'whatsapp', 'email', 'होटलको बारेमा', 'परिचय', 'सम्पर्क'
     ],
-    answerEn: "Hotel Sherpa Soul is a tranquil boutique hotel located at 26 Thamel Bhagwati Marg, Kathmandu, inspired by authentic Himalayan Sherpa hospitality 😊\n\n• Motto: 'No Restaurant. No Noise. Sleep Well.'\n• WhatsApp / Phone: +977-9851068219 (wa.me/9779851068219)\n• Email: info@hotelsherpasoul.com\n• Website: https://hotelsherpasoul.com\n• 24/7 Reception Desk\n\nWe provide clean restful rooms, 24/7 hot showers, high-speed fiber Wi-Fi, and licensed trekking guidance!",
-    answerNe: "होटल शेर्पा सोल ठमेल भगवती मार्ग २६, काठमाडौँमा अवस्थित एक शान्त र आरामदायी बुटिक होटल हो 😊\n\n• आदर्श वाक्य: 'No Restaurant. No Noise. Sleep Well.'\n• ह्वाट्सएप / फोन: +९७७ ९८५१०६८२१९ (wa.me/9779851068219)\n• इमेल: info@hotelsherpasoul.com\n• वेबसाइट: https://hotelsherpasoul.com\n• २४ सै घण्टा खुला फ्रन्ट डेस्क\n\nहामी शान्त निद्रा, सफा कोठा, २४ सै घण्टा तातो पानी, द्रुत गतिको वाइफाइ र शेर्पा जातिको हार्दिक आतिथ्यता प्रदान गर्दछौँ!",
-    answerHi: "होटल शेरपा सोल थमेल, काठमांडू में स्थित एक शांत बुटीक होटल है। संपर्क: +977-9851068219, info@hotelsherpasoul.com 😊"
+    answerEn: "Hotel Sherpa Soul is a tranquil boutique hotel located at 26 Thamel Bhagwati Marg, Kathmandu, inspired by authentic Himalayan Sherpa hospitality 😊\n\n• Motto: 'No Restaurant. No Noise. Sleep Well.'\n• WhatsApp Chatbot: +977-9818259472 (wa.me/9779818259472)\n• Front Desk / Call: +977-1-4530311 / +977-9851068219\n• Email: info@hotelsherpasoul.com\n• Website: https://hotelsherpasoul.com\n• 24/7 Reception Desk\n\nWe provide clean restful rooms, 24/7 hot showers, high-speed fiber Wi-Fi, and licensed trekking guidance!",
+    answerNe: "होटल शेर्पा सोल ठमेल भगवती मार्ग २६, काठमाडौँमा अवस्थित एक शान्त र आरामदायी बुटिक होटल हो 😊\n\n• आदर्श वाक्य: 'No Restaurant. No Noise. Sleep Well.'\n• ह्वाट्सएप च्याटबोट: +९७७ ९८१८२५९४७२ (wa.me/9779818259472)\n• फ्रन्ट डेस्क / कल: +९७७-१-४५३०३११ / +९७७ ९८५१०६८२१९\n• इमेल: info@hotelsherpasoul.com\n• वेबसाइट: https://hotelsherpasoul.com\n• २४ सै घण्टा खुला फ्रन्ट डेस्क\n\nहामी शान्त निद्रा, सफा कोठा, २४ सै घण्टा तातो पानी, द्रुत गतिको वाइफाइ र शेर्पा जातिको हार्दिक आतिथ्यता प्रदान गर्दछौँ!",
+    answerHi: "होटल शेरपा सोल थमेल, काठमांडू में स्थित एक शांत बुटीक होटल है। WhatsApp: +977-9818259472, फोन: +977-9851068219, info@hotelsherpasoul.com 😊"
   }
 ];
 

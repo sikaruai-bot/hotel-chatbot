@@ -419,7 +419,7 @@
 
       <div class="hss-notice-bar">
         <span>Quick answer or prefer WhatsApp?</span>
-        <a href="https://wa.me/9779851068219" target="_blank" rel="noopener">WhatsApp Us ↗</a>
+        <a href="https://wa.me/9779818259472" target="_blank" rel="noopener">WhatsApp Us ↗</a>
       </div>
 
       <div class="hss-messages" id="hss-messages-list"></div>
@@ -478,7 +478,7 @@
           b.textContent = btnText;
           b.onclick = () => {
             if (btnText.toLowerCase().includes('whatsapp')) {
-              window.open('https://wa.me/9779851068219?text=Hi%2C%20I%20would%20like%20to%20inquire%20about%20Hotel%20Sherpa%20Soul', '_blank');
+              window.open('https://wa.me/9779818259472?text=Hi%2C%20I%20would%20like%20to%20inquire%20about%20Hotel%20Sherpa%20Soul', '_blank');
               return;
             }
             handleSendMessage(btnText);
@@ -581,7 +581,7 @@
       messages.push({
         id: 'bot_err_' + Date.now(),
         sender: 'bot',
-        text: 'Thank you for reaching out! If our live chat is experiencing a delay, please feel free to message our front desk directly on WhatsApp at +977-9851068219 😊',
+        text: 'Thank you for reaching out! If our live chat is experiencing a delay, please feel free to message our front desk directly on WhatsApp at +977-9818259472 😊',
         buttons: ['WhatsApp Us', 'Hotel Information'],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       });
