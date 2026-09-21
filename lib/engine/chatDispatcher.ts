@@ -5,6 +5,7 @@ import { processConversationStep } from './stateMachine';
 import { sendWhatsAppMessage } from '../meta/whatsapp';
 import { sendMessengerMessage } from '../meta/messenger';
 import { sendInstagramMessage } from '../meta/instagram';
+import { createPmsBooking } from '../pmsClient';
 
 export async function processInboundMessage(
   msg: UnifiedInboundMessage
@@ -268,39 +269,73 @@ export async function processInboundMessage(
     const roomsCount = currentState.roomsCount || 1;
     const nights = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))) || 1;
     const totalPriceUsd = pricePerNight * nights * roomsCount;
-    const bookingCode = `HSS-${Math.floor(100000 + Math.random() * 900000)}`;
+    const guestPhone = currentState.phone || customer.phone || (msg.channel === 'WHATSAPP' ? msg.senderId : null);
+    const guestEmail = currentState.email || customer.email;
 
-    const guestNameForBooking =
-      currentState.guestName && currentState.guestName !== 'Guest' && currentState.guestName !== 'Website Visitor'
-        ? currentState.guestName
-        : customer.name && customer.name !== 'Guest' && customer.name !== 'Website Visitor'
-        ? customer.name
-        : 'Valued Guest';
+    // Call Hotel Sherpa Soul PMS directly for real-time room lock and reservation
+    let officialBookingCode = `HSS-${Math.floor(100000 + Math.random() * 900000)}`;
+    let assignedRoomNumber: string | null = null;
+    let voucherUrl: string | null = null;
+
+    try {
+      const pmsResult = await createPmsBooking({
+        guestName: guestNameForBooking,
+        phone: guestPhone,
+        email: guestEmail,
+        channel: msg.channel,
+        checkInDate: checkInDate.toISOString().split('T')[0],
+        checkOutDate: checkOutDate.toISOString().split('T')[0],
+        roomTypeName: currentState.roomType || 'Deluxe Room',
+        adults: currentState.adults || 1,
+        children: currentState.children || 0,
+        specialRequests: `Automated booking created via ${msg.channel} Chatbot`,
+        externalMessageId: msg.externalMessageId || `BOT-${Date.now()}`,
+        threadId: msg.senderId,
+      });
+
+      if (pmsResult.success && pmsResult.data?.reservationNumber) {
+        officialBookingCode = pmsResult.data.reservationNumber;
+        assignedRoomNumber = pmsResult.data.roomNumber || null;
+        voucherUrl = pmsResult.data.voucherUrl || null;
+        console.log(`[PMS Integration] Successfully registered booking in PMS: ${officialBookingCode} for ${guestNameForBooking}`);
+      } else {
+        console.warn('[PMS Integration] PMS booking response error:', pmsResult.error);
+      }
+    } catch (pmsErr: any) {
+      console.error('[PMS Integration] Failed to connect to PMS API:', pmsErr.message);
+    }
 
     if (matchedRoomType) {
       await prisma.reservation.create({
         data: {
-          bookingCode,
+          bookingCode: officialBookingCode,
           customerId: customer.id,
           roomTypeId: matchedRoomType.id,
           guestName: guestNameForBooking,
-          guestPhone: currentState.phone || customer.phone || (msg.channel === 'WHATSAPP' ? msg.senderId : null),
-          guestEmail: currentState.email || customer.email,
+          guestPhone,
+          guestEmail,
           checkInDate,
           checkOutDate,
           adults: currentState.adults || 1,
           children: currentState.children || 0,
           totalPriceUsd,
-          status: 'PENDING_REQUEST',
+          status: 'CONFIRMED',
           source: msg.channel,
-          notes: `Automated booking created via ${msg.channel} Chatbot`,
+          notes: assignedRoomNumber
+            ? `Official PMS Reservation ${officialBookingCode} (Room ${assignedRoomNumber})`
+            : `PMS Reservation Reference: ${officialBookingCode}`,
         },
       });
 
-      // Embed booking code into the outbound confirmation response
+      // Embed booking code and self-checkin voucher URL into outbound response
+      let confirmationAddon = `\n📌 Official Booking Ref: ${officialBookingCode}${assignedRoomNumber ? ` (Room ${assignedRoomNumber})` : ''}`;
+      if (voucherUrl) {
+        confirmationAddon += `\n📲 Digital Check-in Voucher: ${voucherUrl}`;
+      }
+
       outbound.content = outbound.content.replace(
         '━━━━━━━━━━━━━━━━━━',
-        `━━━━━━━━━━━━━━━━━━\n📌 Booking Reference: ${bookingCode}`
+        `━━━━━━━━━━━━━━━━━━${confirmationAddon}`
       );
     }
   }

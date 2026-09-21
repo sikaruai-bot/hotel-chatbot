@@ -1,5 +1,6 @@
 import { ConversationStep, ExtractedEntities, IntentResult, UnifiedOutboundResponse } from './types';
 import { getGroundedKnowledge, formatRoomPricesMessage, searchKnowledgeBase } from './knowledgeBase';
+import { checkPmsAvailability } from '../pmsClient';
 
 export interface StateMachineContext {
   state: {
@@ -358,6 +359,35 @@ Would you like to check room availability for your dates?`;
         : state.roomType === 'Budget Family Room'
         ? rates.budgetFamily
         : rates.deluxe;
+
+    // Step C.2: Real-time PMS availability validation
+    if (state.checkIn) {
+      const cIn = state.checkIn;
+      const cOut = state.checkOut || new Date(new Date(state.checkIn).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      try {
+        const pmsAvail = await checkPmsAvailability({
+          checkIn: cIn,
+          checkOut: cOut,
+          adults: state.adults || 2,
+          children: state.children || 0,
+        });
+
+        if (pmsAvail.success && pmsAvail.data && !pmsAvail.data.isAnyAvailable) {
+          return {
+            content:
+              lang === 'ne'
+                ? `माफ गर्नुहोस् 😊 यहाँले छान्नुभएको मिति (${cIn} देखि ${cOut}) मा हाम्रा सबै कोठाहरू भरिभराउ (Sold Out) भइसकेका छन्।\n\nके यहाँ अर्को कुनै मितिमा यात्रा गर्न सक्नुहुन्छ? वा हाम्रो फ्रन्ट डेस्कसँग सिधै सम्पर्क गर्न सक्नुहुन्छ:\n📲 +977-9851068219 (wa.me/9779851068219)`
+                : `We apologize 😊 All rooms at Hotel Sherpa Soul are fully booked for your selected dates (${cIn} to ${cOut}).\n\nWould you like to check different dates? Or you can message our front desk directly at +977-9851068219!`,
+            suggestedReplies: ['Check Different Dates', 'Talk to Staff', 'Contact Front Desk'],
+            intent: 'ROOM_AVAILABILITY',
+            step: 'AWAITING_DATES',
+            triggerHandover: false,
+          };
+        }
+      } catch (e) {
+        // Continue gracefully if PMS is temporarily offline
+      }
+    }
 
     // Step D: Confirming Booking Summary
     const rawName = state.guestName || ctx.customerName || '';
