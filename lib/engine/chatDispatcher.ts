@@ -269,6 +269,13 @@ export async function processInboundMessage(
     const roomsCount = currentState.roomsCount || 1;
     const nights = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))) || 1;
     const totalPriceUsd = pricePerNight * nights * roomsCount;
+    const guestNameForBooking =
+      currentState.guestName && currentState.guestName !== 'Guest' && currentState.guestName !== 'Website Visitor'
+        ? currentState.guestName
+        : customer.name && customer.name !== 'Guest' && customer.name !== 'Website Visitor'
+        ? customer.name
+        : 'Valued Guest';
+
     const guestPhone = currentState.phone || customer.phone || (msg.channel === 'WHATSAPP' ? msg.senderId : null);
     const guestEmail = currentState.email || customer.email;
 
