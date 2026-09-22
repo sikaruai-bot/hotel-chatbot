@@ -57,7 +57,7 @@ export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise
       };
     }
 
-    const response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+    let response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -66,7 +66,28 @@ export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    let data = await response.json();
+
+    // If interactive button message failed, fallback immediately to standard text
+    if (!response.ok && payload.type === 'interactive') {
+      const fallbackPayload = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: options.to,
+        type: 'text',
+        text: { body: options.text, preview_url: false },
+      };
+      response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(fallbackPayload),
+      });
+      data = await response.json();
+    }
+
     if (!response.ok) {
       console.error('WhatsApp Cloud API error response:', data);
       return { success: false, error: data.error?.message || 'Failed to send WhatsApp message' };

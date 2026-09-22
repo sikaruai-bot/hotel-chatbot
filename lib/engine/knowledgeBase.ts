@@ -163,7 +163,8 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
     keywords: [
       'location', 'address', 'where', 'distance', 'far', 'garden of dreams', 'durbar square',
       'swayambhu', 'monkey temple', 'walking distance', 'map', 'alley', 'quiet',
-      'ठेगाना', 'कहाँ छ', 'कति टाढा', 'स्थान', 'नजिक', 'hotel location', 'hotel address'
+      'ठेगाना', 'कहाँ छ', 'कति टाढा', 'स्थान', 'नजिक', 'hotel location', 'hotel address',
+      'thamel', 'thamel ma', 'kata chha', 'kata cha', 'kata ho', 'hotel kata'
     ],
     answerEn: "Hotel Sherpa Soul is located at 26 Thamel Bhagwati Marg, Thamel, Kathmandu 44600, Nepal 😊\n\nWe are situated in a quiet alley right in the heart of central Thamel, away from street noise. Key walking and driving distances:\n• Garden of Dreams: 7 minutes walk (~500m)\n• Kathmandu Durbar Square: 20 minutes walk (~1.5 km)\n• Swayambhunath (Monkey Temple): ~3 km (10-15 mins by taxi)\n• Tribhuvan International Airport (KTM): ~6 km (20-30 mins by taxi)\n\nDozens of famous cafes, ATMs, gear shops, and currency exchanges are just 1-2 minutes walk away!",
     answerNe: "होटल शेर्पा सोल ठमेलको केन्द्र, २६ ठमेल भगवती मार्ग, काठमाडौँ ४४६०० मा अवस्थित छ 😊\n\nयो मुख्य सडकको कोलाहलबाट थोरै भित्र शान्त गल्लीमा रहेकाले कोठाहरू शान्त र आरामदायी छन्:\n• गार्डन अफ ड्रिम्स (Garden of Dreams): ७ मिनेट हिँडाइ (~५०० मिटर)\n• काठमाडौँ दरबार स्क्वायर: २० मिनेट हिँडाइ (~१.५ कि.मि.)\n• स्वयम्भुनाथ (Monkey Temple): करिब ३ कि.मि. (ट्याक्सीमा १० मिनेट)\n• त्रिभुवन अन्तर्राष्ट्रिय विमानस्थल: करिब ६ कि.मि. (ट्याक्सीमा २०-३० मिनेट)\n\nवरपर एटीएम, बैंक, ट्रेकिङ पसल र क्याफेहरू १-२ मिनेटमै पुग्न सकिन्छ!",
@@ -272,6 +273,27 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
 ];
 
 // Search Grounded Knowledge Base first, then fallback to DB
+const CATEGORY_ALIASES: Record<string, string[]> = {
+  HOTEL_INFORMATION: ['HOTEL_INFORMATION', 'FACILITIES', 'LOCATION'],
+  ROOM_AMENITIES: ['ROOM_AMENITIES', 'FACILITIES', 'HOT_WATER', 'WIFI'],
+  CHECK_OUT: ['CHECK_IN', 'POLICY'],
+  CHECK_IN: ['CHECK_IN', 'POLICY'],
+  DISCOUNT: ['PAYMENT'],
+  PAYMENT: ['PAYMENT'],
+  FACILITIES: ['FACILITIES', 'HOTEL_INFORMATION', 'SHARED_KITCHEN'],
+  LOCATION: ['LOCATION'],
+  POLICY: ['POLICY', 'CHECK_IN'],
+  SAFETY: ['SAFETY', 'POLICY'],
+  LUGGAGE: ['LUGGAGE'],
+  TREKKING: ['TREKKING'],
+  ROOFTOP: ['ROOFTOP'],
+  HOT_WATER: ['HOT_WATER', 'ROOM_AMENITIES'],
+  WIFI: ['WIFI', 'ROOM_AMENITIES'],
+  TRANSPORTATION: ['TRANSPORTATION'],
+  SHARED_KITCHEN: ['SHARED_KITCHEN', 'FACILITIES'],
+};
+
+// Search Grounded Knowledge Base first, then fallback to DB
 export async function searchKnowledgeBase(
   query: string,
   langOrCategory?: string,
@@ -284,15 +306,22 @@ export async function searchKnowledgeBase(
   const targetCategory = isLang ? categoryParam : langOrCategory;
 
   const qLower = query.toLowerCase().trim();
+  const relevantCategories = targetCategory
+    ? CATEGORY_ALIASES[targetCategory] || [targetCategory]
+    : [];
 
   // 1. Search in-memory curated website facts with weighted keyword scoring
   let bestItem: WebsiteKnowledgeItem | null = null;
   let highestScore = 0;
 
   for (const item of HOTEL_WEBSITE_KNOWLEDGE) {
-    if (targetCategory && item.category !== targetCategory) continue;
-
     let score = 0;
+
+    // Category relevance bonus
+    if (relevantCategories.length > 0 && relevantCategories.includes(item.category)) {
+      score += 3;
+    }
+
     for (const kw of item.keywords) {
       const kwLower = kw.toLowerCase();
       if (qLower.includes(kwLower)) {
@@ -319,7 +348,6 @@ export async function searchKnowledgeBase(
     const entries = await prisma.knowledgeBase.findMany({
       where: {
         isActive: true,
-        ...(targetCategory ? { category: targetCategory } : {}),
       },
       orderBy: { priority: 'desc' },
     });

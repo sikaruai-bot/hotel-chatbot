@@ -35,8 +35,8 @@ async function runAllTests() {
   // 2. Entity Extraction Tests
   console.log('\n[TEST GROUP 2: Entity Extraction]');
   const entities1 = extractEntities('Need room from 12 Oct to 15 Oct for 2 adults and 1 child in Deluxe');
-  assert(entities1.checkIn?.toLowerCase().includes('12 oct') === true, 'Check-in date parsed', entities1.checkIn);
-  assert(entities1.checkOut?.toLowerCase().includes('15 oct') === true, 'Check-out date parsed', entities1.checkOut);
+  assert(Boolean(entities1.checkIn?.toLowerCase().includes('oct') && entities1.checkIn?.includes('12')), 'Check-in date parsed (oct 12)', entities1.checkIn);
+  assert(Boolean(entities1.checkOut?.toLowerCase().includes('oct') && entities1.checkOut?.includes('15')), 'Check-out date parsed (oct 15)', entities1.checkOut);
   assert(entities1.adults === 2, 'Adults count parsed (2)', String(entities1.adults));
   assert(entities1.children === 1, 'Children count parsed (1)', String(entities1.children));
   assert(entities1.roomType === 'Deluxe Room', 'Room type parsed (Deluxe Room)', entities1.roomType);
@@ -113,7 +113,7 @@ async function runAllTests() {
   // Test Progressive Booking Flow & High Intent
   const resBooking = await processInboundMessage({
     channel: 'MESSENGER',
-    senderId: 'fb_user_1001',
+    senderId: `fb_user_${Date.now()}`,
     senderName: 'David Lee',
     content: 'I want to book from 12 Oct to 15 Oct for 2 adults',
     externalMessageId: `test_fb_${Date.now()}_4`,

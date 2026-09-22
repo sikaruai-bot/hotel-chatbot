@@ -16,6 +16,8 @@ import {
   Users,
 } from 'lucide-react';
 import HotelWidget from '@/components/HotelWidget';
+import DirectBookingEngine from '@/components/DirectBookingEngine';
+import RoomSelectButton from '@/components/RoomSelectButton';
 
 export default function HomePage() {
   return (
@@ -63,26 +65,28 @@ export default function HomePage() {
           </div>
 
           <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
-            <a href="#philosophy" className="hover:text-slate-950 transition">Our USP</a>
+            <a href="#booking-engine" className="text-amber-600 font-bold hover:text-amber-700 transition flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Book Online (-10%)</span>
+            </a>
             <a href="#rooms" className="hover:text-slate-950 transition">Rooms & Rates</a>
+            <a href="#philosophy" className="hover:text-slate-950 transition">Our USP</a>
             <a href="#kitchen" className="hover:text-slate-950 transition">Shared Kitchen (102)</a>
             <a href="#location" className="hover:text-slate-950 transition">Location</a>
           </nav>
 
           <a
-            href="https://wa.me/9779818259472"
-            target="_blank"
-            rel="noreferrer"
-            className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5"
+            href="#booking-engine"
+            className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5"
           >
-            <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Book via WhatsApp</span>
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Book Now</span>
           </a>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white py-16 px-4">
+      <section className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white py-14 px-4">
         <div className="max-w-4xl mx-auto text-center space-y-6">
           <div className="inline-flex items-center gap-2 bg-slate-800/80 border border-slate-700 px-3.5 py-1.5 rounded-full text-xs font-medium text-amber-400">
             <Sparkles className="w-3.5 h-3.5" />
@@ -99,23 +103,24 @@ export default function HomePage() {
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <a
-              href="#rooms"
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-5 py-3 rounded-xl transition shadow-md"
+              href="#booking-engine"
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-6 py-3 rounded-xl transition shadow-md flex items-center gap-1.5"
             >
-              Explore 6 Quiet Rooms
+              <Sparkles className="w-4 h-4" />
+              <span>Book Online (Instant 10% Discount)</span>
             </a>
             <a
-              href="https://wa.me/9779818259472"
-              target="_blank"
-              rel="noreferrer"
+              href="#rooms"
               className="bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold px-5 py-3 rounded-xl transition border border-slate-700 flex items-center gap-1.5"
             >
-              <MessageCircle className="w-4 h-4 text-emerald-400" />
-              <span>Inquire on WhatsApp</span>
+              <span>Explore 6 Quiet Rooms</span>
             </a>
           </div>
         </div>
       </section>
+
+      {/* Direct Booking Engine Section */}
+      <DirectBookingEngine />
 
       {/* USP Feature Strip */}
       <section id="philosophy" className="py-12 bg-white border-b border-slate-200">
@@ -208,15 +213,7 @@ export default function HomePage() {
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-100">
-              <a
-                href="https://wa.me/9779818259472?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Deluxe%20Room."
-                target="_blank"
-                rel="noreferrer"
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
-              >
-                <span>Check Availability</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </a>
+              <RoomSelectButton roomType="Deluxe Room" />
             </div>
           </div>
 
@@ -248,15 +245,7 @@ export default function HomePage() {
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-100">
-              <a
-                href="https://wa.me/9779818259472?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Budget%20Family%20Room."
-                target="_blank"
-                rel="noreferrer"
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
-              >
-                <span>Check Availability</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </a>
+              <RoomSelectButton roomType="Budget Family Room" />
             </div>
           </div>
 
@@ -288,15 +277,7 @@ export default function HomePage() {
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-100">
-              <a
-                href="https://wa.me/9779818259472?text=Hi!%20I%20would%20like%20to%20inquire%20about%20the%20Family%20Room."
-                target="_blank"
-                rel="noreferrer"
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"
-              >
-                <span>Check Availability</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </a>
+              <RoomSelectButton roomType="Family Room" />
             </div>
           </div>
         </div>

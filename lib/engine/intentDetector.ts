@@ -21,7 +21,7 @@ export function detectLanguage(text: string): SupportedLanguage {
 
   // Romanized Nepali and Hindi detection
   const lower = text.toLowerCase();
-  const romanNepaliStrong = /\b(chha|chhaina|cha|chaina|tapai|tapaiko|hamro|saman|rakhna|milchha|milla|kasto|hunchha|hune|paryo|parchha|kotha|jana|dinus|garnus|gardinus|garne|bhane|pauchha|kati baje|tada)\b/i;
+  const romanNepaliStrong = /\b(chha|chhaina|cha|chaina|tapai|tapaiko|hamro|saman|rakhna|milchha|milla|kasto|hunchha|hune|paryo|parchha|kotha|jana|dinus|garnus|gardinus|garne|bhane|pauchha|kati|kata|ho|ma|k k|subidha|khana|tato)\b/i;
   if (romanNepaliStrong.test(lower)) {
     return 'ne';
   }
@@ -366,7 +366,17 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('एसी छ') ||
     lower.includes('ac छ') ||
     lower.includes('कोठामा एसी') ||
-    lower.includes('फ्यान')
+    lower.includes('फ्यान') ||
+    lower.includes('k k chha') ||
+    lower.includes('k k cha') ||
+    lower.includes('k chha') ||
+    lower.includes('k cha') ||
+    lower.includes('subidha') ||
+    lower.includes('suvidha') ||
+    lower.includes('room ma k') ||
+    lower.includes('kotha ma k') ||
+    lower.includes('kasto room') ||
+    lower.includes('kasto kotha')
   ) {
     return { intent: 'ROOM_AMENITIES', confidence: 0.96, language, entities, reason: 'Guest inquiring about room amenities, AC, and categories.' };
   }
@@ -383,7 +393,13 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('कति पर्छ') ||
     lower.includes('मूल्य') ||
     lower.includes('भाडा') ||
-    lower.includes('किराया')
+    lower.includes('किराया') ||
+    lower.includes('kati ho') ||
+    lower.includes('kati chha') ||
+    lower.includes('kati cha') ||
+    lower.includes('price kati') ||
+    lower.includes('rate kati') ||
+    lower.includes('paisa kati')
   ) {
     return { intent: 'ROOM_PRICE', confidence: 0.95, language, entities };
   }
@@ -446,7 +462,12 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('map') ||
     lower.includes('thamel') ||
     lower.includes('कहाँ छ') ||
-    lower.includes('ठेगाना')
+    lower.includes('ठेगाना') ||
+    lower.includes('kata chha') ||
+    lower.includes('kata cha') ||
+    lower.includes('kata ho') ||
+    lower.includes('thamel ma') ||
+    lower.includes('hotel kata')
   ) {
     return { intent: 'LOCATION', confidence: 0.94, language, entities };
   }
