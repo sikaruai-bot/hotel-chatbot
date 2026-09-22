@@ -344,8 +344,12 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-4 text-slate-400 text-[11px]">
-            <span>info@hotelsherpasoul.com</span>
-            <span>+977-1-4530311</span>
+            <a href="mailto:info@hotelsherpasoul.com" className="hover:text-amber-400 hover:underline">
+              info@hotelsherpasoul.com
+            </a>
+            <a href="tel:+97714530311" className="hover:text-amber-400 hover:underline">
+              +977-1-4530311
+            </a>
             <Link href="/admin/inbox" className="text-amber-400 hover:underline">
               Staff Portal
             </Link>

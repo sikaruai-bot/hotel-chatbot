@@ -264,33 +264,97 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
     category: 'HOTEL_INFORMATION',
     keywords: [
       'about', 'story', 'who are you', 'hotel info', 'sherpa soul', 'philosophy',
-      'contact', 'phone', 'whatsapp', 'email', 'होटलको बारेमा', 'परिचय', 'सम्पर्क'
+      'contact', 'phone', 'whatsapp', 'email', 'e-mail', 'mail', 'होटलको बारेमा', 'परिचय', 'सम्पर्क'
     ],
     answerEn: "Hotel Sherpa Soul is a tranquil boutique hotel located at 26 Thamel Bhagwati Marg, Kathmandu, inspired by authentic Himalayan Sherpa hospitality 😊\n\n• Motto: 'No Restaurant. No Noise. Sleep Well.'\n• WhatsApp Chatbot: +977-9818259472 (wa.me/9779818259472)\n• Front Desk / Call: +977-1-4530311 / +977-9851068219\n• Email: info@hotelsherpasoul.com\n• Website: https://hotelsherpasoul.com\n• 24/7 Reception Desk\n\nWe provide clean restful rooms, 24/7 hot showers, high-speed fiber Wi-Fi, and licensed trekking guidance!",
     answerNe: "होटल शेर्पा सोल ठमेल भगवती मार्ग २६, काठमाडौँमा अवस्थित एक शान्त र आरामदायी बुटिक होटल हो 😊\n\n• आदर्श वाक्य: 'No Restaurant. No Noise. Sleep Well.'\n• ह्वाट्सएप च्याटबोट: +९७७ ९८१८२५९४७२ (wa.me/9779818259472)\n• फ्रन्ट डेस्क / कल: +९७७-१-४५३०३११ / +९७७ ९८५१०६८२१९\n• इमेल: info@hotelsherpasoul.com\n• वेबसाइट: https://hotelsherpasoul.com\n• २४ सै घण्टा खुला फ्रन्ट डेस्क\n\nहामी शान्त निद्रा, सफा कोठा, २४ सै घण्टा तातो पानी, द्रुत गतिको वाइफाइ र शेर्पा जातिको हार्दिक आतिथ्यता प्रदान गर्दछौँ!",
     answerHi: "होटल शेरपा सोल थमेल, काठमांडू में स्थित एक शांत बुटीक होटल है। WhatsApp: +977-9818259472, फोन: +977-9851068219, info@hotelsherpasoul.com 😊"
+  },
+  {
+    id: 'hotel_email_contact',
+    category: 'HOTEL_INFORMATION',
+    keywords: [
+      'email', 'e-mail', 'mail', 'email address', 'official email', 'hotel email',
+      'email k ho', 'email ke ho', 'email k cha', 'email cha', 'email chahiyo', 'email pathaunus',
+      'इमेल', 'ईमेल', 'इमेल ठेगाना', 'ईमेल पता', 'इमेल के हो', 'ईमेल क्या है'
+    ],
+    answerEn: "Our official hotel email address is info@hotelsherpasoul.com 😊\n\n• Official Email: info@hotelsherpasoul.com\n• Front Desk / Call: +977-1-4530311 / +977-9851068219\n• WhatsApp: +977-9818259472 (wa.me/9779818259472)\n• Website: https://hotelsherpasoul.com\n\nFeel free to email us for reservations, trekking permits, visa confirmation letters, or any inquiries!",
+    answerNe: "होटल शेर्पा सोलको आधिकारिक इमेल ठेगाना info@hotelsherpasoul.com हो 😊\n\n• आधिकारिक इमेल: info@hotelsherpasoul.com\n• फ्रन्ट डेस्क / कल: +९७७-१-४५३०३११ / +९७७ ९८५१०६८२१९\n• ह्वाट्सएप: +९७७ ९८१८२५९४७२ (wa.me/9779818259472)\n• वेबसाइट: https://hotelsherpasoul.com\n\nबुकिङ, ट्रेकिङ अनुमतिपत्र वा आधिकारिक कन्फर्मेसन लेटरका लागि यहाँले सिधै हामीलाई इमेल गर्न सक्नुहुन्छ!",
+    answerHi: "होटल शेरपा सोल का आधिकारिक ईमेल पता info@hotelsherpasoul.com है 😊\n\n• आधिकारिक ईमेल: info@hotelsherpasoul.com\n• फोन: +977-1-4530311 / +977-9851068219\n• WhatsApp: +977-9818259472\n\nआप किसी भी जानकारी या बुकिंग के लिए हमें बेझिझक ईमेल कर सकते हैं!"
+  },
+  {
+    id: 'hotel_floors_layout',
+    category: 'FLOORS',
+    keywords: [
+      'floor', 'floors', 'which floor', 'kun floor', 'kun kun floor', 'second floor',
+      'third floor', 'ground floor', 'room numbers', 'tala', 'kati tala', 'kun tala',
+      'तला', 'कति तला', 'कुन तला', 'भुइँतला', 'building layout', 'building', 'rook kun kun floor',
+      'room kun kun floor', 'floor ma chha'
+    ],
+    answerEn: "Hotel Sherpa Soul features a quiet, low-density layout across 3 floors 😊:\n\n• 🏢 Ground Floor: 24/7 Front Desk Reception Lobby & Secure Luggage Storage\n• 🍳 1st Floor: Room 102 — Fully equipped Shared Kitchen (FREE for guests staying 2+ weeks)\n• 🏨 2nd Floor: Guest Rooms 201 (Deluxe AC), 202 (Deluxe AC), 203 (Budget Family Non-AC)\n• 🏨 3rd Floor: Guest Rooms 301 (Deluxe AC), 302 (Budget Family Non-AC), 303 (Family Room AC)\n• ☀️ Top / Rooftop: Open Rooftop Terrace with panoramic views of Kathmandu valley & mountains\n\nWe strictly maintain only 6 quiet guest rooms (on the 2nd and 3rd floors) so our guests enjoy peace, privacy, and deep, restful sleep!",
+    answerNe: "होटल शेर्पा सोलमा कोठा र सुविधाहरू निम्न तलामा व्यवस्थित छन् 😊:\n\n• 🏢 भुइँतला (Ground Floor): २४ सै घण्टा खुला रिसेप्सन (फ्रन्ट डेस्क) र निःशुल्क लगेज भण्डारण\n• 🍳 पहिलो तला (1st Floor): कोठा १०२ — लामो समय (२ हप्ता वा सोभन्दा बढी) बस्ने पाहुनाका लागि निःशुल्क साझा भान्सा (Shared Kitchen)\n• 🏨 दोस्रो तला (2nd Floor): पाहुना कोठाहरू २०१ (Deluxe AC), २०२ (Deluxe AC), २०३ (Budget Family Non-AC)\n• 🏨 तेस्रो तला (3rd Floor): पाहुना कोठाहरू ३०१ (Deluxe AC), ३०२ (Budget Family Non-AC), ३०३ (Family Room AC)\n• ☀️ रुफटप (Rooftop Terrace): काठमाडौँ उपत्यका र हिमाल देखिने खुला शान्त टेरेस\n\nहोटलमा दोस्रो र तेस्रो तलामा गरी जम्मा ६ वटा मात्र शान्त पाहुना कोठा छन्, जसले गर्दा कुनै होहल्ला वा भीडभाड हुँदैन!",
+    answerHi: "होटल शेरपा सोल में भूतल पर रिसेप्शन और लगेज स्टोरेज, पहली मंजिल पर शेयर्ड किचन (कमरा 102), दूसरी मंजिल पर कमरे 201-203, तीसरी मंजिल पर कमरे 301-303, और सबसे ऊपर खुला रूफटॉप टेरेस है 😊"
+  },
+  {
+    id: 'elevator_stairs',
+    category: 'ELEVATOR',
+    keywords: [
+      'elevator', 'lift', 'stairs', 'staircase', 'wheelchair', 'lift chha', 'lift cha',
+      'लिफ्ट', 'भर्‍याङ'
+    ],
+    answerEn: "Hotel Sherpa Soul is an intimate 3-storey boutique hotel with comfortable, wide indoor staircases and does not have an elevator (lift) 😊\n\nOur friendly 24/7 staff will gladly assist with carrying all your heavy luggage and trekking bags directly to and from your room. If you prefer a lower floor (2nd floor), please let us know when booking!",
+    answerNe: "होटल शेर्पा सोल ३ तले शान्त बुटिक होटल भएकोले यसमा लिफ्ट (Elevator) छैन, सजिलो र फराकिलो भर्‍याङ (Stairs) छ 😊\n\nहाम्रा २४ सै घण्टा उपलब्ध कर्मचारी साथीहरूले यहाँको सम्पूर्ण ठूला लगेज र ट्रेकिङ झोलाहरू कोठासम्म पुर्‍याउन र झार्न सहर्ष सहयोग गर्नेछन्। यदि यहाँलाई तल्लो तल्ला (दोस्रो तला) को कोठा मन पर्छ भने बुकिङ गर्दा जानकारी गराउन सक्नुहुन्छ!",
+    answerHi: "होटल शेरपा सोल में लिफ्ट नहीं है, आसान और चौड़ी सीढ़ियाँ हैं। हमारा 24/7 स्टाफ आपका सारा भारी सामान और ट्रेकिंग बैग खुशी-खुशी कमरे तक पहुँचा देगा 😊"
+  },
+  {
+    id: 'couple_friendly',
+    category: 'COUPLE_FRIENDLY',
+    keywords: [
+      'couple', 'unmarried', 'couple friendly', 'boy girl', 'girlfriend', 'boyfriend',
+      'जोडी', 'दम्पती', 'couple allowed'
+    ],
+    answerEn: "Yes! Hotel Sherpa Soul warmly welcomes adult couples (married and unmarried) and solo travelers 😊\n\nAll adult guests must present valid government photo identification (Citizenship card, Passport, Driving License, or National ID) during check-in. We strictly ensure guest privacy, quiet comfort, and a safe, respectful environment.",
+    answerNe: "हजुर! होटल शेर्पा सोल सबै वयस्क जोडीहरू (विवाहित तथा अविवाहित) लाई हार्दिक स्वागत गर्दछ 😊\n\nसबै वयस्क पाहुनाहरूसँग चेक-इनको समयमा मान्य सरकारी फोटो परिचयपत्र (नागरिकता, राहदानी, ड्राइभिङ लाइसेन्स वा राष्ट्रिय परिचयपत्र) हुनुपर्दछ। हामी हाम्रा सम्पूर्ण पाहुनाहरूको गोपनीयता, सुरक्षा र शान्त वातावरणको पूर्ण सम्मान गर्दछौँ!",
+    answerHi: "हाँ! होटल शेरपा सोल सभी वयस्क जोड़ों का गर्मजोशी से स्वागत करता है। चेक-इन के समय वैध सरकारी फोटो आईडी आवश्यक है। हम गोपनीयता और सुरक्षा का पूरा ध्यान रखते हैं 😊"
+  },
+  {
+    id: 'booking_confirmation_voucher',
+    category: 'BOOKING_CONFIRMATION',
+    keywords: [
+      'confirmation', 'conformation', 'comfirmation', 'booking letter', 'letter chahiyo',
+      'letter dinus', 'booking slip', 'booking receipt', 'voucher', 'confirmation slip',
+      'visa letter', 'proof of booking', 'booking gareko letter', 'booking praman',
+      'पुष्टि पत्र', 'रसिद', 'भौचर', 'लेटर चाहियो'
+    ],
+    answerEn: "Yes! Hotel Sherpa Soul provides an official Reservation Confirmation Letter & Digital Voucher on official hotel letterhead 😊\n\n• For Visa / Embassy / Trek Permit purposes: We issue formal PDF booking vouchers with our company registration and official stamp completely FREE of charge.\n• No advance deposit required.\n• If you have an active booking with us, our front desk can email or WhatsApp your official confirmation letter immediately. You can also message our front desk directly at +977-9851068219!",
+    answerNe: "हजुर! होटल शेर्पा सोलले आधिकारिक लेटरहेड र होटलको छाप (Official Stamp) सहितको बुकिङ कन्फर्मेसन लेटर (Booking Confirmation Letter / Voucher) निःशुल्क उपलब्ध गराउँछ 😊\n\n• नेपाल पर्यटक भिसा, दूतावास वा ट्रेकिङ पर्मिट प्रयोजनका लागि आधिकारिक PDF लेटर प्राप्त गर्न सकिन्छ।\n• कुनै अग्रिम रकम (Advance Deposit) तिर्नु पर्दैन।\n• यहाँको बुकिङ सुरक्षित भएपछि हाम्रो फ्रन्ट डेस्कले ह्वाट्सएप (+९७७ ९८५१०६८२१९) वा इमेलमा तुरुन्त लेटर पठाइदिनेछ!",
+    answerHi: "हाँ! होटल शेरपा सोल वीज़ा, परमिट या यात्रा के लिए अपने आधिकारिक लेटरहेड और मुहर के साथ बुकिंग कन्फर्मेशन लेटर / वाउचर मुफ्त में प्रदान करता है 😊"
   }
 ];
 
 // Search Grounded Knowledge Base first, then fallback to DB
 const CATEGORY_ALIASES: Record<string, string[]> = {
-  HOTEL_INFORMATION: ['HOTEL_INFORMATION', 'FACILITIES', 'LOCATION'],
-  ROOM_AMENITIES: ['ROOM_AMENITIES', 'FACILITIES', 'HOT_WATER', 'WIFI'],
+  HOTEL_INFORMATION: ['HOTEL_INFORMATION', 'FACILITIES', 'LOCATION', 'FLOORS'],
+  ROOM_AMENITIES: ['ROOM_AMENITIES', 'FACILITIES', 'HOT_WATER', 'WIFI', 'FLOORS'],
   CHECK_OUT: ['CHECK_IN', 'POLICY'],
   CHECK_IN: ['CHECK_IN', 'POLICY'],
   DISCOUNT: ['PAYMENT'],
   PAYMENT: ['PAYMENT'],
-  FACILITIES: ['FACILITIES', 'HOTEL_INFORMATION', 'SHARED_KITCHEN'],
-  LOCATION: ['LOCATION'],
-  POLICY: ['POLICY', 'CHECK_IN'],
-  SAFETY: ['SAFETY', 'POLICY'],
+  FACILITIES: ['FACILITIES', 'HOTEL_INFORMATION', 'SHARED_KITCHEN', 'FLOORS', 'ELEVATOR'],
+  LOCATION: ['LOCATION', 'HOTEL_INFORMATION'],
+  POLICY: ['POLICY', 'CHECK_IN', 'COUPLE_FRIENDLY'],
+  SAFETY: ['SAFETY', 'POLICY', 'COUPLE_FRIENDLY'],
   LUGGAGE: ['LUGGAGE'],
   TREKKING: ['TREKKING'],
-  ROOFTOP: ['ROOFTOP'],
+  ROOFTOP: ['ROOFTOP', 'FLOORS'],
   HOT_WATER: ['HOT_WATER', 'ROOM_AMENITIES'],
   WIFI: ['WIFI', 'ROOM_AMENITIES'],
   TRANSPORTATION: ['TRANSPORTATION'],
-  SHARED_KITCHEN: ['SHARED_KITCHEN', 'FACILITIES'],
+  SHARED_KITCHEN: ['SHARED_KITCHEN', 'FACILITIES', 'FLOORS'],
+  FLOORS: ['FLOORS', 'ROOM_AMENITIES', 'ELEVATOR'],
+  ELEVATOR: ['ELEVATOR', 'FLOORS', 'FACILITIES'],
+  COUPLE_FRIENDLY: ['COUPLE_FRIENDLY', 'POLICY', 'SAFETY'],
+  BOOKING_CONFIRMATION: ['BOOKING_CONFIRMATION', 'PAYMENT', 'CHECK_IN'],
 };
 
 // Search Grounded Knowledge Base first, then fallback to DB

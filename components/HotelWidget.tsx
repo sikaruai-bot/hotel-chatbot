@@ -6,6 +6,7 @@ import {
   X,
   Send,
   MessageCircle,
+  Mail,
   Sparkles,
   Phone,
   Calendar,
@@ -127,10 +128,17 @@ export default function HotelWidget() {
 
             <div className="flex items-center gap-1.5">
               <a
+                href="mailto:info@hotelsherpasoul.com"
+                title="Email: info@hotelsherpasoul.com"
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-white transition"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
+              <a
                 href="https://wa.me/9779818259472"
                 target="_blank"
                 rel="noreferrer"
-                title="Direct WhatsApp"
+                title="Direct WhatsApp: +977 9818259472"
                 className="p-1.5 rounded-lg bg-emerald-700/60 hover:bg-emerald-600 text-white transition"
               >
                 <MessageCircle className="w-4 h-4" />
@@ -144,16 +152,23 @@ export default function HotelWidget() {
             </div>
           </div>
 
-          {/* Quick WhatsApp Handoff Strip */}
+          {/* Quick Contact Strip */}
           <div className="bg-amber-50 text-amber-950 px-3 py-1.5 text-[11px] flex items-center justify-between border-b border-amber-200/60">
-            <span>Prefer WhatsApp?</span>
+            <a
+              href="mailto:info@hotelsherpasoul.com"
+              className="text-amber-900 hover:text-amber-700 font-medium hover:underline flex items-center gap-1"
+              title="Official Hotel Email"
+            >
+              <Mail className="w-3 h-3 text-amber-700" /> info@hotelsherpasoul.com
+            </a>
             <a
               href="https://wa.me/9779818259472"
               target="_blank"
               rel="noreferrer"
               className="text-emerald-700 font-bold hover:underline flex items-center gap-1"
+              title="Direct WhatsApp"
             >
-              <MessageCircle className="w-3 h-3" /> +977 9818259472
+              <MessageCircle className="w-3 h-3" /> WhatsApp
             </a>
           </div>
 

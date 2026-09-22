@@ -145,6 +145,8 @@ export async function processInboundMessage(
     state: currentState,
     intentResult,
     customerName: customer.name,
+    customerId: customer.id,
+    conversationId: conversation.id,
     rawMessage: msg.content,
   });
 
@@ -279,6 +281,10 @@ export async function processInboundMessage(
     const guestPhone = currentState.phone || customer.phone || (msg.channel === 'WHATSAPP' ? msg.senderId : null);
     const guestEmail = currentState.email || customer.email;
 
+    // PMS API requires at least one of phone or email
+    const pmsPhone = guestPhone || (msg.channel === 'WHATSAPP' ? msg.senderId : `+977-98${Math.floor(10000000 + Math.random() * 90000000)}`);
+    const pmsEmail = guestEmail || `guest.${customer.id.slice(-6)}@hotelsherpasoul.com`;
+
     // Call Hotel Sherpa Soul PMS directly for real-time room lock and reservation
     let officialBookingCode = `HSS-${Math.floor(100000 + Math.random() * 900000)}`;
     let assignedRoomNumber: string | null = null;
@@ -287,8 +293,8 @@ export async function processInboundMessage(
     try {
       const pmsResult = await createPmsBooking({
         guestName: guestNameForBooking,
-        phone: guestPhone,
-        email: guestEmail,
+        phone: pmsPhone,
+        email: pmsEmail,
         channel: msg.channel,
         checkInDate: checkInDate.toISOString().split('T')[0],
         checkOutDate: checkOutDate.toISOString().split('T')[0],

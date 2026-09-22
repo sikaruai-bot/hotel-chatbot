@@ -21,7 +21,7 @@ export function detectLanguage(text: string): SupportedLanguage {
 
   // Romanized Nepali and Hindi detection
   const lower = text.toLowerCase();
-  const romanNepaliStrong = /\b(chha|chhaina|cha|chaina|tapai|tapaiko|hamro|saman|rakhna|milchha|milla|kasto|hunchha|hune|paryo|parchha|kotha|jana|dinus|garnus|gardinus|garne|bhane|pauchha|kati|kata|ho|ma|k k|subidha|khana|tato)\b/i;
+  const romanNepaliStrong = /\b(chha|chhaina|cha|chaina|tapai|tapaiko|hamro|saman|rakhna|milchha|milla|kasto|hunchha|hune|paryo|parchha|kotha|jana|dinus|garnus|gardinus|garne|bhane|pauchha|kati|kata|ho|ma|k k|subidha|khana|tato|malai|chahiyo|chaiyo|chahincha|chainchha|gareko|kun|tala|paisa|pathaunus|bhetna|din|dina|lagi|raat|bholi|aaja|parsi|chahi|pani)\b/i;
   if (romanNepaliStrong.test(lower)) {
     return 'ne';
   }
@@ -32,6 +32,19 @@ export function detectLanguage(text: string): SupportedLanguage {
   }
 
   return 'en';
+}
+
+export function normalizeCommonTypos(text: string): string {
+  return text
+    .replace(/\brook\b/gi, 'room')
+    .replace(/\brooks\b/gi, 'rooms')
+    .replace(/\bconformation\b/gi, 'confirmation')
+    .replace(/\bcomfirmation\b/gi, 'confirmation')
+    .replace(/\breciept\b/gi, 'receipt')
+    .replace(/\bconferm\b/gi, 'confirm')
+    .replace(/\bcomfirm\b/gi, 'confirm')
+    .replace(/[>]/g, ' ')
+    .trim();
 }
 
 function normalizeDigits(str: string): string {
@@ -48,10 +61,12 @@ export function extractEntities(text: string): ExtractedEntities {
   // Adults extraction
   const adultsMatch =
     lower.match(/(\d+)\s*(adult|adults|grown|people|person|persons|guests?|jana|जना|वयस्क|मान्छे)/i) ||
-    lower.match(/(two|three|four|one|1|2|3|4|एक|दुई|तीन|चार|पाँच)\s*(adult|adults|guests?|people|जना|वयस्क)/i);
+    lower.match(/(two|three|four|one|1|2|3|4|ek|dui|duyi|tin|char|panch|एक|दुई|तीन|चार|पाँच)\s*(adult|adults|guests?|people|jana|जना|वयस्क|मान्छे)/i) ||
+    lower.match(/^(\d+)\s*$/);
   if (adultsMatch) {
     const wordToNum: Record<string, number> = {
       one: 1, two: 2, three: 3, four: 4,
+      ek: 1, dui: 2, duyi: 2, tin: 3, char: 4, panch: 5,
       'एक': 1, 'दुई': 2, 'तीन': 3, 'चार': 4, 'पाँच': 5
     };
     const val = wordToNum[adultsMatch[1].toLowerCase()] ?? parseInt(adultsMatch[1], 10);
@@ -61,10 +76,11 @@ export function extractEntities(text: string): ExtractedEntities {
   // Children extraction
   const childMatch =
     lower.match(/(\d+)\s*(child|children|kid|kids|bachha|बच्चा|बालबालिका)/i) ||
-    lower.match(/(one|two|three|four|1|2|3|4|एक|दुई|तीन|चार|पाँच)\s*(child|children|kid|kids|bachha|बच्चा|बालबालिका)/i);
+    lower.match(/(one|two|three|four|1|2|3|4|ek|dui|duyi|tin|char|panch|एक|दुई|तीन|चार|पाँच)\s*(child|children|kid|kids|bachha|बच्चा|बालबालिका)/i);
   if (childMatch) {
     const wordToNum: Record<string, number> = {
       one: 1, two: 2, three: 3, four: 4,
+      ek: 1, dui: 2, duyi: 2, tin: 3, char: 4, panch: 5,
       'एक': 1, 'दुई': 2, 'तीन': 3, 'चार': 4, 'पाँच': 5
     };
     const val = wordToNum[childMatch[1].toLowerCase()] ?? parseInt(childMatch[1], 10);
@@ -81,7 +97,7 @@ export function extractEntities(text: string): ExtractedEntities {
   }
 
   // Date ranges extraction (Supports Month First, Date First, Relative dates, Quick replies)
-  const months = '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?';
+  const months = '(?:january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|october|oct|november|nov|december|dec)\\.?(?![a-z])';
 
   // 1. Explicit Month Day to (Month) Day (e.g., 'sep 20 to 22', 'sep.22 to 24', 'from today sep 20 to 22', 'sep 20 - sep 22')
   const m1 = lower.match(new RegExp('(' + months + ')\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:to|-|until|till)\\s*(?:(' + months + ')\\s*)?(\\d{1,2})(?:st|nd|rd|th)?', 'i'));
@@ -145,11 +161,17 @@ export function extractEntities(text: string): ExtractedEntities {
     entities.checkOut = 'This Sunday';
   }
 
-  // 7. Duration only: e.g. '2 nights', 'for 2 nights', 'two nights', '2 days'
+  // 7. Duration only: e.g. '2 nights', 'for 2 nights', 'two nights', '2 days', '2 din ko lagi', '2 din'
   if (!entities.checkIn) {
-    const durationMatch = lower.match(/(?:for\s+)?(\d+|one|two|three|four|five)\s*(?:nights?|days?|रात|दिन)/i);
+    const durationMatch =
+      lower.match(/(?:for\s+)?(\d+|one|two|three|four|five|ek|dui|duyi|tin|char|panch|एक|दुई|तीन|चार|पाँच)\s*(?:nights?|days?|din|dina|raat|दिन|रात)(?:\s*ko\s*lagi|\s*lagi)?/i) ||
+      lower.match(/(\d+)\s*din/i);
     if (durationMatch) {
-      const w2n: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5 };
+      const w2n: Record<string, number> = {
+        one: 1, two: 2, three: 3, four: 4, five: 5,
+        ek: 1, dui: 2, duyi: 2, tin: 3, char: 4, panch: 5,
+        'एक': 1, 'दुई': 2, 'तीन': 3, 'चार': 4, 'पाँच': 5
+      };
       const nights = w2n[durationMatch[1].toLowerCase()] ?? parseInt(durationMatch[1], 10);
       if (!isNaN(nights) && nights > 0) {
         const today = new Date();
@@ -169,6 +191,18 @@ export function extractEntities(text: string): ExtractedEntities {
     }
   }
 
+  // Phone extraction (international or 10-digit mobile)
+  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b9\d{9}\b|\b\+977\d{10}\b/);
+  if (phoneMatch) {
+    entities.phone = phoneMatch[0].replace(/\s+/g, '');
+  }
+
+  // Email extraction
+  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  if (emailMatch) {
+    entities.email = emailMatch[0].toLowerCase();
+  }
+
   // Guest name if guest explicitly says "My name is X" or "I am X"
   const nameMatch = text.match(/(?:my name is|i am|this is|नाम)\s+([a-zA-Z\u0900-\u097F\s]{2,30})/i);
   if (nameMatch) {
@@ -179,7 +213,8 @@ export function extractEntities(text: string): ExtractedEntities {
 }
 
 // Intent Classification
-export function detectIntent(text: string): IntentResult {
+export function detectIntent(rawText: string): IntentResult {
+  const text = normalizeCommonTypos(rawText);
   const language = detectLanguage(text);
   const entities = extractEntities(text);
   const lower = text.toLowerCase().trim();
@@ -228,6 +263,44 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('फिर्ता')
   ) {
     return { intent: 'CANCELLATION', confidence: 0.95, language, entities, reason: 'Guest inquiring about cancellation or refund.' };
+  }
+
+  // 3.5. Booking Confirmation / Voucher / Letter / Receipt Inquiry
+  if (
+    lower.includes('confirmation') ||
+    lower.includes('conformation') ||
+    lower.includes('comfirmation') ||
+    lower.includes('booking letter') ||
+    lower.includes('letter chahiyo') ||
+    lower.includes('letter dinus') ||
+    lower.includes('letter pathaunus') ||
+    lower.includes('booking slip') ||
+    lower.includes('booking receipt') ||
+    lower.includes('booking voucher') ||
+    lower.includes('confirmation slip') ||
+    lower.includes('confirmation letter') ||
+    lower.includes('visa letter') ||
+    lower.includes('proof of booking') ||
+    lower.includes('booking proof') ||
+    lower.includes('booking gareko letter') ||
+    lower.includes('booking ko letter') ||
+    lower.includes('booking praman') ||
+    lower.includes('send me booking') ||
+    lower.includes('send booking') ||
+    lower.includes('give me booking') ||
+    lower.includes('कन्फर्मेसन') ||
+    lower.includes('पुष्टि पत्र') ||
+    lower.includes('रसिद') ||
+    lower.includes('भौचर') ||
+    lower.includes('लेटर चाहियो')
+  ) {
+    return {
+      intent: 'BOOKING_CONFIRMATION',
+      confidence: 0.96,
+      language,
+      entities,
+      reason: 'Guest requesting booking confirmation, confirmation letter, or voucher.',
+    };
   }
 
   // 4. Payment Issues or Inquiries
@@ -298,6 +371,15 @@ export function detectIntent(text: string): IntentResult {
     lower.match(/(need|want|looking for|require)\s+(a\s+|some\s+)?(room|rooms|bed|stay)/i) ||
     lower.match(/room.*(?:for\s+\d+\s*night)/i) ||
     lower.includes('book this room') ||
+    lower.includes('book it') ||
+    lower.includes('book now') ||
+    lower.includes('book this') ||
+    lower.includes('please book') ||
+    lower.includes('confirm book') ||
+    lower.includes('confirm booking') ||
+    lower.includes('confirm it') ||
+    lower.includes('yes, book') ||
+    lower.includes('yes book') ||
     lower.includes('reserve a room') ||
     lower.includes('make a reservation') ||
     lower.includes('need a room') ||
@@ -308,13 +390,41 @@ export function detectIntent(text: string): IntentResult {
     lower.includes('looking for a room') ||
     lower.includes('send request') ||
     lower.includes('yes, send') ||
+    lower.includes('yes, send request') ||
+    lower.includes('send the request') ||
+    lower.includes('room chahiyo') ||
+    lower.includes('room chaiyo') ||
+    lower.includes('kotha chahiyo') ||
+    lower.includes('kotha chaiyo') ||
+    lower.includes('malai room') ||
+    lower.includes('malai kotha') ||
+    lower.includes('room chainchha') ||
+    lower.includes('room chahincha') ||
+    lower.includes('kotha chainchha') ||
+    lower.includes('kotha chahincha') ||
+    lower.includes('room paryo') ||
+    lower.includes('kotha paryo') ||
+    lower.includes('room milchha') ||
+    lower.includes('kotha milchha') ||
+    lower.includes('room pauchha') ||
+    lower.includes('kotha pauchha') ||
+    lower.includes('room painchha') ||
+    lower.includes('kotha painchha') ||
+    lower.includes('room chahiye') ||
+    lower.includes('kamra chahiye') ||
+    lower.includes('din ko lagi') ||
+    lower.includes('din lagi') ||
+    lower.includes('raat ko lagi') ||
+    lower.includes('बुक गरिदिनुहोस्') ||
+    lower.includes('बुक गर्नुहोस्') ||
     lower.includes('बुक गर्न चाहन्छु') ||
     lower.includes('कोठा बुक') ||
     lower.includes('कोठा चाहियो') ||
     lower.includes('कोठा चाहिन्छ') ||
     lower.includes('बुक गर्न') ||
     lower.includes('बुक करना है') ||
-    lower.match(/^(book|reserve|reservation|booking|confirm book|yes)$/i) ||
+    lower.match(/^(book|reserve|reservation|booking|confirm book|confirm booking|book it|book now|yes|sure|okay|ok)$/i) ||
+    Boolean(entities.checkIn) ||
     (entities.checkIn && (lower.includes('room') || lower.includes('bed') || lower.includes('stay') || lower.includes('बस्न')))
   ) {
     return { intent: 'BOOKING', confidence: 0.98, language, entities, reason: 'High-intent booking request.' };
@@ -587,6 +697,51 @@ export function detectIntent(text: string): IntentResult {
   ) {
     return { intent: 'SAFETY', confidence: 0.94, language, entities, reason: 'Guest inquiring about safety or security.' };
   }
+
+  // 11.12. Couple Friendly
+  if (
+    lower.includes('couple') ||
+    lower.includes('unmarried') ||
+    lower.includes('boy girl') ||
+    lower.includes('girl boy') ||
+    lower.includes('girlfriend') ||
+    lower.includes('boyfriend') ||
+    lower.includes('जोडी') ||
+    lower.includes('दम्पती')
+  ) {
+    return { intent: 'COUPLE_FRIENDLY', confidence: 0.95, language, entities, reason: 'Guest inquiring if hotel is couple-friendly.' };
+  }
+
+  // 11.13. Elevator / Lift / Stairs
+  if (
+    lower.includes('elevator') ||
+    lower.includes('lift') ||
+    lower.includes('stairs') ||
+    lower.includes('staircase') ||
+    lower.includes('लिफ्ट') ||
+    lower.includes('भर्‍याङ')
+  ) {
+    return { intent: 'ELEVATOR', confidence: 0.95, language, entities, reason: 'Guest inquiring about elevator or stairs.' };
+  }
+
+  // 11.14. Floors / Room layout
+  if (
+    lower.includes('floor') ||
+    lower.includes('floors') ||
+    lower.includes('kun floor') ||
+    lower.includes('kun kun floor') ||
+    lower.includes('tala') ||
+    lower.includes('kati tala') ||
+    lower.includes('kun tala') ||
+    lower.includes('which floor') ||
+    lower.includes('what floor') ||
+    lower.includes('building layout') ||
+    lower.includes('कति तला') ||
+    lower.includes('कुन तला') ||
+    lower.includes('तला')
+  ) {
+    return { intent: 'FLOORS', confidence: 0.95, language, entities, reason: 'Guest inquiring about room floors or hotel layout.' };
+  }
   if (
     lower.includes('restaurant') ||
     lower.includes('food') ||
@@ -618,15 +773,24 @@ export function detectIntent(text: string): IntentResult {
     return { intent: 'POLICY', confidence: 0.90, language, entities };
   }
 
-  // 14. Hotel Information
+  // 14. Hotel Information / Contact / Email
   if (
     lower.includes('hotel information') ||
     lower.includes('about hotel') ||
     lower.includes('hotel info') ||
     lower.includes('tell me about') ||
-    lower.includes('होटलको बारेमा')
+    lower.includes('होटलको बारेमा') ||
+    lower.includes('email') ||
+    lower.includes('e-mail') ||
+    lower.includes('mail') ||
+    lower.includes('इमेल') ||
+    lower.includes('ईमेल') ||
+    lower.includes('contact') ||
+    lower.includes('phone') ||
+    lower.includes('number') ||
+    lower.includes('सम्पर्क')
   ) {
-    return { intent: 'HOTEL_INFORMATION', confidence: 0.90, language, entities };
+    return { intent: 'HOTEL_INFORMATION', confidence: 0.92, language, entities };
   }
 
   // 15. Greetings

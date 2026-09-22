@@ -28,6 +28,10 @@ export type Intent =
   | 'PAYMENT'
   | 'COMPLAINT'
   | 'HUMAN_REQUEST'
+  | 'BOOKING_CONFIRMATION'
+  | 'FLOORS'
+  | 'ELEVATOR'
+  | 'COUPLE_FRIENDLY'
   | 'OTHER';
 
 export type ConversationStep =

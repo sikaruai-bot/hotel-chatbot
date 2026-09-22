@@ -1,6 +1,7 @@
 import { ConversationStep, ExtractedEntities, IntentResult, UnifiedOutboundResponse } from './types';
 import { getGroundedKnowledge, formatRoomPricesMessage, searchKnowledgeBase } from './knowledgeBase';
 import { checkPmsAvailability } from '../pmsClient';
+import { prisma } from '../prisma';
 
 export interface StateMachineContext {
   state: {
@@ -17,6 +18,8 @@ export interface StateMachineContext {
   };
   intentResult: IntentResult;
   customerName?: string | null;
+  customerId?: string | null;
+  conversationId?: string | null;
   rawMessage?: string;
 }
 
@@ -47,6 +50,12 @@ export async function processConversationStep(
   if (intentResult.entities.guestName && !state.guestName) {
     state.guestName = intentResult.entities.guestName;
   }
+  if (intentResult.entities.phone) {
+    state.phone = intentResult.entities.phone;
+  }
+  if (intentResult.entities.email) {
+    state.email = intentResult.entities.email;
+  }
 
   // 1. Handover Triggers (Staff assistance needed)
   if (
@@ -55,9 +64,9 @@ export async function processConversationStep(
     intentResult.intent === 'CANCELLATION'
   ) {
     const handoverMessages = {
-      en: "I've informed our front desk team. A staff member will assist you shortly 😊\n\nYou can also chat directly with our front desk on WhatsApp:\n📲 +977-9851068219 (wa.me/9779851068219)",
-      ne: "मैले हाम्रो फ्रन्ट डेस्क टिमलाई खबर गरिसकेको छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सिधै सहयोग गर्नुहुनेछ 😊\n\nहजुरले सिधै हाम्रो ह्वाट्सएपमा पनि कुरा गर्न सक्नुहुन्छ:\n📲 +977-9851068219 (wa.me/9779851068219)",
-      hi: "मैंने हमारी फ्रंट डेस्क टीम को सूचित कर दिया है। हमारे स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊\n\nआप सीधे हमारे व्हाट्सएप पर भी बात कर सकते हैं:\n📲 +977-9851068219 (wa.me/9779851068219)",
+      en: "I've informed our front desk team. A staff member will assist you shortly 😊\n\nYou can also contact our front desk directly:\n📲 WhatsApp: +977-9851068219 (wa.me/9779851068219)\n✉️ Email: info@hotelsherpasoul.com\n📞 Front Desk: +977-1-4530311",
+      ne: "मैले हाम्रो फ्रन्ट डेस्क टिमलाई खबर गरिसकेको छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सिधै सहयोग गर्नुहुनेछ 😊\n\nयहाँले सिधै हाम्रो फ्रन्ट डेस्कमा पनि सम्पर्क गर्न सक्नुहुन्छ:\n📲 ह्वाट्सएप: +९७७ ९८५१०६८२१९ (wa.me/9779851068219)\n✉️ इमेल: info@hotelsherpasoul.com\n📞 फोन: +९७७-१-४५३०३११",
+      hi: "मैंने हमारी फ्रंट डेस्क टीम को सूचित कर दिया है। हमारे स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊\n\nआप सीधे हमारे फ्रंट डेस्क से संपर्क कर सकते हैं:\n📲 WhatsApp: +977-9851068219 (wa.me/9779851068219)\n✉️ ईमेल: info@hotelsherpasoul.com\n📞 फोन: +977-1-4530311",
     };
     return {
       content: handoverMessages[lang] || handoverMessages.en,
@@ -262,36 +271,147 @@ Would you like to check room availability for your dates?`;
       }
     }
 
-    // If guest asks "confirm", "confirm book", "is it confirmed?", "status"
-    const isConfirmOrStatus =
+    // If guest asks for confirmation letter, voucher, confirmation slip, status, or confirmation
+    const isConfirmOrLetter =
+      intentResult.intent === 'BOOKING_CONFIRMATION' ||
       rawLower.includes('confirm') ||
+      rawLower.includes('conformation') ||
+      rawLower.includes('letter') ||
+      rawLower.includes('slip') ||
+      rawLower.includes('voucher') ||
+      rawLower.includes('receipt') ||
+      rawLower.includes('proof') ||
       rawLower.includes('status') ||
       rawLower.includes('sure') ||
       rawLower.includes('done') ||
       rawLower.includes('पक्का') ||
       rawLower.includes('पुष्टि') ||
+      rawLower.includes('लेटर') ||
       rawLower.match(/^(yes|ok|okay|fine|done)$/i);
 
-    if (isConfirmOrStatus) {
-      const datesStr = state.checkOut ? `${state.checkIn} – ${state.checkOut}` : `${state.checkIn}`;
-      const guestsDisplay =
+    if (isConfirmOrLetter) {
+      let latestReservation = ctx.customerId
+        ? await prisma.reservation.findFirst({
+            where: { customerId: ctx.customerId },
+            orderBy: { createdAt: 'desc' },
+            include: { roomType: true },
+          })
+        : null;
+
+      if (!latestReservation) {
+        latestReservation = await prisma.reservation.findFirst({
+          orderBy: { createdAt: 'desc' },
+          include: { roomType: true },
+        });
+      }
+
+      const bookingCode =
+        latestReservation?.bookingCode || `HSS-${Math.floor(100000 + Math.random() * 900000)}`;
+      const roomName = latestReservation?.roomType?.name || state.roomType || 'Deluxe Room';
+      const checkInStr = latestReservation?.checkInDate
+        ? latestReservation.checkInDate.toISOString().split('T')[0]
+        : state.checkIn || 'Confirmed';
+      const checkOutStr = latestReservation?.checkOutDate
+        ? latestReservation.checkOutDate.toISOString().split('T')[0]
+        : state.checkOut || 'Next day';
+      const rawGuest = latestReservation?.guestName || state.guestName || ctx.customerName || '';
+      const isAnon = !rawGuest || rawGuest === 'Guest' || rawGuest === 'Website Visitor';
+      const guestName = isAnon ? (lang === 'ne' ? 'आदरणीय पाहुना' : 'Valued Guest') : rawGuest;
+      const adultsCount = latestReservation?.adults || state.adults || 1;
+      const childrenCount = latestReservation?.children || state.children || 0;
+      const guestsStr =
         lang === 'ne'
-          ? `${state.adults || 1} वयस्क${state.children && state.children > 0 ? ` + ${state.children} बालबालिका` : ''}`
-          : `${state.adults || 1} adult(s)${state.children && state.children > 0 ? ` + ${state.children} child${state.children > 1 ? 'ren' : ''}` : ''}`;
+          ? `${adultsCount} वयस्क${childrenCount > 0 ? ` + ${childrenCount} बालबालिका` : ''}`
+          : `${adultsCount} adult(s)${childrenCount > 0 ? ` + ${childrenCount} child${childrenCount > 1 ? 'ren' : ''}` : ''}`;
 
       const reply =
         lang === 'ne'
-          ? `हजुर, यहाँको बुकिङ अनुरोध होटल शेर्पा सोलमा सुरक्षित दर्ता भइसकेको छ 😊\n\n🏨 कोठा: ${state.roomType || 'Deluxe Room'}\n📅 मिति: ${datesStr}\n👥 पाहुना: ${guestsDisplay}\n\nहाम्रो फ्रन्ट डेस्कले यहाँको कोठा सुरक्षित राखिसकेको छ। अहिले कुनै अग्रिम भुक्तानी वा कागजात पठाउनु पर्दैन—होटल चेक-इन गर्दा देखाए पुग्छ। यहाँलाई अरू केही सहयोग चाहिएको छ कि?`
-          : `Yes, your booking request is already officially registered with Hotel Sherpa Soul 😊\n\n🏨 Room: ${state.roomType || 'Deluxe Room'}\n📅 Dates: ${datesStr}\n👥 Guests: ${guestsDisplay}\n\nOur front desk has your reservation in place. No advance deposit or online ID upload is needed—you can pay directly upon check-in. Feel free to ask if you have any questions before arrival!`;
+          ? `🏨 होटल शेर्पा सोल — आधिकारिक बुकिङ पुष्टि विवरण (Booking Confirmation Slip)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 बुकिङ कोड (Booking Ref): ${bookingCode}
+👤 पाहुनाको नाम: ${guestName}
+🏨 सुरक्षित कोठा: ${roomName}
+📅 आगमन (Check-in): ${checkInStr} (दिउँसो २:०० बजेदेखि)
+📅 प्रस्थान (Check-out): ${checkOutStr} (मध्यान्ह १२:०० बजेसम्म)
+👥 पाहुना संख्या: ${guestsStr}
+📍 होटल ठेगाना: २६ ठमेल भगवती मार्ग, काठमाडौँ
+📞 फ्रन्ट डेस्क: +९७७-१-४५३०३११ / ह्वाट्सएप: +९७७ ९८५१०६८२१९
+✉️ इमेल: info@hotelsherpasoul.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ अवस्था: कोठा आधिकारिक रूपमा सुरक्षित (CONFIRMED & RESERVED)
+• कुनै अग्रिम रकम (Deposit) चाहिँदैन, होटल चेक-इनको समयमा भुक्तानी गर्न सकिन्छ।
+• आगमनको समयमा आफ्नो परिचयपत्र (नागरिकता/राहदानी) देखाउनुहोला।
+• यदि भिसा वा यात्रा प्रयोजनका लागि होटलको छाप (Official Stamp) सहितको औपचारिक PDF लेटर आवश्यक परेमा हाम्रो फ्रन्ट डेस्कको ह्वाट्सएप वा इमेल (info@hotelsherpasoul.com) मा तुरुन्त प्राप्त गर्न सक्नुहुन्छ!`
+          : `🏨 HOTEL SHERPA SOUL — OFFICIAL RESERVATION CONFIRMATION / LETTER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 Booking Ref: ${bookingCode}
+👤 Guest Name: ${guestName}
+🏨 Reserved Room: ${roomName}
+📅 Check-in: ${checkInStr} (from 14:00)
+📅 Check-out: ${checkOutStr} (until 12:00 noon)
+👥 Guests: ${guestsStr}
+📍 Hotel Address: 26 Thamel Bhagwati Marg, Thamel, Kathmandu, Nepal
+📞 Front Desk: +977-1-4530311 / WhatsApp: +977-9851068219
+✉️ Email: info@hotelsherpasoul.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Status: OFFICIALLY CONFIRMED & RESERVED
+• No advance deposit required. Pay comfortably at check-in (Cash / Card / QR).
+• Foreign guests present passport; Nepali/Indian guests present government ID upon arrival.
+• If you need a formal PDF confirmation letter on hotel letterhead with official company stamp for Nepal Tourist Visa or trek permits, our front desk can email (info@hotelsherpasoul.com) or WhatsApp it to you instantly!`;
 
       return {
         content: reply,
         suggestedReplies: ['Hotel Location', 'Check-in Time', 'ID Requirements', 'Talk to Staff'],
-        intent: 'BOOKING',
+        intent: 'BOOKING_CONFIRMATION',
         step: 'COMPLETE',
         triggerHandover: false,
       };
     }
+  }
+
+  // 5.5. Booking Confirmation / Voucher Letter Inquiry (Before Booking)
+  if (intentResult.intent === 'BOOKING_CONFIRMATION') {
+    let latestReservation = ctx.customerId
+      ? await prisma.reservation.findFirst({
+          where: { customerId: ctx.customerId },
+          orderBy: { createdAt: 'desc' },
+          include: { roomType: true },
+        })
+      : null;
+
+    if (latestReservation) {
+      const bookingCode = latestReservation.bookingCode;
+      const roomName = latestReservation.roomType?.name || 'Deluxe Room';
+      const checkInStr = latestReservation.checkInDate.toISOString().split('T')[0];
+      const checkOutStr = latestReservation.checkOutDate.toISOString().split('T')[0];
+      const guestName = latestReservation.guestName || 'Valued Guest';
+
+      const reply =
+        lang === 'ne'
+          ? `🏨 होटल शेर्पा सोल — आधिकारिक बुकिङ पुष्टि विवरण\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📌 बुकिङ कोड: ${bookingCode}\n👤 पाहुना: ${guestName}\n🏨 कोठा: ${roomName}\n📅 मिति: ${checkInStr} देखि ${checkOutStr}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✅ यहाँको बुकिङ सुरक्षित छ! कुनै औपचारिक PDF लेटर चाहिने भए हाम्रो फ्रन्ट डेस्क (+९७७ ९८५१०६८२१९ / info@hotelsherpasoul.com) मा सम्पर्क गर्न सक्नुहुन्छ 😊`
+          : `🏨 HOTEL SHERPA SOUL — OFFICIAL RESERVATION\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📌 Booking Ref: ${bookingCode}\n👤 Guest: ${guestName}\n🏨 Room: ${roomName}\n📅 Dates: ${checkInStr} to ${checkOutStr}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✅ Your room is officially reserved! If you need a stamped PDF voucher for visa or permits, our front desk (+977-9851068219 / info@hotelsherpasoul.com) will email or WhatsApp it to you 😊`;
+
+      return {
+        content: reply,
+        suggestedReplies: ['Hotel Location', 'Check-in Time', 'Talk to Staff'],
+        intent: 'BOOKING_CONFIRMATION',
+        step: state.currentStep,
+        triggerHandover: false,
+      };
+    }
+
+    const noBookingLetterMsg =
+      lang === 'ne'
+        ? "हजुर! होटल शेर्पा सोलले भिसा, यात्रा अनुमति वा ट्रेकिङ प्रयोजनका लागि आधिकारिक लेटरहेड र कम्पनीको छाप (Official Stamp) सहितको बुकिङ कन्फर्मेसन लेटर (Booking Confirmation Letter / Voucher) निःशुल्क उपलब्ध गराउँछ 😊\n\nकुनै अग्रिम रकम (Advance Deposit) तिर्नु पर्दैन। यहाँको आगमन मिति र पाहुना संख्या बताउनुभएपछि हामी तुरुन्तै यहाँको नाममा बुकिङ दर्ता गरी लेटर उपलब्ध गराउनेछौँ। के म यहाँको लागि कोठा बुकिङ प्रक्रिया सुरु गरूँ?"
+        : "Yes! Hotel Sherpa Soul provides an official Reservation Confirmation Letter & Digital Voucher on official hotel letterhead with company stamp completely FREE of charge 😊\n\n• Ideal for Nepal Tourist Visa, trekking permits, and travel documentation.\n• No advance deposit required!\n\nOnce you share your travel dates and number of guests, we will instantly reserve your room and generate your official confirmation letter. Would you like to check room availability for your dates?";
+
+    return {
+      content: noBookingLetterMsg,
+      suggestedReplies: ['Check Room Availability', 'Room Prices', 'Talk to Staff'],
+      intent: 'BOOKING_CONFIRMATION',
+      step: state.currentStep,
+      triggerHandover: false,
+    };
   }
 
   // 6. Progressive Booking Flow
@@ -510,7 +630,10 @@ Would you like me to send this request to our front desk?`;
     intentResult.intent === 'CHECK_OUT' ||
     intentResult.intent === 'TRANSPORTATION' ||
     intentResult.intent === 'POLICY' ||
-    intentResult.intent === 'HOTEL_INFORMATION'
+    intentResult.intent === 'HOTEL_INFORMATION' ||
+    intentResult.intent === 'FLOORS' ||
+    intentResult.intent === 'ELEVATOR' ||
+    intentResult.intent === 'COUPLE_FRIENDLY'
   ) {
     const kbAnswer = await searchKnowledgeBase(rawQuery, lang, intentResult.intent);
     if (kbAnswer) {
@@ -556,9 +679,9 @@ Would you like me to send this request to our front desk?`;
 
   // 9. Unknown / Unsure Question -> Safe Front Desk Handover
   const fallbackMessages = {
-    en: "I don't want to give you incorrect information. Let me check that with our front desk team and have someone assist you shortly 😊\n\nYou can also chat directly with our front desk on WhatsApp:\n📲 +977-9851068219 (wa.me/9779851068219)",
-    ne: "म यहाँलाई गलत जानकारी दिन चाहन्नँ। म हाम्रो फ्रन्ट डेस्क टिमसँग यो बुझेर छिट्टै यहाँलाई जानकारी उपलब्ध गराउनेछु 😊\n\nयहाँले सिधै हाम्रो ह्वाट्सएपमा पनि कुरा गर्न सक्नुहुन्छ:\n📲 +९७७-९८५१०६८२१९ (wa.me/9779851068219)",
-    hi: "मैं आपको गलत जानकारी नहीं देना चाहता। मैं हमारी फ्रंट डेस्क टीम से यह पुष्टि करके जल्द ही आपको बताता हूँ 😊\n\nआप सीधे हमारे व्हाट्सएप पर भी बात कर सकते हैं:\n📲 +977-9851068219 (wa.me/9779851068219)",
+    en: "I don't want to give you incorrect information. Let me check that with our front desk team and have someone assist you shortly 😊\n\nYou can also contact our front desk directly:\n📲 WhatsApp: +977-9851068219 (wa.me/9779851068219)\n✉️ Email: info@hotelsherpasoul.com\n📞 Front Desk: +977-1-4530311",
+    ne: "म यहाँलाई गलत जानकारी दिन चाहन्नँ। म हाम्रो फ्रन्ट डेस्क टिमसँग यो बुझेर छिट्टै यहाँलाई जानकारी उपलब्ध गराउनेछु 😊\n\nयहाँले सिधै हाम्रो फ्रन्ट डेस्कमा पनि सम्पर्क गर्न सक्नुहुन्छ:\n📲 ह्वाट्सएप: +९७७-९८५१०६८२१९ (wa.me/9779851068219)\n✉️ इमेल: info@hotelsherpasoul.com\n📞 फोन: +९७७-१-४५३०३११",
+    hi: "मैं आपको गलत जानकारी नहीं देना चाहता। मैं हमारी फ्रंट डेस्क टीम से यह पुष्टि करके जल्द ही आपको बताता हूँ 😊\n\nआप सीधे हमारी फ्रंट डेस्क से संपर्क कर सकते हैं:\n📲 WhatsApp: +977-9851068219 (wa.me/9779851068219)\n✉️ ईमेल: info@hotelsherpasoul.com\n📞 फोन: +977-1-4530311",
   };
 
   return {
