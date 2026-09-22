@@ -28,13 +28,9 @@ yarn-error.log*
 *.env
 
 # databases & local data
-*.db
 *.db-journal
-*.sqlite
-*.sqlite3
-prisma/*.db
-prisma/*.db-journal
-prisma/dev.db
+*.sqlite-journal
+!prisma/dev.db
 
 # vercel
 .vercel
