@@ -661,6 +661,22 @@ Would you like me to send this request to our front desk?`;
     }
   }
 
+  // 8.4. Meta Ads Inquiry (Click-to-WhatsApp Ads)
+  if (intentResult.intent === 'AD_INQUIRY') {
+    const adWelcome = {
+      en: "Hi! Welcome to Hotel Sherpa Soul 😊\nThank you for reaching out through our advertisement!\n\nWe are a peaceful boutique hotel in Thamel (26 Thamel Bhagwati Marg, Kathmandu):\n• Deluxe AC Room — USD 20/night\n• Budget Family Room — USD 20/night\n• Family AC Room — USD 30/night\n\n✨ Special Direct Booking Perk: Instant 10% discount and NO advance deposit required!\n\nWould you like to check room availability for your travel dates?",
+      ne: "नमस्ते! होटल शेर्पा सोलमा यहाँलाई स्वागत छ 😊\nहाम्रो विज्ञापन हेरेर सम्पर्क गर्नुभएकोमा धन्यवाद!\n\nहामी ठमेल (२६ ठमेल भगवती मार्ग) मा अवस्थित शान्त बुटिक होटल हौँ:\n• डिलक्स कोठा (AC) — USD २०/रात\n• बजेट फेमिली कोठा — USD २०/रात\n• फेमिली कोठा (AC) — USD ३०/रात\n\n✨ विशेष सुविधा: सिधै बुकिङ गर्दा १०% छुट र कुनै अग्रिम रकम (Deposit) चाहिँदैन!\n\nयहाँको आगमन मिति बताइदिनुभए म कोठा उपलब्धता हेर्न मद्दत गर्नेछु 😊",
+      hi: "नमस्ते! होटल शेरपा सोल में आपका स्वागत है 😊\nहमारे विज्ञापन से संपर्क करने के लिए धन्यवाद!\n\n• डीलक्स एसी रूम — USD 20/रात\n• बजट फैमिली रूम — USD 20/रात\n• फैमिली एसी रूम — USD 30/रात\n\n✨ सीधी बुकिंग पर 10% की विशेष छूट और अग्रिम जमा की आवश्यकता नहीं है!\n\nक्या आप अपनी तारीखों के लिए उपलब्धता की जाँच करना चाहेंगे?",
+    };
+    return {
+      content: adWelcome[lang] || adWelcome.en,
+      suggestedReplies: ['Check Availability', 'Room Prices', 'Hotel Location', 'Talk to Staff'],
+      intent: 'AD_INQUIRY',
+      step: 'GREETING',
+      triggerHandover: false,
+    };
+  }
+
   // 8.5. Greeting Fallback
   if (intentResult.intent === 'GREETING') {
     const greetings = {

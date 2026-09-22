@@ -32,6 +32,7 @@ export type Intent =
   | 'FLOORS'
   | 'ELEVATOR'
   | 'COUPLE_FRIENDLY'
+  | 'AD_INQUIRY'
   | 'OTHER';
 
 export type ConversationStep =

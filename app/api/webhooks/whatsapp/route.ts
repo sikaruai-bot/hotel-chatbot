@@ -52,6 +52,11 @@ export async function POST(req: NextRequest) {
                 messageType = 'BUTTON';
               }
 
+              // Handle Click-to-WhatsApp Meta Ads referral
+              if (msg.referral && !text) {
+                text = msg.referral.headline || msg.referral.body || 'Hi, I saw your ad on Facebook and want to know more';
+              }
+
               if (text) {
                 await processInboundMessage({
                   channel: 'WHATSAPP',

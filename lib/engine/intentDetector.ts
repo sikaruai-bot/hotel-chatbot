@@ -793,6 +793,39 @@ export function detectIntent(rawText: string): IntentResult {
     return { intent: 'HOTEL_INFORMATION', confidence: 0.92, language, entities };
   }
 
+  // 14.5. Meta Ads / Click-to-WhatsApp Ad Inquiries
+  if (
+    lower.includes('saw this on facebook') ||
+    lower.includes('saw this on instagram') ||
+    lower.includes('saw your ad') ||
+    lower.includes('seen your ad') ||
+    lower.includes('from your ad') ||
+    lower.includes('about your ad') ||
+    lower.includes('facebook ad') ||
+    lower.includes('instagram ad') ||
+    lower.includes('meta ad') ||
+    lower.includes('ad ma dekheko') ||
+    lower.includes('ad herera') ||
+    lower.includes('ad bata') ||
+    lower.includes('can i learn more') ||
+    lower.includes('tell me more about your hotel') ||
+    lower.includes('tell me more') ||
+    lower.includes('interested in your hotel') ||
+    lower.includes('interested in your room') ||
+    lower.includes('interested in this') ||
+    lower.includes('more info please') ||
+    lower.includes('more information') ||
+    lower.includes('विज्ञापन')
+  ) {
+    return {
+      intent: 'AD_INQUIRY',
+      confidence: 0.96,
+      language,
+      entities,
+      reason: 'Guest inquiring from Meta Facebook/Instagram advertisement.',
+    };
+  }
+
   // 15. Greetings
   if (
     lower.startsWith('hi') ||
