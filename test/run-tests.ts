@@ -161,6 +161,144 @@ async function runAllTests() {
   const room102 = await prisma.room.findUnique({ where: { roomNumber: '102' } });
   assert(room102 !== null && room102.isSellable === false && room102.isSharedKitchen === true, 'Room 102 is strictly non-sellable shared kitchen');
 
+  // Test Real Conversation Scenarios (Prompt Section 38)
+  console.log('\n[TEST GROUP 7: Section 38 Real Human Conversation Scenarios]');
+
+  // Scenario A: Natural Greeting + Ask Dates
+  const simSenderA = `sim_user_A_${Date.now()}`;
+  const resScenarioA = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderA,
+    content: 'Hi',
+    externalMessageId: `scen_a_${Date.now()}`,
+  });
+  assert(
+    resScenarioA.reply?.includes('What dates are you looking at') === true,
+    'Scenario A: "Hi" -> Warm greeting asking for dates'
+  );
+
+  // Scenario B: Nepali travel dates
+  const simSenderB = `sim_user_B_${Date.now()}`;
+  const resScenarioB = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderB,
+    content: 'Room chaiyo October 10 dekhi 12 samma',
+    externalMessageId: `scen_b_${Date.now()}`,
+  });
+  assert(
+    resScenarioB.outbound?.step === 'AWAITING_GUESTS',
+    'Scenario B: Understands Nepali + dates -> Steps to AWAITING_GUESTS'
+  );
+  assert(
+    resScenarioB.reply?.includes('कति जना') === true || resScenarioB.reply?.includes('how many guests') === true,
+    'Scenario B: Asks for number of guests'
+  );
+
+  // Scenario C: Guest count given in context
+  const resScenarioC = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderB,
+    content: '2 adults and one child',
+    externalMessageId: `scen_c_${Date.now()}`,
+  });
+  assert(
+    resScenarioC.outbound?.step === 'CONFIRMING_SUMMARY',
+    'Scenario C: Context preserved -> Steps to CONFIRMING_SUMMARY'
+  );
+  assert(
+    resScenarioC.reply?.includes('Deluxe Room') === true && resScenarioC.reply?.includes('USD 20') === true,
+    'Scenario C: Recommends Deluxe Room at USD 20/night'
+  );
+
+  // Scenario D: Guest asks "How much?"
+  const resScenarioD = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderB,
+    content: 'How much?',
+    externalMessageId: `scen_d_${Date.now()}`,
+  });
+  assert(
+    resScenarioD.reply?.includes('USD 20') === true,
+    'Scenario D: "How much?" answers specific Deluxe Room rate in context'
+  );
+
+  // Scenario E: Guest asks "Can I book it?"
+  const resScenarioE = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderB,
+    content: 'Can I book it?',
+    externalMessageId: `scen_e_${Date.now()}`,
+  });
+  assert(
+    resScenarioE.reply?.includes('full name') === true ||
+      resScenarioE.reply?.includes('पूरा नाम') === true ||
+      resScenarioE.reply?.includes('Perfect') === true ||
+      resScenarioE.reply?.includes('धन्यवाद') === true,
+    'Scenario E: "Can I book it?" proceeds toward booking collection or confirmation'
+  );
+
+  // Scenario F: "I want to talk to someone" -> Immediate Human Handover
+  const simSenderF = `sim_user_F_${Date.now()}`;
+  const resScenarioF = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderF,
+    content: 'I want to talk to someone.',
+    externalMessageId: `scen_f_${Date.now()}`,
+  });
+  assert(
+    resScenarioF.outbound?.step === 'HANDOVER' && resScenarioF.outbound?.triggerHandover === true,
+    'Scenario F: "I want to talk to someone" triggers immediate human handover'
+  );
+
+  // Scenario G: "Can I cook?" -> Room 102 shared kitchen info
+  const simSenderG = `sim_user_G_${Date.now()}`;
+  const resScenarioG = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderG,
+    content: 'Can I cook?',
+    externalMessageId: `scen_g_${Date.now()}`,
+  });
+  assert(
+    resScenarioG.reply?.includes('Room 102') === true && resScenarioG.reply?.includes('2 weeks') === true,
+    'Scenario G: "Can I cook?" explains Room 102 shared kitchen for long stays (>= 2 weeks)'
+  );
+
+  // Honest AI Identity: "Are you a real person?"
+  const simSenderH = `sim_user_H_${Date.now()}`;
+  const resScenarioH = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderH,
+    content: 'Are you a real person?',
+    externalMessageId: `scen_h_${Date.now()}`,
+  });
+  assert(
+    resScenarioH.reply?.includes("I'm the hotel's chat assistant") === true,
+    'Honest AI Identity: Acknowledges being the hotel chat assistant and offers to connect to staff'
+  );
+
+  // Click-to-WhatsApp Meta Ads Referral & Lead Attribution
+  const simSenderAd = `+9779818299887`;
+  const resAd = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: simSenderAd,
+    senderPhone: simSenderAd,
+    content: 'Hi, I saw your ad on Meta and want to check room availability',
+    externalMessageId: `scen_ad_${Date.now()}`,
+    campaignInfo: {
+      campaign: 'Meta_Autumn_Nepal_Trek_2026',
+      adId: 'ad_7788990011',
+      ad: 'Book Now - Sleep Well in Thamel',
+    },
+  });
+  assert(resAd.success === true, 'Click-to-WhatsApp ad message processed');
+  const capturedLead = await prisma.lead.findFirst({
+    where: { phone: simSenderAd },
+  });
+  assert(
+    capturedLead?.campaign === 'Meta_Autumn_Nepal_Trek_2026' && capturedLead?.adId === 'ad_7788990011',
+    'Attribution: Meta Ad Campaign and Ad ID saved to CRM Lead'
+  );
+
   console.log('\n======================================================');
   console.log(`TEST SUMMARY: ${passed} Passed, ${failed} Failed`);
   console.log('======================================================\n');

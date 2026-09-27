@@ -96,11 +96,15 @@ export function extractEntities(text: string): ExtractedEntities {
     entities.roomType = 'Deluxe Room';
   }
 
-  // Date ranges extraction (Supports Month First, Date First, Relative dates, Quick replies)
-  const months = '(?:january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|october|oct|november|nov|december|dec)\\.?(?![a-z])';
+  // Date ranges extraction (Supports Month First, Date First, Relative dates, Nepali/Hindi separators)
+  const engMonths = '(?:january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|october|oct|november|nov|december|dec)';
+  const nepMonths = '(?:baishakh|baisakh|jestha|jeth|ashadh|asar|shrawan|saun|bhadra|bhadau|ashwin|asoj|kartik|mangsir|poush|magh|falgun|chaitra|chait|बैशाख|जेठ|असार|साउन|भदौ|असोज|कार्तिक|मंसिर|पुष|माघ|फागुन|चैत)';
+  const months = `(?:${engMonths}|${nepMonths})\\.?(?![a-z])`;
+  const dateSeparators = '(?:to|-|until|till|dekhi|देखि|से)';
+  const dateEndSuffix = '(?:\\s*(?:samma|सम्म|तक))?';
 
-  // 1. Explicit Month Day to (Month) Day (e.g., 'sep 20 to 22', 'sep.22 to 24', 'from today sep 20 to 22', 'sep 20 - sep 22')
-  const m1 = lower.match(new RegExp('(' + months + ')\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:to|-|until|till)\\s*(?:(' + months + ')\\s*)?(\\d{1,2})(?:st|nd|rd|th)?', 'i'));
+  // 1. Explicit Month Day to (Month) Day (e.g., 'sep 20 to 22', 'October 10 dekhi 12 samma', 'असोज १२ देखि १५ सम्म')
+  const m1 = lower.match(new RegExp('(' + months + ')\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s*' + dateSeparators + '\\s*(?:(' + months + ')\\s*)?(\\d{1,2})(?:st|nd|rd|th)?' + dateEndSuffix, 'i'));
   if (m1) {
     const startMonth = m1[1].replace('.', '');
     const startDay = m1[2];
@@ -110,9 +114,9 @@ export function extractEntities(text: string): ExtractedEntities {
     entities.checkOut = `${endMonth} ${endDay}`;
   }
 
-  // 2. Day Month to Day Month OR Day to Day Month (e.g., '20 sep to 22 sep', '20 to 22 sep')
+  // 2. Day Month to Day Month OR Day to Day Month (e.g., '20 sep to 22 sep', '10 dekhi 12 october')
   if (!entities.checkIn) {
-    const m2 = lower.match(new RegExp('(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:(' + months + ')\\s*)?(?:to|-|until|till)\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s*(' + months + ')', 'i'));
+    const m2 = lower.match(new RegExp('(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:(' + months + ')\\s*)?' + dateSeparators + '\\s*(\\d{1,2})(?:st|nd|rd|th)?\\s*(' + months + ')' + dateEndSuffix, 'i'));
     if (m2) {
       const startDay = m2[1];
       const endMonth = m2[4].replace('.', '');
@@ -123,9 +127,21 @@ export function extractEntities(text: string): ExtractedEntities {
     }
   }
 
-  // 3. Numeric slash/dash date ranges (e.g. '20/09 to 22/09', '2026-09-20 to 2026-09-22')
+  // 2b. Day Month to Day (e.g. '12 oct dekhi 15')
   if (!entities.checkIn) {
-    const m3 = lower.match(/(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\s*(?:to|-|until|till)\s*(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)/i);
+    const m2b = lower.match(new RegExp('(\\d{1,2})(?:st|nd|rd|th)?\\s*(' + months + ')\\s*' + dateSeparators + '\\s*(\\d{1,2})(?:st|nd|rd|th)?' + dateEndSuffix, 'i'));
+    if (m2b) {
+      const startDay = m2b[1];
+      const startMonth = m2b[2].replace('.', '');
+      const endDay = m2b[3];
+      entities.checkIn = `${startMonth} ${startDay}`;
+      entities.checkOut = `${startMonth} ${endDay}`;
+    }
+  }
+
+  // 3. Numeric slash/dash date ranges (e.g. '20/09 to 22/09', '2026-09-20 to 2026-09-22', '10/10 dekhi 12/10')
+  if (!entities.checkIn) {
+    const m3 = lower.match(new RegExp('(\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?)\\s*' + dateSeparators + '\\s*(\\d{1,2}[/-]\\d{1,2}(?:[/-]\\d{2,4})?)' + dateEndSuffix, 'i'));
     if (m3) {
       entities.checkIn = m3[1].trim();
       entities.checkOut = m3[2].trim();
@@ -219,19 +235,53 @@ export function detectIntent(rawText: string): IntentResult {
   const entities = extractEntities(text);
   const lower = text.toLowerCase().trim();
 
+  // 0. AI Identity Query ("Are you a real person?", "Are you an AI/bot?")
+  if (
+    lower.includes('are you a real person') ||
+    lower.includes('are you real person') ||
+    lower.includes('are you human') ||
+    lower.includes('are you a human') ||
+    lower.includes('are you a bot') ||
+    lower.includes('are you bot') ||
+    lower.includes('are you an ai') ||
+    lower.includes('are you ai') ||
+    lower.includes('के तपाई मान्छे हो') ||
+    lower.includes('के तपाईं मान्छे हो') ||
+    lower.includes('तपाईं रोबोट हो') ||
+    lower.includes('क्या आप इंसान हैं') ||
+    lower.includes('क्या आप रोबोट हैं') ||
+    lower.match(/^are you (a )?(real person|real|human|bot|ai)\??$/i)
+  ) {
+    return {
+      intent: 'AI_IDENTITY',
+      confidence: 0.99,
+      language,
+      entities,
+      reason: 'Guest inquiring whether assistant is AI or real person.',
+    };
+  }
+
   // 1. Human Handover Request
   if (
-    lower.includes('human') ||
+    lower.includes('talk to someone') ||
+    lower.includes('speak to someone') ||
+    lower.includes('want to talk to someone') ||
+    lower.includes('want to speak to someone') ||
     lower.includes('talk to staff') ||
     lower.includes('speak to staff') ||
     lower.includes('speak with staff') ||
-    lower.includes('real person') ||
-    lower.includes('agent') ||
+    lower.includes('connect with staff') ||
+    lower.includes('talk to a person') ||
+    lower.includes('speak to a person') ||
+    lower.includes('human agent') ||
     lower.includes('front desk officer') ||
     lower.includes('call me') ||
     lower.includes('म मान्छेसँग कुरा गर्न चाहन्छु') ||
+    lower.includes('मान्छेसँग कुरा') ||
     lower.includes('कर्मचारीसँग कुरा') ||
-    lower.includes('बात करनी है')
+    lower.includes('बात करनी है') ||
+    lower.includes('किसी से बात करनी है') ||
+    lower.match(/^(talk to staff|human|agent|person)$/i)
   ) {
     return { intent: 'HUMAN_REQUEST', confidence: 0.99, language, entities, reason: 'Guest explicitly requested human staff assistance.' };
   }

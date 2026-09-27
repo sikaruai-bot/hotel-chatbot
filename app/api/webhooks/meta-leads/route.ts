@@ -39,10 +39,41 @@ export async function POST(req: NextRequest) {
 
             // Direct mock payload support for testing
             const testData = change.value?.mockData;
-            const leadName = testData?.name || 'Meta Ad Lead';
-            const leadPhone = testData?.phone || '+9779800000000';
-            const leadEmail = testData?.email || 'lead@example.com';
-            const campaign = testData?.campaign || 'Meta_Thamel_Travelers_Campaign';
+            let leadName = testData?.name;
+            let leadPhone = testData?.phone;
+            let leadEmail = testData?.email;
+            let campaign = testData?.campaign || 'Meta Lead Ad Campaign';
+
+            // If real leadgen_id exists and Page Access Token is configured, fetch real lead details from Meta Graph API
+            const pageToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+            if (leadgenId && pageToken && !pageToken.startsWith('mock_')) {
+              try {
+                const graphRes = await fetch(
+                  `https://graph.facebook.com/v21.0/${leadgenId}?access_token=${pageToken}`,
+                  { headers: { Accept: 'application/json' } }
+                );
+                if (graphRes.ok) {
+                  const graphData = await graphRes.json();
+                  if (graphData.field_data) {
+                    for (const field of graphData.field_data) {
+                      const val = field.values?.[0];
+                      if (!val) continue;
+                      if (field.name.includes('full_name') || field.name.includes('name')) leadName = val;
+                      else if (field.name.includes('phone')) leadPhone = val;
+                      else if (field.name.includes('email')) leadEmail = val;
+                    }
+                  }
+                } else {
+                  console.warn('[Meta Lead Webhook] Failed to fetch lead from Graph API:', await graphRes.text());
+                }
+              } catch (fetchErr: any) {
+                console.error('[Meta Lead Webhook] Graph API fetch error:', fetchErr.message);
+              }
+            }
+
+            leadName = leadName || 'Meta Ad Guest';
+            leadPhone = leadPhone || '+9779800000000';
+            leadEmail = leadEmail || 'lead@example.com';
 
             // Find or create customer
             let customer = await prisma.customer.findFirst({

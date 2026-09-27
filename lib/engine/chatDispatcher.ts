@@ -286,9 +286,10 @@ export async function processInboundMessage(
     const pmsEmail = guestEmail || `guest.${customer.id.slice(-6)}@hotelsherpasoul.com`;
 
     // Call Hotel Sherpa Soul PMS directly for real-time room lock and reservation
-    let officialBookingCode = `HSS-${Math.floor(100000 + Math.random() * 900000)}`;
+    let officialBookingCode: string | null = null;
     let assignedRoomNumber: string | null = null;
     let voucherUrl: string | null = null;
+    let pmsSuccess = false;
 
     try {
       const pmsResult = await createPmsBooking({
@@ -301,24 +302,25 @@ export async function processInboundMessage(
         roomTypeName: currentState.roomType || 'Deluxe Room',
         adults: currentState.adults || 1,
         children: currentState.children || 0,
-        specialRequests: `Automated booking created via ${msg.channel} Chatbot`,
+        specialRequests: `Direct booking via ${msg.channel} Chatbot`,
         externalMessageId: msg.externalMessageId || `BOT-${Date.now()}`,
         threadId: msg.senderId,
       });
 
       if (pmsResult.success && pmsResult.data?.reservationNumber) {
+        pmsSuccess = true;
         officialBookingCode = pmsResult.data.reservationNumber;
         assignedRoomNumber = pmsResult.data.roomNumber || null;
         voucherUrl = pmsResult.data.voucherUrl || null;
         console.log(`[PMS Integration] Successfully registered booking in PMS: ${officialBookingCode} for ${guestNameForBooking}`);
       } else {
-        console.warn('[PMS Integration] PMS booking response error:', pmsResult.error);
+        console.warn('[PMS Integration] PMS booking was not confirmed:', pmsResult.error);
       }
     } catch (pmsErr: any) {
       console.error('[PMS Integration] Failed to connect to PMS API:', pmsErr.message);
     }
 
-    if (matchedRoomType) {
+    if (pmsSuccess && officialBookingCode && matchedRoomType) {
       await prisma.reservation.create({
         data: {
           bookingCode: officialBookingCode,
@@ -340,16 +342,31 @@ export async function processInboundMessage(
         },
       });
 
-      // Embed booking code and self-checkin voucher URL into outbound response
-      let confirmationAddon = `\n📌 Official Booking Ref: ${officialBookingCode}${assignedRoomNumber ? ` (Room ${assignedRoomNumber})` : ''}`;
-      if (voucherUrl) {
-        confirmationAddon += `\n📲 Digital Check-in Voucher: ${voucherUrl}`;
+      // Human-feeling natural confirmation message
+      const lang = intentResult.language || 'en';
+      if (lang === 'ne') {
+        outbound.content = `धन्यवाद ${guestNameForBooking}! यहाँको बुकिङ होटल शेर्पा सोलमा आधिकारिक रूपमा दर्ता भएको छ।\n\n📌 बुकिङ कोड: ${officialBookingCode}${assignedRoomNumber ? ` (कोठा ${assignedRoomNumber})` : ''}\n🏨 कोठा: ${currentState.roomType || 'Deluxe Room'}\n📅 मिति: ${currentState.checkIn} देखि ${currentState.checkOut || 'भोलिपल्ट'} (${nights} रात)\n💰 दर: USD ${pricePerNight}/रात\n${voucherUrl ? `📲 डिजिटल चेक-इन: ${voucherUrl}\n` : ''}\nकुनै अग्रिम रकम तिर्नु पर्दैन, होटल आगमनमा भुक्तानी गर्न सकिन्छ। हामी यहाँलाई स्वागत गर्न उत्सुक छौँ!`;
+      } else if (lang === 'hi') {
+        outbound.content = `धन्यवाद ${guestNameForBooking}! आपकी बुकिंग होटल शेरपा सोल में दर्ज हो गई है।\n\n📌 बुकिंग कोड: ${officialBookingCode}${assignedRoomNumber ? ` (कमरा ${assignedRoomNumber})` : ''}\n🏨 कमरा: ${currentState.roomType || 'Deluxe Room'}\n📅 तारीख: ${currentState.checkIn} से ${currentState.checkOut || 'अगले दिन'} (${nights} रात)\n💰 दर: USD ${pricePerNight}/रात\n${voucherUrl ? `📲 डिजिटल वाउचर: ${voucherUrl}\n` : ''}\nअग्रिम भुगतान की आवश्यकता नहीं है, चेक-इन पर भुगतान करें। स्वागत है!`;
+      } else {
+        outbound.content = `Perfect. I've got your booking confirmed for ${nights} night${nights > 1 ? 's' : ''}, from ${currentState.checkIn} to ${currentState.checkOut || 'next day'}, for ${currentState.adults || 1} adult(s).\n\nYou're booked in a ${currentState.roomType || 'Deluxe Room'} at USD ${pricePerNight} per night.\nBooking Ref: ${officialBookingCode}${assignedRoomNumber ? ` (Room ${assignedRoomNumber})` : ''}\n${voucherUrl ? `Digital Check-in: ${voucherUrl}\n` : ''}\nNo advance deposit required—you can pay comfortably at check-in. We look forward to welcoming you!`;
       }
+    } else {
+      // If PMS unavailable or room sold out, do NOT invent confirmation. Escalate to front desk!
+      outbound.step = 'HANDOVER';
+      outbound.triggerHandover = true;
+      leadStatus = 'BOOKING_REQUEST';
+      conversationStatus = 'HUMAN_REQUIRED';
+      scoreReason = 'PMS Confirmation Pending / Staff Assistance Required';
 
-      outbound.content = outbound.content.replace(
-        '━━━━━━━━━━━━━━━━━━',
-        `━━━━━━━━━━━━━━━━━━${confirmationAddon}`
-      );
+      const lang = intentResult.language || 'en';
+      if (lang === 'ne') {
+        outbound.content = `धन्यवाद ${guestNameForBooking}! म हाम्रो फ्रन्ट डेस्क टिमसँग यो बुझेर यहाँको कोठा सुनिश्चित गर्छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सम्पर्क गर्नुहुनेछ 😊`;
+      } else if (lang === 'hi') {
+        outbound.content = `धन्यवाद ${guestNameForBooking}! मैं हमारी फ्रंट डेस्क टीम से पुष्टि करके आपका कमरा सुरक्षित करवाता हूँ। हमारे स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊`;
+      } else {
+        outbound.content = `Thank you, ${guestNameForBooking}! Let me check that with our front desk team so they can arrange your room personally. Someone from our staff will reach out to you shortly 😊`;
+      }
     }
   }
 
@@ -368,7 +385,7 @@ export async function processInboundMessage(
   }
 
   // 9. Save Outbound Message
-  await prisma.message.create({
+  const savedMsg = await prisma.message.create({
     data: {
       conversationId: conversation.id,
       customerId: customer.id,
@@ -380,25 +397,44 @@ export async function processInboundMessage(
     },
   });
 
-  // 10. Dispatch to Channel
+  // 10. Dispatch to Channel and track delivery
   if (msg.channel === 'WHATSAPP') {
     const phone = msg.senderPhone || msg.senderId;
-    await sendWhatsAppMessage({
+    const waRes = await sendWhatsAppMessage({
       to: phone,
       text: outbound.content,
       buttons: outbound.suggestedReplies,
     });
+    if (!waRes.success) {
+      console.error(`[WhatsApp Dispatch Failed] ${waRes.error} for phone ${phone}`);
+      await prisma.message.update({
+        where: { id: savedMsg.id },
+        data: { status: 'FAILED' },
+      });
+    }
   } else if (msg.channel === 'MESSENGER') {
-    await sendMessengerMessage({
+    const fbRes = await sendMessengerMessage({
       recipientId: msg.senderId,
       text: outbound.content,
       quickReplies: outbound.suggestedReplies,
     });
+    if (!fbRes.success) {
+      await prisma.message.update({
+        where: { id: savedMsg.id },
+        data: { status: 'FAILED' },
+      });
+    }
   } else if (msg.channel === 'INSTAGRAM') {
-    await sendInstagramMessage({
+    const igRes = await sendInstagramMessage({
       recipientId: msg.senderId,
       text: outbound.content,
     });
+    if (!igRes.success) {
+      await prisma.message.update({
+        where: { id: savedMsg.id },
+        data: { status: 'FAILED' },
+      });
+    }
   }
 
   return { success: true, reply: outbound.content, outbound };

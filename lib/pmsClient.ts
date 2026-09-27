@@ -4,8 +4,8 @@
  * Base URL: https://pms.hotelsherpasoul.com
  */
 
-const PMS_BASE_URL = process.env.PMS_BASE_URL || 'https://pms.hotelsherpasoul.com';
-const PMS_API_KEY = process.env.PMS_API_KEY || 'sherpa-bot-key-2026';
+const PMS_BASE_URL = process.env.PMS_API_URL || process.env.PMS_BASE_URL || 'https://hotelsherpasoulpms-sigma.vercel.app';
+const PMS_API_KEY = process.env.PMS_API_KEY || '';
 
 export interface PmsAvailabilityParams {
   checkIn: string; // YYYY-MM-DD

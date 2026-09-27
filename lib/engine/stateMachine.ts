@@ -57,6 +57,25 @@ export async function processConversationStep(
     state.email = intentResult.entities.email;
   }
 
+  const frontdeskPhone = knowledge.hotelInfo.phone || '+977-1-4530311';
+  const whatsappPhone = knowledge.hotelInfo.whatsapp || '+977-9818259472';
+
+  // 0. AI Identity Query ("Are you a real person?", "Are you an AI/bot?")
+  if (intentResult.intent === 'AI_IDENTITY') {
+    const aiIdentityMsg = {
+      en: "I'm the hotel's chat assistant, but I can also connect you with our staff if you'd prefer.",
+      ne: "म होटलको च्याट सहायक हुँ, तर यहाँ चाहनुहुन्छ भने म हाम्रा कर्मचारी साथीसँग पनि तुरुन्त जोडिदिन सक्छु 😊",
+      hi: "मैं होटल का चैट असिस्टेंट हूँ, लेकिन अगर आप चाहें तो मैं आपको हमारे स्टाफ से भी जोड़ सकता हूँ 😊",
+    };
+    return {
+      content: aiIdentityMsg[lang] || aiIdentityMsg.en,
+      suggestedReplies: ['Talk to Staff', 'Check Availability', 'Room Prices'],
+      intent: 'AI_IDENTITY',
+      step: state.currentStep,
+      triggerHandover: false,
+    };
+  }
+
   // 1. Handover Triggers (Staff assistance needed)
   if (
     intentResult.intent === 'HUMAN_REQUEST' ||
@@ -64,13 +83,13 @@ export async function processConversationStep(
     intentResult.intent === 'CANCELLATION'
   ) {
     const handoverMessages = {
-      en: "I've informed our front desk team. A staff member will assist you shortly 😊\n\nYou can also contact our front desk directly:\n📲 WhatsApp: +977-9851068219 (wa.me/9779851068219)\n✉️ Email: info@hotelsherpasoul.com\n📞 Front Desk: +977-1-4530311",
-      ne: "मैले हाम्रो फ्रन्ट डेस्क टिमलाई खबर गरिसकेको छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सिधै सहयोग गर्नुहुनेछ 😊\n\nयहाँले सिधै हाम्रो फ्रन्ट डेस्कमा पनि सम्पर्क गर्न सक्नुहुन्छ:\n📲 ह्वाट्सएप: +९७७ ९८५१०६८२१९ (wa.me/9779851068219)\n✉️ इमेल: info@hotelsherpasoul.com\n📞 फोन: +९७७-१-४५३०३११",
-      hi: "मैंने हमारी फ्रंट डेस्क टीम को सूचित कर दिया है। हमारे स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊\n\nआप सीधे हमारे फ्रंट डेस्क से संपर्क कर सकते हैं:\n📲 WhatsApp: +977-9851068219 (wa.me/9779851068219)\n✉️ ईमेल: info@hotelsherpasoul.com\n📞 फोन: +977-1-4530311",
+      en: `I've informed our front desk team. A staff member will assist you shortly 😊\n\nYou can also contact our front desk directly:\nWhatsApp: ${whatsappPhone}\nPhone: ${frontdeskPhone}\nEmail: ${knowledge.hotelInfo.email}`,
+      ne: `मैले हाम्रो फ्रन्ट डेस्क टिमलाई खबर गरिसकेको छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सिधै सहयोग गर्नुहुनेछ 😊\n\nयहाँले सिधै हाम्रो फ्रन्ट डेस्कमा पनि सम्पर्क गर्न सक्नुहुन्छ:\nह्वाट्सएप: ${whatsappPhone}\nफोन: ${frontdeskPhone}\nइमेल: ${knowledge.hotelInfo.email}`,
+      hi: `मैंने हमारी फ्रंट डेस्क टीम को सूचित कर दिया है। हमारे स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊\n\nआप सीधे हमारे फ्रंट डेस्क से संपर्क कर सकते हैं:\nWhatsApp: ${whatsappPhone}\nफोन: ${frontdeskPhone}\nईमेल: ${knowledge.hotelInfo.email}`,
     };
     return {
       content: handoverMessages[lang] || handoverMessages.en,
-      suggestedReplies: ['WhatsApp Front Desk', 'Room Prices', 'Hotel Location'],
+      suggestedReplies: ['Room Prices', 'Hotel Location', 'Check Availability'],
       intent: intentResult.intent,
       step: 'HANDOVER',
       triggerHandover: true,
@@ -78,8 +97,29 @@ export async function processConversationStep(
     };
   }
 
-  // 2. Room Rates Query
+  // 2. Room Rates Query (Context-Aware)
   if (intentResult.intent === 'ROOM_PRICE') {
+    if (state.roomType) {
+      const roomPrice =
+        state.roomType === 'Family Room'
+          ? rates.family
+          : state.roomType === 'Budget Family Room'
+          ? rates.budgetFamily
+          : rates.deluxe;
+      const priceMsg = {
+        en: `Our ${state.roomType} is USD ${roomPrice} per night${state.checkIn ? ` for ${state.checkIn}${state.checkOut ? ` to ${state.checkOut}` : ''}` : ''}. Would you like to reserve it?`,
+        ne: `हाम्रो ${state.roomType} प्रति रात USD ${roomPrice} हो${state.checkIn ? ` (${state.checkIn}${state.checkOut ? ` देखि ${state.checkOut}` : ''})` : ''}। के म यो कोठा यहाँको लागि सुरक्षित गरूँ?`,
+        hi: `हमारा ${state.roomType} USD ${roomPrice} प्रति रात है${state.checkIn ? ` (${state.checkIn}${state.checkOut ? ` से ${state.checkOut}` : ''})` : ''}। क्या आप इसे बुक करना चाहेंगे?`,
+      };
+      return {
+        content: priceMsg[lang] || priceMsg.en,
+        suggestedReplies: ['Yes, Book Now', 'Check Availability', 'Talk to Staff'],
+        intent: 'ROOM_PRICE',
+        step: state.currentStep,
+        triggerHandover: false,
+      };
+    }
+
     return {
       content: formatRoomPricesMessage(rates, lang),
       suggestedReplies: ['Check Availability', 'Hotel Location', 'Talk to Staff'],
@@ -435,8 +475,8 @@ Would you like to check room availability for your dates?`;
 
       const content =
         lang === 'ne'
-          ? `धन्यवाद! ${guestsText ? `${guestsText}को लागि ` : ''}यहाँको आगमन (Check-in) र प्रस्थान (Check-out) मिति कहिले हो?`
-          : `Thank you! ${guestsText ? `For ${guestsText}, ` : ''}what are your check-in and check-out dates?`;
+          ? `हजुर, ${guestsText ? `${guestsText}को लागि ` : ''}यहाँ कुन मितिमा बस्ने योजना बनाउँदै हुनुहुन्छ?`
+          : `Sure! ${guestsText ? `For ${guestsText}, ` : ''}what dates are you planning to stay?`;
 
       return {
         content,
@@ -449,11 +489,13 @@ Would you like to check room availability for your dates?`;
 
     // Step B: Missing guest count
     if (!state.adults || state.adults === 0) {
+      const content =
+        lang === 'ne'
+          ? `धन्यवाद! ${state.checkIn}${state.checkOut ? ` देखि ${state.checkOut}` : ''} को लागि कति जना पाहुनाहरू बस्नुहुनेछ?`
+          : `Thanks! For ${state.checkIn}${state.checkOut ? ` to ${state.checkOut}` : ''}, how many guests will be staying?`;
+
       return {
-        content:
-          lang === 'ne'
-            ? `धन्यवाद। ${state.checkIn} को लागि कति जना पाहुनाहरू (वयस्क / बालबालिका) बस्नुहुनेछ?`
-            : `Thank you! For ${state.checkIn}${state.checkOut ? ` to ${state.checkOut}` : ''}, how many guests will be staying? (Adults and children)`,
+        content,
         suggestedReplies: ['1 Adult', '2 Adults', '3 Adults (Family)', '2 Adults + 1 Child'],
         intent: intentResult.intent,
         step: 'AWAITING_GUESTS',
@@ -461,12 +503,10 @@ Would you like to check room availability for your dates?`;
       };
     }
 
-    // Step C: Determine suitable room
+    // Step C: Determine suitable room based on occupancy
     if (!state.roomType) {
       const totalGuests = (state.adults || 1) + (state.children || 0);
-      if (totalGuests > 3) {
-        state.roomType = 'Family Room';
-      } else if (state.adults > 2) {
+      if (totalGuests > 3 || (state.adults || 1) > 2) {
         state.roomType = 'Family Room';
       } else {
         state.roomType = 'Deluxe Room';
@@ -480,7 +520,13 @@ Would you like to check room availability for your dates?`;
         ? rates.budgetFamily
         : rates.deluxe;
 
-    // Step C.2: Real-time PMS availability validation
+    const datesStr = state.checkOut ? `${state.checkIn} – ${state.checkOut}` : `${state.checkIn}`;
+    const guestsDisplay =
+      lang === 'ne'
+        ? `${state.adults} वयस्क${state.children && state.children > 0 ? ` + ${state.children} बालबालिका` : ''}`
+        : `${state.adults} adult(s)${state.children && state.children > 0 ? ` + ${state.children} child${state.children > 1 ? 'ren' : ''}` : ''}`;
+
+    // Step C.2: Real-time PMS availability check
     if (state.checkIn) {
       const cIn = state.checkIn;
       const cOut = state.checkOut || new Date(new Date(state.checkIn).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -496,9 +542,9 @@ Would you like to check room availability for your dates?`;
           return {
             content:
               lang === 'ne'
-                ? `माफ गर्नुहोस् 😊 यहाँले छान्नुभएको मिति (${cIn} देखि ${cOut}) मा हाम्रा सबै कोठाहरू भरिभराउ (Sold Out) भइसकेका छन्।\n\nके यहाँ अर्को कुनै मितिमा यात्रा गर्न सक्नुहुन्छ? वा हाम्रो फ्रन्ट डेस्कसँग सिधै सम्पर्क गर्न सक्नुहुन्छ:\n📲 +977-9851068219 (wa.me/9779851068219)`
-                : `We apologize 😊 All rooms at Hotel Sherpa Soul are fully booked for your selected dates (${cIn} to ${cOut}).\n\nWould you like to check different dates? Or you can message our front desk directly at +977-9851068219!`,
-            suggestedReplies: ['Check Different Dates', 'Talk to Staff', 'Contact Front Desk'],
+                ? `माफ गर्नुहोस् 😊 यहाँले छान्नुभएको मिति (${cIn} देखि ${cOut}) मा हाम्रा सबै कोठाहरू भरिभराउ भइसकेका छन्। के यहाँ अर्को कुनै मितिमा यात्रा गर्न सक्नुहुन्छ?`
+                : `We apologize, all rooms at Hotel Sherpa Soul are fully booked for your selected dates (${cIn} to ${cOut}). Would you like to check different dates, or speak with our staff?`,
+            suggestedReplies: ['Check Different Dates', 'Talk to Staff'],
             intent: 'ROOM_AVAILABILITY',
             step: 'AWAITING_DATES',
             triggerHandover: false,
@@ -509,20 +555,14 @@ Would you like to check room availability for your dates?`;
       }
     }
 
-    // Step D: Confirming Booking Summary
+    // Step D: Confirming Booking or Recommending
     const rawName = state.guestName || ctx.customerName || '';
-    const isAnonymous = !rawName || rawName === 'Guest' || rawName === 'Website Visitor';
+    const isAnonymous = !rawName || rawName === 'Guest' || rawName === 'Website Visitor' || rawName === 'Valued Guest';
     const guestDisplayName = isAnonymous
       ? (lang === 'ne' ? 'आदरणीय पाहुना' : 'Valued Guest')
       : rawName;
 
-    const datesStr = state.checkOut ? `${state.checkIn} – ${state.checkOut}` : `${state.checkIn}`;
-    const guestsDisplay =
-      lang === 'ne'
-        ? `${state.adults} वयस्क${state.children && state.children > 0 ? ` + ${state.children} बालबालिका` : ''}`
-        : `${state.adults} adult(s)${state.children && state.children > 0 ? ` + ${state.children} child${state.children > 1 ? 'ren' : ''}` : ''}`;
-
-    // If guest is currently at CONFIRMING_SUMMARY step, check if they confirmed or asked to change
+    // Check if user confirmed booking or asked to change
     if (state.currentStep === 'CONFIRMING_SUMMARY') {
       const rawText = (ctx.rawMessage || intentResult.reason || '').toLowerCase();
 
@@ -538,7 +578,7 @@ Would you like to check room availability for your dates?`;
         return {
           content:
             lang === 'ne'
-              ? "कुनै समस्या छैन 😊 कृपया यहाँको नयाँ आगमन (Check-in) र प्रस्थान (Check-out) मिति बताइदिनुहोस्।"
+              ? "कुनै समस्या छैन 😊 कृपया यहाँको नयाँ आगमन र प्रस्थान मिति बताइदिनुहोस्।"
               : "No problem at all 😊 Please share your preferred check-in and check-out dates.",
           suggestedReplies: ['Today - 2 nights', 'This weekend', 'Talk to Staff'],
           intent: 'BOOKING',
@@ -547,66 +587,54 @@ Would you like to check room availability for your dates?`;
         };
       }
 
-      // If user confirms sending request / booking
+      // Check if user is answering their name
+      const isBookingCommand = /\b(book|reserve|reservation|can i|how much|price|cost|confirm|yes|ok|okay|fine|done|sure|सक्छु|गरिदिनुहोस्|गर्नुहोस्)\b/i.test(rawText);
+      if (isAnonymous && !isBookingCommand) {
+        if (rawText.match(/^(my name is|i am|this is|नाम)\s+/i) || (rawText.length >= 3 && rawText.length <= 35 && !rawText.includes('?'))) {
+          state.guestName = rawText.replace(/^(my name is|i am|this is|name is|नाम)\s+/i, '').trim();
+        }
+      }
+
+      // If name is still missing, ask for guest name
+      if (!state.guestName || state.guestName === 'Guest' || state.guestName === 'Website Visitor') {
+        const askNameMsg = {
+          en: `Great! For the reservation, what is your full name and the best phone number to reach you?`,
+          ne: `हुन्छ हजुर! बुकिङ सुरक्षित गर्नको लागि यहाँको पूरा नाम र फोन नम्बर बताइदिनुहोला?`,
+          hi: `बिल्कुल! बुकिंग के लिए आपका पूरा नाम और फोन नंबर क्या है?`,
+        };
+        return {
+          content: askNameMsg[lang] || askNameMsg.en,
+          suggestedReplies: ['Talk to Staff'],
+          intent: 'BOOKING',
+          step: 'CONFIRMING_SUMMARY',
+          triggerHandover: false,
+        };
+      }
+
+      // Guest confirmed and name is present -> Proceed to COMPLETE (chatDispatcher will create in PMS)
       return {
         content:
           lang === 'ne'
-            ? `🎉 धन्यवाद ${guestDisplayName}! यहाँको बुकिङ अनुरोध होटल शेर्पा सोलमा दर्ता भएको छ।
-━━━━━━━━━━━━━━━━━━
-🏨 कोठा: ${state.roomType} (${state.roomsCount || 1} वटा)
-📅 मिति: ${datesStr}
-👥 पाहुना: ${guestsDisplay}
-💰 दर: USD ${price}/रात (चेक-इनमा १०% छुट लागू हुनेछ)
-━━━━━━━━━━━━━━━━━━
-हाम्रो फ्रन्ट डेस्कले यहाँको कोठा सुरक्षित राख्नेछ।
-• कुनै अग्रिम भुक्तानी (Advance / Deposit) चाहिँदैन।
-• चेक-इनको समयमा सजिलै नगद, कार्ड वा फोनपेबाट भुक्तानी गर्न सक्नुहुन्छ।
-• होटल चेक-इन गर्दा परिचयपत्र (नागरिकता/राहदानी) देखाए पुग्छ।
-
-थप केही जानकारी चाहिएमा निर्धक्क सोध्न सक्नुहुन्छ 😊`
-            : `🎉 Thank you, ${guestDisplayName}! Your booking request has been officially received by Hotel Sherpa Soul.
-━━━━━━━━━━━━━━━━━━
-🏨 Room: ${state.roomType} (${state.roomsCount || 1} room)
-📅 Dates: ${datesStr}
-👥 Guests: ${guestsDisplay}
-💰 Rate: USD ${price}/night (10% Direct Discount applied upon check-in)
-━━━━━━━━━━━━━━━━━━
-Our front desk has received your request and reserved your space.
-• No advance deposit is required.
-• Pay comfortably at check-in (Cash / Card / QR).
-• Foreign guests present passport; Nepali/Indian guests present government ID upon arrival.
-
-Feel free to ask if you have any questions before arrival 😊`,
-        suggestedReplies: ['Hotel Location', 'Check-in Time', 'Talk to Staff'],
+            ? `धन्यवाद ${state.guestName}! म यहाँको बुकिङ होटल शेर्पा सोलको सिस्टममा दर्ता गर्दैछु...`
+            : `Thank you, ${state.guestName}! Reserving your ${state.roomType} now...`,
+        suggestedReplies: ['Talk to Staff'],
         intent: 'BOOKING',
         step: 'COMPLETE',
         triggerHandover: false,
-        summary: `Confirmed Booking Request: ${state.roomType} for ${guestsDisplay} (${datesStr})`,
+        summary: `Booking Request: ${state.roomType} for ${guestsDisplay} (${datesStr})`,
       };
     }
 
-    const summaryText =
-      lang === 'ne'
-        ? `यहाँको अनुरोध विवरण यस प्रकार छ:
-• पाहुना: ${guestDisplayName}
-• मिति: ${datesStr}
-• पाहुना संख्या: ${guestsDisplay}
-• कोठा: ${state.roomType} (USD ${price}/रात, फ्रन्ट डेस्कबाट १०% छुटसहित)
-• कोठा संख्या: ${state.roomsCount || 1}
-
-के म यो अनुरोध हाम्रो फ्रन्ट डेस्कमा पठाऊँ?`
-        : `Here is your booking inquiry summary:
-• Guest: ${guestDisplayName}
-• Dates: ${datesStr}
-• Guests: ${guestsDisplay}
-• Room: ${state.roomType} (Starting from USD ${price}/night, subject to front desk confirmation)
-• Rooms: ${state.roomsCount || 1}
-
-Would you like me to send this request to our front desk?`;
+    // First time presenting the room recommendation
+    const recommendationMsg = {
+      en: `For ${guestsDisplay}, our ${state.roomType} is available at USD ${price} per night for ${datesStr}. Would you like me to reserve this for you?`,
+      ne: `${guestsDisplay}को लागि हाम्रो ${state.roomType} प्रति रात USD ${price} मा उपलब्ध छ (${datesStr})। के म यो कोठा यहाँको लागि बुक गरूँ?`,
+      hi: `${guestsDisplay} के लिए हमारा ${state.roomType} USD ${price} प्रति रात उपलब्ध है (${datesStr})। क्या आप इसे बुक करना चाहेंगे?`,
+    };
 
     return {
-      content: summaryText,
-      suggestedReplies: ['Yes, Send Request', 'Change Details', 'Talk to Staff'],
+      content: recommendationMsg[lang] || recommendationMsg.en,
+      suggestedReplies: ['Yes, Reserve Room', 'Change Dates', 'Room Prices', 'Talk to Staff'],
       intent: 'BOOKING',
       step: 'CONFIRMING_SUMMARY',
       triggerHandover: false,
@@ -664,15 +692,15 @@ Would you like me to send this request to our front desk?`;
   // 8.4. Meta Ads Inquiry (Click-to-WhatsApp Ads)
   if (intentResult.intent === 'AD_INQUIRY') {
     const adWelcome = {
-      en: "Hi! Welcome to Hotel Sherpa Soul 😊\nThank you for reaching out through our advertisement!\n\nWe are a peaceful boutique hotel in Thamel (26 Thamel Bhagwati Marg, Kathmandu):\n• Deluxe AC Room — USD 20/night\n• Budget Family Room — USD 20/night\n• Family AC Room — USD 30/night\n\n✨ Special Direct Booking Perk: Instant 10% discount and NO advance deposit required!\n\nWould you like to check room availability for your travel dates?",
-      ne: "नमस्ते! होटल शेर्पा सोलमा यहाँलाई स्वागत छ 😊\nहाम्रो विज्ञापन हेरेर सम्पर्क गर्नुभएकोमा धन्यवाद!\n\nहामी ठमेल (२६ ठमेल भगवती मार्ग) मा अवस्थित शान्त बुटिक होटल हौँ:\n• डिलक्स कोठा (AC) — USD २०/रात\n• बजेट फेमिली कोठा — USD २०/रात\n• फेमिली कोठा (AC) — USD ३०/रात\n\n✨ विशेष सुविधा: सिधै बुकिङ गर्दा १०% छुट र कुनै अग्रिम रकम (Deposit) चाहिँदैन!\n\nयहाँको आगमन मिति बताइदिनुभए म कोठा उपलब्धता हेर्न मद्दत गर्नेछु 😊",
-      hi: "नमस्ते! होटल शेरपा सोल में आपका स्वागत है 😊\nहमारे विज्ञापन से संपर्क करने के लिए धन्यवाद!\n\n• डीलक्स एसी रूम — USD 20/रात\n• बजट फैमिली रूम — USD 20/रात\n• फैमिली एसी रूम — USD 30/रात\n\n✨ सीधी बुकिंग पर 10% की विशेष छूट और अग्रिम जमा की आवश्यकता नहीं है!\n\nक्या आप अपनी तारीखों के लिए उपलब्धता की जाँच करना चाहेंगे?",
+      en: "Hi! Thanks for checking out our ad 😊 We're a peaceful hotel in central Thamel with clean rooms starting at USD 20/night. What dates are you looking at?",
+      ne: "नमस्ते! हाम्रो विज्ञापन हेरेर सम्पर्क गर्नुभएकोमा धन्यवाद 😊 हामी ठमेलमा अवस्थित शान्त होटल हौँ, कोठाको सुरुवाती दर USD २०/रात छ। यहाँ कुन मितिको लागि कोठा हेर्दै हुनुहुन्छ?",
+      hi: "नमस्ते! हमारा विज्ञापन देखकर संपर्क करने के लिए धन्यवाद 😊 हम थमेल में स्थित एक शांत होटल हैं, कमरों का किराया USD 20/रात से शुरू है। आप किन तारीखों के लिए देख रहे हैं?",
     };
     return {
       content: adWelcome[lang] || adWelcome.en,
-      suggestedReplies: ['Check Availability', 'Room Prices', 'Hotel Location', 'Talk to Staff'],
+      suggestedReplies: ['Today - 2 nights', 'This weekend', 'Room Prices', 'Hotel Location'],
       intent: 'AD_INQUIRY',
-      step: 'GREETING',
+      step: 'AWAITING_DATES',
       triggerHandover: false,
     };
   }
@@ -680,24 +708,24 @@ Would you like me to send this request to our front desk?`;
   // 8.5. Greeting Fallback
   if (intentResult.intent === 'GREETING') {
     const greetings = {
-      en: "Hi! Welcome to Hotel Sherpa Soul 😊\nHow can I help you today?",
-      ne: "नमस्ते! होटल शेर्पा सोलमा यहाँलाई स्वागत छ 😊\nम यहाँलाई कसरी सहयोग गर्न सक्छु?",
-      hi: "नमस्ते! होटल शेरपा सोल में आपका स्वागत है 😊\nमैं आज आपकी क्या सहायता कर सकता हूँ?",
+      en: "Hi! Welcome to Hotel Sherpa Soul 😊 What dates are you looking at?",
+      ne: "नमस्ते! होटल शेर्पा सोलमा यहाँलाई स्वागत छ 😊 यहाँ कुन मितिको लागि कोठा खोज्दै हुनुहुन्छ?",
+      hi: "नमस्ते! होटल शेरपा सोल में आपका स्वागत है 😊 आप किन तारीखों के लिए कमरा देख रहे हैं?",
     };
     return {
       content: greetings[lang] || greetings.en,
-      suggestedReplies: ['Check Room Availability', 'Room Prices', 'Hotel Information', 'Location', 'Talk to Staff'],
+      suggestedReplies: ['Today - 2 nights', 'This weekend', 'Room Prices', 'Talk to Staff'],
       intent: 'GREETING',
-      step: 'GREETING',
+      step: 'AWAITING_DATES',
       triggerHandover: false,
     };
   }
 
   // 9. Unknown / Unsure Question -> Safe Front Desk Handover
   const fallbackMessages = {
-    en: "I don't want to give you incorrect information. Let me check that with our front desk team and have someone assist you shortly 😊\n\nYou can also contact our front desk directly:\n📲 WhatsApp: +977-9851068219 (wa.me/9779851068219)\n✉️ Email: info@hotelsherpasoul.com\n📞 Front Desk: +977-1-4530311",
-    ne: "म यहाँलाई गलत जानकारी दिन चाहन्नँ। म हाम्रो फ्रन्ट डेस्क टिमसँग यो बुझेर छिट्टै यहाँलाई जानकारी उपलब्ध गराउनेछु 😊\n\nयहाँले सिधै हाम्रो फ्रन्ट डेस्कमा पनि सम्पर्क गर्न सक्नुहुन्छ:\n📲 ह्वाट्सएप: +९७७-९८५१०६८२१९ (wa.me/9779851068219)\n✉️ इमेल: info@hotelsherpasoul.com\n📞 फोन: +९७७-१-४५३०३११",
-    hi: "मैं आपको गलत जानकारी नहीं देना चाहता। मैं हमारी फ्रंट डेस्क टीम से यह पुष्टि करके जल्द ही आपको बताता हूँ 😊\n\nआप सीधे हमारी फ्रंट डेस्क से संपर्क कर सकते हैं:\n📲 WhatsApp: +977-9851068219 (wa.me/9779851068219)\n✉️ ईमेल: info@hotelsherpasoul.com\n📞 फोन: +977-1-4530311",
+    en: `I don't want to give you the wrong information on this one. I'll pass this to our staff so they can help you 😊\n\nYou can also contact our front desk directly:\nWhatsApp: ${whatsappPhone}\nPhone: ${frontdeskPhone}\nEmail: ${knowledge.hotelInfo.email}`,
+    ne: `म यहाँलाई गलत जानकारी दिन चाहन्नँ। म हाम्रो टिमलाई यो जिम्मा दिन्छु ताकि यहाँले सही जानकारी पाउन सक्नुहोस् 😊\n\nयहाँले सिधै हाम्रो फ्रन्ट डेस्कमा पनि सम्पर्क गर्न सक्नुहुन्छ:\nह्वाट्सएप: ${whatsappPhone}\nफोन: ${frontdeskPhone}\nइमेल: ${knowledge.hotelInfo.email}`,
+    hi: `मैं आपको गलत जानकारी नहीं देना चाहता। मैं इसे हमारे स्टाफ को भेज देता हूँ ताकि वे आपकी पूरी मदद कर सकें 😊\n\nआप सीधे हमारे फ्रंट डेस्क से संपर्क कर सकते हैं:\nWhatsApp: ${whatsappPhone}\nफोन: ${frontdeskPhone}\nईमेल: ${knowledge.hotelInfo.email}`,
   };
 
   return {

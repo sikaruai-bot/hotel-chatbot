@@ -52,9 +52,18 @@ export async function POST(req: NextRequest) {
                 messageType = 'BUTTON';
               }
 
-              // Handle Click-to-WhatsApp Meta Ads referral
-              if (msg.referral && !text) {
-                text = msg.referral.headline || msg.referral.body || 'Hi, I saw your ad on Facebook and want to know more';
+              // Extract Click-to-WhatsApp Meta Ads referral attribution
+              let campaignInfo: { campaign?: string; campaignId?: string; ad?: string; adId?: string } | undefined = undefined;
+              if (msg.referral) {
+                const ref = msg.referral;
+                campaignInfo = {
+                  campaign: ref.headline || ref.body || 'Click-to-WhatsApp Meta Ad',
+                  adId: ref.source_id ? String(ref.source_id) : undefined,
+                  ad: ref.headline,
+                };
+                if (!text) {
+                  text = ref.headline || ref.body || 'Hi, I saw your ad on Meta and want to check room availability';
+                }
               }
 
               if (text) {
@@ -67,6 +76,7 @@ export async function POST(req: NextRequest) {
                   externalMessageId: messageId,
                   messageType,
                   rawPayload: msg,
+                  campaignInfo,
                 });
               }
             }

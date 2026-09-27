@@ -108,8 +108,8 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
       'tims', 'acap', 'sagarmatha', 'porter', 'ट्रेकिङ', 'गाइड', 'पर्मिट', 'अनुमतिपत्र',
       'सगरमाथा', 'लुक्ला', 'अन्नपूर्ण', 'उडान', 'टुर', 'ट्रेकिङ गाइड', 'trek guide', 'trek permit'
     ],
-    answerEn: "Yes! Drawing from our authentic Sherpa mountain heritage, Hotel Sherpa Soul provides complete travel and trekking desk support right from our front desk 😊\n\nWe can arrange:\n• Trekking permits (TIMS Card, Sagarmatha National Park, Annapurna ACAP)\n• Certified, licensed Sherpa trekking guides and porters\n• Domestic mountain flights (Kathmandu–Lukla, Pokhara, etc.)\n• Kathmandu Valley cultural sightseeing tours\n\nFeel free to speak directly with our front desk or message us on WhatsApp at +977-9851068219 for personalized trek planning!",
-    answerNe: "हजुर! हाम्रो आफ्नै शेर्पा परम्परा र अनुभवका साथ होटल शेर्पा सोलले ट्रेकिङ र यात्रा सम्बन्धी सम्पूर्ण सेवा उपलब्ध गराउँछ 😊\n\nहामी मार्फत:\n• ट्रेकिङ अनुमतिपत्रहरू (TIMS, सगरमाथा राष्ट्रिय निकुञ्ज, अन्नपूर्ण ACAP Permits)\n• लाइसेन्सप्राप्त अनुभवी शेर्पा ट्रेकिङ गाइड तथा पोर्टर\n• आन्तरिक हवाई टिकट (लुक्ला, पोखरा उडानहरू)\n• काठमाडौँ उपत्यका दृश्यावलोकन (Sightseeing) टुरहरू\nसजिलै व्यवस्था गर्न सकिन्छ। थप जानकारीका लागि हाम्रो फ्रन्ट डेस्क वा सिधै ह्वाट्सएप (+९७७ ९८५१०६८२१९) मा सम्पर्क गर्न सक्नुहुन्छ!",
+    answerEn: "Yes! Drawing from our authentic Sherpa mountain heritage, Hotel Sherpa Soul provides complete travel and trekking desk support right from our front desk 😊\n\nWe can arrange:\n• Trekking permits (TIMS Card, Sagarmatha National Park, Annapurna ACAP)\n• Certified, licensed Sherpa trekking guides and porters\n• Domestic mountain flights (Kathmandu–Lukla, Pokhara, etc.)\n• Kathmandu Valley cultural sightseeing tours\n\nFeel free to speak directly with our front desk or message us on WhatsApp at +977-9818259472 for personalized trek planning!",
+    answerNe: "हजुर! हाम्रो आफ्नै शेर्पा परम्परा र अनुभवका साथ होटल शेर्पा सोलले ट्रेकिङ र यात्रा सम्बन्धी सम्पूर्ण सेवा उपलब्ध गराउँछ 😊\n\nहामी मार्फत:\n• ट्रेकिङ अनुमतिपत्रहरू (TIMS, सगरमाथा राष्ट्रिय निकुञ्ज, अन्नपूर्ण ACAP Permits)\n• लाइसेन्सप्राप्त अनुभवी शेर्पा ट्रेकिङ गाइड तथा पोर्टर\n• आन्तरिक हवाई टिकट (लुक्ला, पोखरा उडानहरू)\n• काठमाडौँ उपत्यका दृश्यावलोकन (Sightseeing) टुरहरू\nसजिलै व्यवस्था गर्न सकिन्छ। थप जानकारीका लागि हाम्रो फ्रन्ट डेस्क वा सिधै ह्वाट्सएप (+९७७ ९८१८२५९४७२) मा सम्पर्क गर्न सक्नुहुन्छ!",
     answerHi: "हाँ! हमारी प्रामाणिक शेरपा विरासत के साथ, होटल शेरपा सोल आपके लिए ट्रेकिंग परमिट (TIMS, एवरेस्ट, अन्नपूर्णा), प्रमाणित शेरपा गाइड, घरेलू उड़ानें (लुक्ला, पोखरा) और काठमांडू वैली टूर की पूरी व्यवस्था करता है 😊"
   },
   {
@@ -153,9 +153,9 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
       'airport', 'pickup', 'drop', 'shuttle', 'transfer', 'cab', 'taxi', 'tribhuvan',
       'tia', 'ktm airport', 'विमानस्थल', 'एयरपोर्ट', 'पिकअप', 'ट्याक्सी', 'airport pickup', 'airport transfer'
     ],
-    answerEn: "Yes! We arrange reliable private airport pick-up and drop-off transfers to and from Tribhuvan International Airport (TIA/KTM), which is about 6 km (~20-30 minutes) from our hotel 😊\n\nTo arrange an airport transfer, you can request it during booking or message our front desk on WhatsApp at +977-9851068219 with your flight number and arrival time. A trusted driver will meet you right outside the airport arrivals terminal!",
-    answerNe: "हजुर! हामी त्रिभुवन अन्तर्राष्ट्रिय विमानस्थल (TIA) बाट होटलसम्म भरपर्दो एयरपोर्ट पिकअप र ड्रप (Airport Transfer) सेवा व्यवस्था गर्दछौँ। होटल विमानस्थलबाट करिब ६ कि.मि. (२०-३० मिनेट) दूरीमा छ 😊\n\nगाडी मगाउनका लागि यहाँले बुकिङ गर्दा वा हाम्रो फ्रन्ट डेस्कको ह्वाट्सएप (+९७७ ९८५१०६८२१९) मा आफ्नो उडान नम्बर (Flight Number) र आगमन समय पठाउन सक्नुहुन्छ। चालकले विमानस्थलमै यहाँलाई स्वागत गर्नेछन्!",
-    answerHi: "हाँ! हम त्रिभुवन अंतर्राष्ट्रीय हवाई अड्डे (TIA) से होटल तक विश्वसनीय एयरपोर्ट पिकअप और ड्रॉप की व्यवस्था करते हैं। आप व्हाट्सएप पर (+977-9851068219) अपनी फ्लाइट विवरण भेजकर टैक्सी बुक कर सकते हैं 😊"
+    answerEn: "Yes! We arrange reliable private airport pick-up and drop-off transfers to and from Tribhuvan International Airport (TIA/KTM), which is about 6 km (~20-30 minutes) from our hotel 😊\n\nTo arrange an airport transfer, you can request it during booking or message our front desk on WhatsApp at +977-9818259472 with your flight number and arrival time. A trusted driver will meet you right outside the airport arrivals terminal!",
+    answerNe: "हजुर! हामी त्रिभुवन अन्तर्राष्ट्रिय विमानस्थल (TIA) बाट होटलसम्म भरपर्दो एयरपोर्ट पिकअप र ड्रप (Airport Transfer) सेवा व्यवस्था गर्दछौँ। होटल विमानस्थलबाट करिब ६ कि.मि. (२०-३० मिनेट) दूरीमा छ 😊\n\nगाडी मगाउनका लागि यहाँले बुकिङ गर्दा वा हाम्रो फ्रन्ट डेस्कको ह्वाट्सएप (+९७७ ९८१८२५९४७२) मा आफ्नो उडान नम्बर (Flight Number) र आगमन समय पठाउन सक्नुहुन्छ। चालकले विमानस्थलमै यहाँलाई स्वागत गर्नेछन्!",
+    answerHi: "हाँ! हम त्रिभुवन अंतर्राष्ट्रीय हवाई अड्डे (TIA) से होटल तक विश्वसनीय एयरपोर्ट पिकअप और ड्रॉप की व्यवस्था करते हैं। आप व्हाट्सएप पर (+977-9818259472) अपनी फ्लाइट विवरण भेजकर टैक्सी बुक कर सकते हैं 😊"
   },
   {
     id: 'location_surroundings',
@@ -266,9 +266,9 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
       'about', 'story', 'who are you', 'hotel info', 'sherpa soul', 'philosophy',
       'contact', 'phone', 'whatsapp', 'email', 'e-mail', 'mail', 'होटलको बारेमा', 'परिचय', 'सम्पर्क'
     ],
-    answerEn: "Hotel Sherpa Soul is a tranquil boutique hotel located at 26 Thamel Bhagwati Marg, Kathmandu, inspired by authentic Himalayan Sherpa hospitality 😊\n\n• Motto: 'No Restaurant. No Noise. Sleep Well.'\n• WhatsApp Chatbot: +977-9818259472 (wa.me/9779818259472)\n• Front Desk / Call: +977-1-4530311 / +977-9851068219\n• Email: info@hotelsherpasoul.com\n• Website: https://hotelsherpasoul.com\n• 24/7 Reception Desk\n\nWe provide clean restful rooms, 24/7 hot showers, high-speed fiber Wi-Fi, and licensed trekking guidance!",
-    answerNe: "होटल शेर्पा सोल ठमेल भगवती मार्ग २६, काठमाडौँमा अवस्थित एक शान्त र आरामदायी बुटिक होटल हो 😊\n\n• आदर्श वाक्य: 'No Restaurant. No Noise. Sleep Well.'\n• ह्वाट्सएप च्याटबोट: +९७७ ९८१८२५९४७२ (wa.me/9779818259472)\n• फ्रन्ट डेस्क / कल: +९७७-१-४५३०३११ / +९७७ ९८५१०६८२१९\n• इमेल: info@hotelsherpasoul.com\n• वेबसाइट: https://hotelsherpasoul.com\n• २४ सै घण्टा खुला फ्रन्ट डेस्क\n\nहामी शान्त निद्रा, सफा कोठा, २४ सै घण्टा तातो पानी, द्रुत गतिको वाइफाइ र शेर्पा जातिको हार्दिक आतिथ्यता प्रदान गर्दछौँ!",
-    answerHi: "होटल शेरपा सोल थमेल, काठमांडू में स्थित एक शांत बुटीक होटल है। WhatsApp: +977-9818259472, फोन: +977-9851068219, info@hotelsherpasoul.com 😊"
+    answerEn: "Hotel Sherpa Soul is a tranquil boutique hotel located at 26 Thamel Bhagwati Marg, Kathmandu, inspired by authentic Himalayan Sherpa hospitality 😊\n\n• Motto: 'No Restaurant. No Noise. Sleep Well.'\n• WhatsApp Chatbot: +977-9818259472 (wa.me/9779818259472)\n• Front Desk / Call: +977-1-4530311 / +977-9818259472\n• Email: info@hotelsherpasoul.com\n• Website: https://hotelsherpasoul.com\n• 24/7 Reception Desk\n\nWe provide clean restful rooms, 24/7 hot showers, high-speed fiber Wi-Fi, and licensed trekking guidance!",
+    answerNe: "होटल शेर्पा सोल ठमेल भगवती मार्ग २६, काठमाडौँमा अवस्थित एक शान्त र आरामदायी बुटिक होटल हो 😊\n\n• आदर्श वाक्य: 'No Restaurant. No Noise. Sleep Well.'\n• ह्वाट्सएप च्याटबोट: +९७७ ९८१८२५९४७२ (wa.me/9779818259472)\n• फ्रन्ट डेस्क / कल: +९७७-१-४५३०३११ / +९७७ ९८१८२५९४७२\n• इमेल: info@hotelsherpasoul.com\n• वेबसाइट: https://hotelsherpasoul.com\n• २४ सै घण्टा खुला फ्रन्ट डेस्क\n\nहामी शान्त निद्रा, सफा कोठा, २४ सै घण्टा तातो पानी, द्रुत गतिको वाइफाइ र शेर्पा जातिको हार्दिक आतिथ्यता प्रदान गर्दछौँ!",
+    answerHi: "होटल शेरपा सोल थमेल, काठमांडू में स्थित एक शांत बुटीक होटल है। WhatsApp: +977-9818259472, फोन: +977-1-4530311 / +977-9818259472, info@hotelsherpasoul.com 😊"
   },
   {
     id: 'hotel_email_contact',
@@ -278,9 +278,9 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
       'email k ho', 'email ke ho', 'email k cha', 'email cha', 'email chahiyo', 'email pathaunus',
       'इमेल', 'ईमेल', 'इमेल ठेगाना', 'ईमेल पता', 'इमेल के हो', 'ईमेल क्या है'
     ],
-    answerEn: "Our official hotel email address is info@hotelsherpasoul.com 😊\n\n• Official Email: info@hotelsherpasoul.com\n• Front Desk / Call: +977-1-4530311 / +977-9851068219\n• WhatsApp: +977-9818259472 (wa.me/9779818259472)\n• Website: https://hotelsherpasoul.com\n\nFeel free to email us for reservations, trekking permits, visa confirmation letters, or any inquiries!",
-    answerNe: "होटल शेर्पा सोलको आधिकारिक इमेल ठेगाना info@hotelsherpasoul.com हो 😊\n\n• आधिकारिक इमेल: info@hotelsherpasoul.com\n• फ्रन्ट डेस्क / कल: +९७७-१-४५३०३११ / +९७७ ९८५१०६८२१९\n• ह्वाट्सएप: +९७७ ९८१८२५९४७२ (wa.me/9779818259472)\n• वेबसाइट: https://hotelsherpasoul.com\n\nबुकिङ, ट्रेकिङ अनुमतिपत्र वा आधिकारिक कन्फर्मेसन लेटरका लागि यहाँले सिधै हामीलाई इमेल गर्न सक्नुहुन्छ!",
-    answerHi: "होटल शेरपा सोल का आधिकारिक ईमेल पता info@hotelsherpasoul.com है 😊\n\n• आधिकारिक ईमेल: info@hotelsherpasoul.com\n• फोन: +977-1-4530311 / +977-9851068219\n• WhatsApp: +977-9818259472\n\nआप किसी भी जानकारी या बुकिंग के लिए हमें बेझिझक ईमेल कर सकते हैं!"
+    answerEn: "Our official hotel email address is info@hotelsherpasoul.com 😊\n\n• Official Email: info@hotelsherpasoul.com\n• Front Desk / Call: +977-1-4530311 / +977-9818259472\n• WhatsApp: +977-9818259472 (wa.me/9779818259472)\n• Website: https://hotelsherpasoul.com\n\nFeel free to email us for reservations, trekking permits, visa confirmation letters, or any inquiries!",
+    answerNe: "होटल शेर्पा सोलको आधिकारिक इमेल ठेगाना info@hotelsherpasoul.com हो 😊\n\n• आधिकारिक इमेल: info@hotelsherpasoul.com\n• फ्रन्ट डेस्क / कल: +९७७-१-४५३०३११ / +९७७ ९८१८२५९४७२\n• ह्वाट्सएप: +९७७ ९८१८२५९४७२ (wa.me/9779818259472)\n• वेबसाइट: https://hotelsherpasoul.com\n\nबुकिङ, ट्रेकिङ अनुमतिपत्र वा आधिकारिक कन्फर्मेसन लेटरका लागि यहाँले सिधै हामीलाई इमेल गर्न सक्नुहुन्छ!",
+    answerHi: "होटल शेरपा सोल का आधिकारिक ईमेल पता info@hotelsherpasoul.com है 😊\n\n• आधिकारिक ईमेल: info@hotelsherpasoul.com\n• फोन: +977-1-4530311 / +977-9818259472\n• WhatsApp: +977-9818259472\n\nआप किसी भी जानकारी या बुकिंग के लिए हमें बेझिझक ईमेल कर सकते हैं!"
   },
   {
     id: 'hotel_floors_layout',
@@ -326,9 +326,101 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
       'visa letter', 'proof of booking', 'booking gareko letter', 'booking praman',
       'पुष्टि पत्र', 'रसिद', 'भौचर', 'लेटर चाहियो'
     ],
-    answerEn: "Yes! Hotel Sherpa Soul provides an official Reservation Confirmation Letter & Digital Voucher on official hotel letterhead 😊\n\n• For Visa / Embassy / Trek Permit purposes: We issue formal PDF booking vouchers with our company registration and official stamp completely FREE of charge.\n• No advance deposit required.\n• If you have an active booking with us, our front desk can email or WhatsApp your official confirmation letter immediately. You can also message our front desk directly at +977-9851068219!",
-    answerNe: "हजुर! होटल शेर्पा सोलले आधिकारिक लेटरहेड र होटलको छाप (Official Stamp) सहितको बुकिङ कन्फर्मेसन लेटर (Booking Confirmation Letter / Voucher) निःशुल्क उपलब्ध गराउँछ 😊\n\n• नेपाल पर्यटक भिसा, दूतावास वा ट्रेकिङ पर्मिट प्रयोजनका लागि आधिकारिक PDF लेटर प्राप्त गर्न सकिन्छ।\n• कुनै अग्रिम रकम (Advance Deposit) तिर्नु पर्दैन।\n• यहाँको बुकिङ सुरक्षित भएपछि हाम्रो फ्रन्ट डेस्कले ह्वाट्सएप (+९७७ ९८५१०६८२१९) वा इमेलमा तुरुन्त लेटर पठाइदिनेछ!",
+    answerEn: "Yes! Hotel Sherpa Soul provides an official Reservation Confirmation Letter & Digital Voucher on official hotel letterhead 😊\n\n• For Visa / Embassy / Trek Permit purposes: We issue formal PDF booking vouchers with our company registration and official stamp completely FREE of charge.\n• No advance deposit required.\n• If you have an active booking with us, our front desk can email or WhatsApp your official confirmation letter immediately. You can also message our front desk directly at +977-9818259472!",
+    answerNe: "हजुर! होटल शेर्पा सोलले आधिकारिक लेटरहेड र होटलको छाप (Official Stamp) सहितको बुकिङ कन्फर्मेसन लेटर (Booking Confirmation Letter / Voucher) निःशुल्क उपलब्ध गराउँछ 😊\n\n• नेपाल पर्यटक भिसा, दूतावास वा ट्रेकिङ पर्मिट प्रयोजनका लागि आधिकारिक PDF लेटर प्राप्त गर्न सकिन्छ।\n• कुनै अग्रिम रकम (Advance Deposit) तिर्नु पर्दैन।\n• यहाँको बुकिङ सुरक्षित भएपछि हाम्रो फ्रन्ट डेस्कले ह्वाट्सएप (+९७७ ९८१८२५९४७२) वा इमेलमा तुरुन्त लेटर पठाइदिनेछ!",
     answerHi: "हाँ! होटल शेरपा सोल वीज़ा, परमिट या यात्रा के लिए अपने आधिकारिक लेटरहेड और मुहर के साथ बुकिंग कन्फर्मेशन लेटर / वाउचर मुफ्त में प्रदान करता है 😊"
+  },
+  {
+    id: 'nearby_food_breakfast',
+    category: 'FACILITIES',
+    keywords: [
+      'breakfast', 'where to eat', 'khana kata khane', 'cafe', 'dining', 'restaurant nearby',
+      'khaja', 'dal bhat', 'thali', 'बिहानको खाजा', 'खाना कहाँ खाने', 'कहाँ खाने', 'नास्ता', 'नास्ता कहाँ',
+      'nasta', 'food nearby', 'eating options', 'dinner place', 'lunch place'
+    ],
+    answerEn: "Because our core philosophy is 'No Restaurant. No Noise. Sleep Well', we intentionally don't operate an in-house restaurant so rooms remain peaceful, quiet, and fresh 😊\n\nHowever, our location in Thamel puts dozens of fantastic dining options just 1–2 minutes walk away:\n• Morning Coffee & Breakfast: Himalayan Java Coffee, European-style bakeries, and organic cafes right down our street.\n• Traditional Nepali & Newari: Authentic Thakali Dal Bhat and Newari khaja sets around Thamel Bhagwati Marg.\n• International Cuisine: Italian wood-fired pizza, Indian, and Continental restaurants steps away.\n\nOur front desk is always delighted to recommend our favorite clean, tasty local spots!",
+    answerNe: "शान्त वातावरण र मीठो निद्राका लागि हाम्रो नीति 'No Restaurant. No Noise. Sleep Well.' भएकोले हामी होटलभित्र व्यावसायिक रेस्टुरेन्ट राख्दैनौँ 😊 तर होटलबाट १–२ मिनेटमै थुप्रै उत्कृष्ट ठाउँहरू उपलब्ध छन्:\n• बिहानको ब्रेकफास्ट र कफी: Himalayan Java, स्थानीय बेकरीहरू र अर्गानिक क्याफेहरू (१ मिनेटमै पुगिने)।\n• नेपाली तथा थकाली खाना: परम्परागत नेपाली दाल-भात, थकाली भान्सा घर र नेवारी खाजा घरहरू।\n• अन्तर्राष्ट्रिय खाना: इटालियन पिज्जा, भारतीय तथा कन्टिनेन्टल रेस्टुरेन्टहरू।\n\nहाम्रो फ्रन्ट डेस्कले यहाँलाई मिठो र सफा खाना पाउने नजिकका ठाउँहरू सहर्ष सिफारिस गरिदिनेछ!",
+    answerHi: "कमरों में शांति बनाए रखने के लिए होटल में इन-हाउस रेस्टोरेंट नहीं है, लेकिन 1-2 मिनट की पैदल दूरी पर हिमालयन जावा कैफे, बेकरी और पारंपरिक नेपाली दाल-भात के कई बेहतरीन विकल्प उपलब्ध हैं 😊"
+  },
+  {
+    id: 'early_checkin_late_checkout',
+    category: 'CHECK_IN',
+    keywords: [
+      'early check in', 'early morning', 'night bus', 'late check out', 'chaudo aayo vane',
+      'chhito aayo vane', 'early arrival', 'छिटो आयो भने', 'सबेरै आएमा', 'चाँडै आएमा',
+      'early checkin', 'late checkout', 'morning check in', 'late arrival'
+    ],
+    answerEn: "If you arrive early in the morning (for example from an overnight flight or night bus), you are warmly welcome to come straight to Hotel Sherpa Soul 😊\n\n• If your room is already vacant and cleaned, we will gladly check you in early completely free of charge!\n• If previous guests are still in the room, you can safely store all your luggage at our 24/7 reception, freshen up, and relax on our rooftop terrace or reception lounge with free Wi-Fi until the room is ready.\n\nStandard check-in is 2:00 PM and check-out is 12:00 PM noon. Late check-out is also accommodated whenever room availability permits!",
+    answerNe: "यदि यहाँ बिहान सबेरै (जस्तै नाइट बस वा बिहानको उडानबाट) आइपुग्नुभयो भने सिधै होटल शेर्पा सोलमा आउन सक्नुहुन्छ 😊\n\n• यदि कोठा खाली र तयार छ भने हामी कुनै अतिरिक्त शुल्क बिना अर्ली चेक-इन (Early Check-in) गराइदिनेछौँ!\n• यदि कोठा खाली हुन बाँकी छ भने यहाँले आफ्नो सम्पूर्ण लगेज रिसेप्सनमा निःशुल्क सुरक्षित राखेर फ्रेस हुन सक्नुहुन्छ र हाम्रो रुफटप टेरेस वा लबीमा बसेर आराम वा वाइफाइ चलाउन सक्नुहुन्छ।\n\nसाधारण चेक-इन दिउँसो २:०० बजे र चेक-आउट मध्यान्ह १२:०० बजे हो। कोठा खाली भएको अवस्थामा लेट चेक-आउट पनि मिलाउन सकिन्छ!",
+    answerHi: "यदि आप सुबह जल्दी आते हैं और कमरा खाली है, तो हम बिना किसी शुल्क के जल्दी चेक-इन प्रदान करते हैं। यदि कमरा तैयार होने में समय है, तो आप अपना सामान रिसेप्शन पर रखकर रूफटॉप पर आराम कर सकते हैं 😊"
+  },
+  {
+    id: 'taxi_directions_landmark',
+    category: 'LOCATION',
+    keywords: [
+      'taxi driver', 'how to reach', 'directions', 'driver lai k bhanne', 'landmark',
+      'bhagwati marg', 'kata bhannu', 'taxi lai k bhanne', 'ट्याक्सीलाई के भन्ने', 'बाटो',
+      'directions to hotel', 'find hotel', 'driver', 'taxi guidance', 'kasari pugne'
+    ],
+    answerEn: "To guide your taxi driver smoothly to Hotel Sherpa Soul, simply tell them:\n'Thamel Bhagwati Marg, near Bhagwati Mandir (Temple)' 😊\n\nOur address is 26 Thamel Bhagwati Marg. We are situated in a quiet alley directly across from the Bhagwati Temple (just 30 meters off the main street).\n\nIf the driver needs exact phone guidance, have them call our 24/7 front desk at +977-1-4530311 or WhatsApp us at +977-9818259472 and our staff will guide them directly in Nepali!",
+    answerNe: "ट्याक्सी चालकलाई होटलसम्म सजिलै ल्याउनका लागि सिधै भन्न सक्नुहुन्छ:\n'ठमेल भगवती मार्ग, भगवती मन्दिर नजिक' 😊\n\nहाम्रो ठेगाना २६ ठमेल भगवती मार्ग हो। हामी भगवती मन्दिरको ठीक अगाडिपट्टी मुख्य बाटोबाट ३० मिटर भित्र शान्त गल्लीमा छौँ।\n\nयदि चालकलाई बाटो ठ्याक्कै थाहा भएन भने हाम्रो फ्रन्ट डेस्क (+९७७-१-४५३०३११ वा ह्वाट्सएप +९७७ ९८१८२५९४७२) मा फोन गर्न दिनुहोला, हामी चालकलाई फोनमै सजिलै बाटो सम्झाइदिनेछौँ!",
+    answerHi: "टैक्सी चालक को बस इतना कहें: 'थमेल भगवती मार्ग, भगवती मंदिर के पास'। हमारा होटल मंदिर के ठीक सामने 26 नंबर पर स्थित है 😊 यदि चालक को रास्ता न मिले तो वह हमारे फ्रंट डेस्क (+977-1-4530311) पर कॉल कर सकता है।"
+  },
+  {
+    id: 'tourist_bus_park_distance',
+    category: 'TRANSPORTATION',
+    keywords: [
+      'bus park', 'tourist bus', 'sorhakhutte', 'pokhara bus', 'chitwan bus', 'bus park bata kata',
+      'bus park distance', 'बसपार्क', 'सोह्रखुट्टे', 'बस पार्क', 'pokhara jane bus', 'chitwan jane bus'
+    ],
+    answerEn: "Hotel Sherpa Soul is located just a 5 to 7-minute walk (~500 meters) from the Sorhakhutte Tourist Bus Park, where all morning tourist buses to Pokhara and Chitwan depart and arrive 😊\n\nThis makes our hotel exceptionally convenient for travelers exploring Nepal! Our front desk can also assist you with tourist bus ticket bookings and early morning departure arrangements.",
+    answerNe: "होटल शेर्पा सोल सोह्रखुट्टे टुरिस्ट बसपार्क (Sorhakhutte Tourist Bus Park) बाट मात्र ५ देखि ७ मिनेटको पैदल दूरी (करिब ५०० मिटर) मा अवस्थित छ 😊\n\nपोखरा वा चितवन जाने सम्पूर्ण बिहानी पर्यटक बसहरू यहीँबाट छुट्छन् र आइपुग्छन्। पोखरा/चितवन यात्राका लागि हाम्रो स्थान अत्यन्तै पायक पर्ने छ। साथै बस टिकटको व्यवस्था पनि हाम्रो फ्रन्ट डेस्कबाटै मिलाउन सकिन्छ!",
+    answerHi: "होटल शेरपा सोल सोह्रखुट्टे टूरिस्ट बस पार्क (जहाँ से पोखरा और चितवन की बसें चलती हैं) से केवल 5-7 मिनट की पैदल दूरी पर है 😊"
+  },
+  {
+    id: 'drinking_water_kettle',
+    category: 'ROOM_AMENITIES',
+    keywords: [
+      'drinking water', 'water refill', 'kettle', 'hot water to drink', 'boiled water',
+      'tea coffee', 'pani', 'water', 'खाने पानी', 'पिउने पानी', 'केटल', 'तातो पानी पिउने',
+      'mineral water', 'filter water'
+    ],
+    answerEn: "Yes! Hotel Sherpa Soul provides safe, clean drinking water for all our guests 😊\n\n• Every room is equipped with an electric kettle and complimentary tea/coffee supplies.\n• Safe, filtered drinking water refills are readily available throughout your stay completely free of charge.\n• You can prepare fresh tea, coffee, or hot drinking water in your room at any time!",
+    answerNe: "हजुर! होटल शेर्पा सोलमा पिउने सफा र सुरक्षित पानीको पूर्ण व्यवस्था छ 😊\n\n• प्रत्येक कोठामा इलेक्ट्रिक केटल (Electric Kettle) र चिया/कफी बनाउने सामग्री उपलब्ध छ।\n• शुद्ध र सुरक्षित फिल्टर गरिएको पिउने पानी (Refill) होटलमा सधैँ निःशुल्क उपलब्ध छ।\n• यहाँले कुनै पनि बेला कोठाभित्रै तातो पानी वा चिया बनाएर पिउन सक्नुहुन्छ!",
+    answerHi: "हाँ! प्रत्येक कमरे में इलेक्ट्रिक केतली और चाय/कॉफी का सामान उपलब्ध है, तथा सुरक्षित पीने का पानी हमेशा निःशुल्क उपलब्ध रहता है 😊"
+  },
+  {
+    id: 'ota_booking_links',
+    category: 'PAYMENT',
+    keywords: [
+      'booking.com', 'airbnb', 'trip.com', 'ota', 'online booking', 'booking link',
+      'agoda', 'बुकिङ लिङ्क', 'booking com', 'ota links', 'website link', 'book online'
+    ],
+    answerEn: "You can book Hotel Sherpa Soul across major travel platforms, or book directly for the best guaranteed rate 😊:\n\n• 🌟 Direct Booking (10% Instant Discount & Best Rate Guarantee): https://hotelsherpasoul.com/book-now\n• 🏨 Booking.com: https://www.booking.com/hotel/np/hotel-sherpa-soul.html\n• 🏡 Airbnb: https://www.airbnb.com/rooms/1760024961976448522\n• ✈️ Trip.com: https://www.trip.com/hotels/list?keyword=Hotel%20Sherpa%20Soul%20Kathmandu\n\nBooking directly through our website or right here on chat gives you the highest savings without any advance deposit!",
+    answerNe: "होटल शेर्पा सोल यहाँले मुख्य ट्राभल प्लेटफर्महरूबाट वा सिधै हाम्रो आधिकारिक वेबसाइटबाट बुक गर्न सक्नुहुन्छ 😊:\n\n• 🌟 सिधै बुकिङ (१०% तुरुन्त छुट र सबैभन्दा सस्तो दर): https://hotelsherpasoul.com/book-now\n• 🏨 Booking.com: https://www.booking.com/hotel/np/hotel-sherpa-soul.html\n• 🏡 Airbnb: https://www.airbnb.com/rooms/1760024961976448522\n• ✈️ Trip.com: https://www.trip.com/hotels/list?keyword=Hotel%20Sherpa%20Soul%20Kathmandu\n\nसिधै हामीसँग वेबसाइट वा यहीँ च्याटमा बुक गर्दा कुनै अग्रिम रकम नतिरी तुरुन्त १०% छुट प्राप्त हुन्छ!",
+    answerHi: "आप होटल शेरपा सोल को Booking.com, Airbnb, Trip.com या हमारी आधिकारिक वेबसाइट (https://hotelsherpasoul.com/book-now) पर सीधे बुक कर सकते हैं, जहाँ आपको 10% की अतिरिक्त छूट मिलती है 😊"
+  },
+  {
+    id: 'google_maps_location',
+    category: 'LOCATION',
+    keywords: [
+      'google maps', 'map link', 'map', 'location link', 'gps', 'गुगल म्याप', 'म्याप',
+      'नक्सा', 'location pathaunus', 'map pathaunus', 'google map', 'google map link'
+    ],
+    answerEn: "Here is the exact Google Maps location for Hotel Sherpa Soul 😊:\n\n📍 Google Maps Navigation: https://maps.app.goo.gl/nDB9DnLtb6taeaLRA\n• Address: 26 Thamel Bhagwati Marg, Thamel, Kathmandu 44600, Nepal\n• Landmark: Across from Bhagwati Mandir (Temple) in a quiet alley (30 meters off the road)\n• GPS Coordinates: 27.7154° N, 85.3123° E\n\nTap the link above to open turn-by-turn navigation directly on your phone!",
+    answerNe: "होटल शेर्पा सोलको ठ्याक्कै गुगल म्याप (Google Maps) लोकेसन तलको लिङ्कमा हेर्न सक्नुहुन्छ 😊:\n\n📍 गुगल म्याप: https://maps.app.goo.gl/nDB9DnLtb6taeaLRA\n• ठेगाना: २६ ठमेल भगवती मार्ग, ठमेल, काठमाडौँ ४४६००\n• ल्यान्डमार्क: भगवती मन्दिरको ठीक अगाडि शान्त गल्लीभित्र (मुख्य बाटोबाट ३० मिटर भित्र)\n• GPS: 27.7154° N, 85.3123° E\n\nमाथिको लिङ्क थिचेर यहाँले सिधै बाटो हेर्दै आइपुग्न सक्नुहुन्छ!",
+    answerHi: "होटल शेरपा सोल का गूगल मैप लिंक: https://maps.app.goo.gl/nDB9DnLtb6taeaLRA (26 थमेल भगवती मार्ग, भगवती मंदिर के पास) 😊"
+  },
+  {
+    id: 'hotel_reviews_rating',
+    category: 'HOTEL_INFORMATION',
+    keywords: [
+      'review', 'rating', 'guest review', 'rating kasto cha', 'rating kati ho', 'stars',
+      'रेभ्यु', 'रेटिङ', 'कस्तो छ', 'customer review', 'reviews', 'ratings'
+    ],
+    answerEn: "Hotel Sherpa Soul proudly holds a 4.9 / 5.0 guest review rating from over 128+ verified travelers exploring Nepal 😊!\n\nOur guests consistently highlight:\n• Exceptionally quiet rooms and deep, restful sleep in central Thamel ('No Restaurant. No Noise. Sleep Well.')\n• 24/7 high-pressure hot water showers in modern private bathrooms\n• Warm, authentic Himalayan Sherpa hospitality & trekking assistance\n• Reliable fiber-optic Wi-Fi and clean, comfortable bedding\n\nYou can read verified traveler reviews on our website at https://hotelsherpasoul.com!",
+    answerNe: "होटल शेर्पा सोललाई विश्वभरका पाहुनाहरूले १२८+ भन्दा बढी प्रमाणित समीक्षाहरूमा ४.९ / ५.० (4.9/5.0) को उत्कृष्ट रेटिङ दिनुभएको छ 😊!\n\nपाहुनाहरूले विशेषगरी:\n• ठमेलको केन्द्रमा भए पनि कुनै कोलाहल नहुने शान्त वातावरण र मीठो निद्रा ('No Restaurant. No Noise. Sleep Well.')\n• २४ सै घण्टा उच्च प्रेसरको तातो पानीसहितको निजी आधुनिक बाथरुम\n• शेर्पा परिवारको हार्दिक आतिथ्यता र ट्रेकिङ सहयोग\n• कोठाको सफाइ र तीव्र गतिको फाइबर वाइफाइको उच्च प्रशंसा गर्नुभएको छ।\n\nथप समीक्षाहरू हाम्रो आधिकारिक वेबसाइट https://hotelsherpasoul.com मा हेर्न सक्नुहुन्छ!",
+    answerHi: "होटल शेरपा सोल को 128+ से अधिक मेहमानों की समीक्षाओं के साथ 4.9/5.0 की उत्कृष्ट रेटिंग प्राप्त है 😊"
   }
 ];
 

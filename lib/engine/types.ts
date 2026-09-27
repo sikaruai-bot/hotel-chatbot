@@ -33,6 +33,7 @@ export type Intent =
   | 'ELEVATOR'
   | 'COUPLE_FRIENDLY'
   | 'AD_INQUIRY'
+  | 'AI_IDENTITY'
   | 'OTHER';
 
 export type ConversationStep =

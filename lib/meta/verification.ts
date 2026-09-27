@@ -5,8 +5,8 @@ export function verifyWebhookChallenge(
   token: string | null,
   challenge: string | null
 ): { isValid: boolean; challenge?: string } {
-  const expectedToken = process.env.META_VERIFY_TOKEN || 'sherpa_soul_webhook_verify_token_2026';
-  if (mode === 'subscribe' && token === expectedToken && challenge) {
+  const expectedToken = process.env.META_VERIFY_TOKEN;
+  if (expectedToken && mode === 'subscribe' && token === expectedToken && challenge) {
     return { isValid: true, challenge };
   }
   return { isValid: false };
@@ -30,8 +30,17 @@ export function verifyMetaSignature(
     .update(rawBody, 'utf-8')
     .digest('hex');
 
-  return crypto.timingSafeEqual(
-    Buffer.from(calculatedSignature, 'hex'),
-    Buffer.from(expectedSignature, 'hex')
-  );
+  try {
+    const calcBuf = Buffer.from(calculatedSignature, 'hex');
+    const expBuf = Buffer.from(expectedSignature, 'hex');
+
+    if (calcBuf.length !== expBuf.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(calcBuf, expBuf);
+  } catch (err) {
+    console.error('[Meta Verification] Signature verification error:', err);
+    return false;
+  }
 }

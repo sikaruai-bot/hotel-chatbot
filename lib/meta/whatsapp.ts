@@ -8,18 +8,20 @@ export interface SendWhatsAppOptions {
 }
 
 export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const token =
-    process.env.WHATSAPP_ACCESS_TOKEN ||
-    'EAAPYfDRHIYcBSv0NZA7YLZCnGHavnC0idR1D1OunDqYWZCxeYJLrbDqtIMgY16AzK2QsPxpLdmMUnRnXsPfybmOjAmrOYbJn4PIJJuiI00ALWGuWqRnIKl0M5e2cAWpyXOHmKJoEAMg4Dwj5SLyUa4RPDzLW78CLU7oCiXQmejgVbU7gFA0JUxYL0BZBlZCHs';
-  const phoneNumberId =
-    options.phoneNumberId ||
-    (process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_PHONE_NUMBER_ID !== '1187660574439714'
-      ? process.env.WHATSAPP_PHONE_NUMBER_ID
-      : '1280352581833442');
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = options.phoneNumberId || process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  // Sanitize recipient phone number: Meta WhatsApp Cloud API requires E.164 digits without '+'
+  const cleanPhone = options.to.replace(/\D/g, '');
 
   if (!token || !phoneNumberId || token.startsWith('mock_') || phoneNumberId.startsWith('mock_')) {
-    console.log(`[WHATSAPP MOCK DISPATCH] To: ${options.to} | Text: "${options.text}" | Buttons: ${options.buttons?.join(', ')}`);
+    console.log(`[WHATSAPP MOCK DISPATCH] To: ${cleanPhone || options.to} | Text: "${options.text}" | Buttons: ${options.buttons?.join(', ')}`);
     return { success: true, messageId: `mock_wa_${Date.now()}` };
+  }
+
+  if (!cleanPhone) {
+    console.error('[WhatsApp Cloud API] Invalid recipient phone number:', options.to);
+    return { success: false, error: 'Invalid recipient phone number' };
   }
 
   try {
@@ -30,7 +32,7 @@ export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise
       payload = {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
-        to: options.to,
+        to: cleanPhone,
         type: 'interactive',
         interactive: {
           type: 'button',
@@ -51,7 +53,7 @@ export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise
       payload = {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
-        to: options.to,
+        to: cleanPhone,
         type: 'text',
         text: { body: options.text, preview_url: false },
       };
@@ -73,7 +75,7 @@ export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise
       const fallbackPayload = {
         messaging_product: 'whatsapp',
         recipient_type: 'individual',
-        to: options.to,
+        to: cleanPhone,
         type: 'text',
         text: { body: options.text, preview_url: false },
       };
