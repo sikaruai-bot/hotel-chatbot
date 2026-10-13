@@ -1,3 +1,5 @@
+import { maskPhoneNumber } from '../masking';
+
 export interface SendWhatsAppOptions {
   to: string;
   text: string;
@@ -15,12 +17,12 @@ export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise
   const cleanPhone = options.to.replace(/\D/g, '');
 
   if (!token || !phoneNumberId || token.startsWith('mock_') || phoneNumberId.startsWith('mock_')) {
-    console.log(`[WHATSAPP MOCK DISPATCH] To: ${cleanPhone || options.to} | Text: "${options.text}" | Buttons: ${options.buttons?.join(', ')}`);
+    console.log(`[WHATSAPP MOCK DISPATCH] To: ${maskPhoneNumber(cleanPhone || options.to)} | Message: [${options.text?.length || 0} chars] | Buttons: ${options.buttons?.join(', ')}`);
     return { success: true, messageId: `mock_wa_${Date.now()}` };
   }
 
   if (!cleanPhone) {
-    console.error('[WhatsApp Cloud API] Invalid recipient phone number:', options.to);
+    console.error('[WhatsApp Cloud API] Invalid recipient phone number:', maskPhoneNumber(options.to));
     return { success: false, error: 'Invalid recipient phone number' };
   }
 
@@ -91,14 +93,14 @@ export async function sendWhatsAppMessage(options: SendWhatsAppOptions): Promise
     }
 
     if (!response.ok) {
-      console.error('WhatsApp Cloud API error response:', data);
-      return { success: false, error: data.error?.message || 'Failed to send WhatsApp message' };
+      console.error('WhatsApp Cloud API error response:', data?.error?.message || data?.error?.code || 'API error');
+      return { success: false, error: data?.error?.message || 'Failed to send WhatsApp message' };
     }
 
     const messageId = data.messages?.[0]?.id;
     return { success: true, messageId };
   } catch (error: any) {
-    console.error('WhatsApp Send Error:', error);
+    console.error('WhatsApp Send Error:', error?.message || 'Unknown network error');
     return { success: false, error: error.message };
   }
 }

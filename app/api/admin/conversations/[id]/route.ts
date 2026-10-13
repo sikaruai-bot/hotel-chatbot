@@ -3,11 +3,17 @@ import { prisma } from '@/lib/prisma';
 import { sendWhatsAppMessage } from '@/lib/meta/whatsapp';
 import { sendMessengerMessage } from '@/lib/meta/messenger';
 import { sendInstagramMessage } from '@/lib/meta/instagram';
+import { validateAdminRequest } from '@/lib/auth/adminAuth';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = validateAdminRequest(req);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const conversation = await prisma.conversation.findUnique({
       where: { id: params.id },
@@ -46,6 +52,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = validateAdminRequest(req);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { action, message, status, note } = body;

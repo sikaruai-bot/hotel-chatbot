@@ -5,11 +5,18 @@ import { processConversationStep } from './stateMachine';
 import { sendWhatsAppMessage } from '../meta/whatsapp';
 import { sendMessengerMessage } from '../meta/messenger';
 import { sendInstagramMessage } from '../meta/instagram';
-import { createPmsBooking } from '../pmsClient';
+import { maskPhoneNumber } from '../masking';
 
 export async function processInboundMessage(
   msg: UnifiedInboundMessage
-): Promise<{ success: boolean; reply?: string; outbound?: UnifiedOutboundResponse; deduplicated?: boolean }> {
+): Promise<{
+  success: boolean;
+  reply?: string;
+  outbound?: UnifiedOutboundResponse;
+  deduplicated?: boolean;
+  conversationId?: string;
+  customerId?: string;
+}> {
   // 1. Idempotency Check (Prevent duplicate Meta webhook events)
   if (msg.externalMessageId) {
     const existing = await prisma.message.findUnique({
@@ -21,25 +28,41 @@ export async function processInboundMessage(
     }
   }
 
-  // 2. Identity Resolution / Customer Lookup
+  // 2. Identity Resolution & Conversation Lookup
   let customer = null;
-  if (msg.channel === 'WHATSAPP' || msg.senderPhone) {
-    const phone = msg.senderPhone || msg.senderId;
-    customer = await prisma.customer.findFirst({
-      where: { OR: [{ phone }, { whatsappId: phone }] },
+  let conversation = null;
+
+  // If conversationId is directly provided (e.g. session-scoped website chat)
+  if (msg.conversationId) {
+    const existingConv = await prisma.conversation.findUnique({
+      where: { id: msg.conversationId },
+      include: { state: true, customer: true },
     });
-  } else if (msg.channel === 'MESSENGER') {
-    customer = await prisma.customer.findFirst({
-      where: { messengerId: msg.senderId },
-    });
-  } else if (msg.channel === 'INSTAGRAM') {
-    customer = await prisma.customer.findFirst({
-      where: { instagramId: msg.senderId },
-    });
-  } else if (msg.channel === 'WEBSITE' && msg.senderId) {
-    customer = await prisma.customer.findUnique({
-      where: { id: msg.senderId },
-    }).catch(() => null);
+    if (existingConv) {
+      conversation = existingConv;
+      customer = existingConv.customer;
+    }
+  }
+
+  if (!customer) {
+    if (msg.channel === 'WHATSAPP' || msg.senderPhone) {
+      const phone = msg.senderPhone || msg.senderId;
+      customer = await prisma.customer.findFirst({
+        where: { OR: [{ phone }, { whatsappId: phone }] },
+      });
+    } else if (msg.channel === 'MESSENGER') {
+      customer = await prisma.customer.findFirst({
+        where: { messengerId: msg.senderId },
+      });
+    } else if (msg.channel === 'INSTAGRAM') {
+      customer = await prisma.customer.findFirst({
+        where: { instagramId: msg.senderId },
+      });
+    } else if (msg.channel === 'WEBSITE' && msg.senderId) {
+      customer = await prisma.customer.findUnique({
+        where: { id: msg.senderId },
+      }).catch(() => null);
+    }
   }
 
   // Create customer if not found
@@ -65,15 +88,17 @@ export async function processInboundMessage(
   }
 
   // 3. Conversation Lookup or Creation
-  let conversation = await prisma.conversation.findFirst({
-    where: {
-      customerId: customer.id,
-      channel: msg.channel,
-      status: { not: 'CLOSED' },
-    },
-    include: { state: true },
-    orderBy: { updatedAt: 'desc' },
-  });
+  if (!conversation) {
+    conversation = await prisma.conversation.findFirst({
+      where: {
+        customerId: customer.id,
+        channel: msg.channel,
+        status: { not: 'CLOSED' },
+      },
+      include: { state: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
 
   if (!conversation) {
     conversation = await prisma.conversation.create({
@@ -194,6 +219,88 @@ export async function processInboundMessage(
     summary = `Inquiry for ${currentState.roomType}, ${currentState.checkIn}${currentState.checkOut ? ` to ${currentState.checkOut}` : ''}, ${currentState.adults || 1} guest(s).`;
   }
 
+  // 8.1. Chatbot Flow Completion -> Create BOOKING_REQUEST Lead (No premature PMS booking!)
+  const isNewlyCompleted = conversation.state?.currentStep !== 'COMPLETE' && outbound.step === 'COMPLETE';
+  if (isNewlyCompleted) {
+    const inquiryCode = `INQ-${Math.floor(10000 + Math.random() * 90000)}`;
+    leadStatus = 'BOOKING_REQUEST';
+    conversationStatus = 'BOOKING_REQUEST';
+    scoreReason = `INQUIRY SUBMITTED — Pending Front Desk Verification & PMS Approval (${inquiryCode})`;
+
+    const guestNameForInquiry =
+      currentState.guestName && currentState.guestName !== 'Guest' && currentState.guestName !== 'Website Visitor'
+        ? currentState.guestName
+        : customer.name && customer.name !== 'Guest' && customer.name !== 'Website Visitor'
+        ? customer.name
+        : 'Valued Guest';
+
+    let checkInDate = new Date();
+    let checkOutDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    if (currentState.checkIn) {
+      const parsedIn = new Date(currentState.checkIn);
+      if (!isNaN(parsedIn.getTime())) checkInDate = parsedIn;
+    }
+    if (currentState.checkOut) {
+      const parsedOut = new Date(currentState.checkOut);
+      if (!isNaN(parsedOut.getTime())) checkOutDate = parsedOut;
+    }
+
+    const pricePerNight = currentState.roomType?.toUpperCase().includes('FAMILY') && !currentState.roomType?.toUpperCase().includes('BUDGET') ? 30 : 20;
+    const roomsCount = currentState.roomsCount || 1;
+    const nights = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))) || 1;
+    const subtotal = pricePerNight * nights * roomsCount;
+    const directDiscount = Math.round(subtotal * 0.1);
+    const estimatedTotal = subtotal - directDiscount;
+
+    // Construct honest, clear Inquiry Receipt (NO claim of confirmed room until staff approves)
+    const lang = intentResult.language || 'en';
+    if (lang === 'ne') {
+      outbound.content = `🛎️ होटल शेर्पा सोल — बुकिङ सोधपुछ दर्ता भयो 😊
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 सोधपुछ कोड (Inquiry Ref): ${inquiryCode}
+👤 पाहुनाको नाम: ${guestNameForInquiry}
+🏨 रोजिएको कोठा: ${currentState.roomType || 'Deluxe Room'}
+📅 मिति: ${currentState.checkIn || 'तोकिन बाँकी'} देखि ${currentState.checkOut || 'भोलिपल्ट'} (${nights} रात)
+👥 पाहुना संख्या: ${currentState.adults || 1} वयस्क${currentState.children ? ` + ${currentState.children} बालबालिका` : ''}
+💰 अनुमानित रकम: USD $${estimatedTotal} (१०% छुट सहित)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏳ अवस्था: कर्मचारी स्वीकृति पर्खिरहेको (PENDING STAFF APPROVAL)
+• धन्यवाद! यहाँको बुकिङ सोधपुछ हाम्रो फ्रन्ट डेस्क टिममा सुरक्षित पुगेको छ।
+• हाम्रा कर्मचारी साथीले कोठाको उपलब्धता रुजु गरी छिट्टै यहाँलाई सम्पर्क गर्नुहुनेछ।
+• कुनै अग्रिम रकम चाहिँदैन, होटल आगमनमा भुक्तानी गर्न सकिन्छ।
+• सिधै फ्रन्ट डेस्कसँग कुरा गर्न वा तुरुन्त कोठा निश्चित गर्न: +९७७-९८१८२५९४७२ मा सम्पर्क गर्न सक्नुहुन्छ!`;
+    } else if (lang === 'hi') {
+      outbound.content = `🛎️ होटल शेरपा सोल — बुकिंग पूछताछ प्राप्त हुई 😊
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 पूछताछ संदर्भ: ${inquiryCode}
+👤 अतिथि: ${guestNameForInquiry}
+🏨 कमरा: ${currentState.roomType || 'Deluxe Room'}
+📅 तारीख: ${currentState.checkIn || 'लंबित'} से ${currentState.checkOut || 'अगले दिन'} (${nights} रात)
+👥 अतिथि संख्या: ${currentState.adults || 1} वयस्क${currentState.children ? ` + ${currentState.children} बच्चे` : ''}
+💰 अनुमानित कुल: USD $${estimatedTotal} (10% छूट सहित)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏳ स्थिति: फ्रंट डेस्क समीक्षा लंबित (PENDING APPROVAL)
+• धन्यवाद! आपकी पूछताछ हमारे फ्रंट डेस्क को भेज दी गई है।
+• हमारे स्टाफ सदस्य उपलब्धता की जांच कर जल्द ही आपसे संपर्क करेंगे।
+• चेक-इन पर ही भुगतान मान्य है। तत्काल पुष्टि के लिए +977-9818259472 पर संपर्क करें!`;
+    } else {
+      outbound.content = `🛎️ HOTEL SHERPA SOUL — BOOKING INQUIRY RECEIVED 😊
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 Inquiry Reference: ${inquiryCode}
+👤 Guest Name: ${guestNameForInquiry}
+🏨 Preferred Room: ${currentState.roomType || 'Deluxe Room'}
+📅 Travel Dates: ${currentState.checkIn || 'Pending'} to ${currentState.checkOut || 'Next day'} (${nights} night(s))
+👥 Guests: ${currentState.adults || 1} adult(s)${currentState.children ? ` + ${currentState.children} child(ren)` : ''}
+💰 Estimated Total: USD $${estimatedTotal} (Instant 10% Direct Discount applied)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏳ Status: PENDING FRONT DESK APPROVAL & ROOM ALLOCATION
+• Thank you! Your booking request has been delivered to our front desk.
+• Our team is reviewing room status and will contact you via WhatsApp shortly to finalize your stay.
+• No advance deposit required — pay comfortably upon check-in (Cash, Card, QR).
+• For immediate confirmation or questions, message our front desk at +977-9818259472.`;
+    }
+  }
+
   // Update Conversation Status
   await prisma.conversation.update({
     where: { id: conversation.id },
@@ -236,140 +343,6 @@ export async function processInboundMessage(
     lastContactAt: new Date(),
   };
 
-  // Automated Booking Creation only once when first reaching COMPLETE
-  const isNewlyConfirmed = conversation.state?.currentStep !== 'COMPLETE' && outbound.step === 'COMPLETE';
-  if (isNewlyConfirmed) {
-    leadStatus = 'CONFIRMED';
-    conversationStatus = 'CONFIRMED';
-    scoreReason = `AUTOMATED BOOKING CONFIRMED — Room: ${currentState.roomType || 'Deluxe Room'}`;
-
-    const roomTypeCode = currentState.roomType?.toUpperCase().includes('BUDGET')
-      ? 'BUDGET_FAMILY'
-      : currentState.roomType?.toUpperCase().includes('FAMILY')
-      ? 'FAMILY'
-      : 'DELUXE';
-
-    let matchedRoomType = await prisma.roomType.findFirst({
-      where: { code: roomTypeCode },
-    });
-    if (!matchedRoomType) {
-      matchedRoomType = await prisma.roomType.findFirst();
-    }
-
-    let checkInDate = new Date();
-    let checkOutDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    if (currentState.checkIn) {
-      const parsedIn = new Date(currentState.checkIn);
-      if (!isNaN(parsedIn.getTime())) checkInDate = parsedIn;
-    }
-    if (currentState.checkOut) {
-      const parsedOut = new Date(currentState.checkOut);
-      if (!isNaN(parsedOut.getTime())) checkOutDate = parsedOut;
-    }
-
-    const pricePerNight = matchedRoomType?.basePriceUsd || 20;
-    const roomsCount = currentState.roomsCount || 1;
-    const nights = Math.max(1, Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24))) || 1;
-    const totalPriceUsd = pricePerNight * nights * roomsCount;
-    const guestNameForBooking =
-      currentState.guestName && currentState.guestName !== 'Guest' && currentState.guestName !== 'Website Visitor'
-        ? currentState.guestName
-        : customer.name && customer.name !== 'Guest' && customer.name !== 'Website Visitor'
-        ? customer.name
-        : 'Valued Guest';
-
-    const guestPhone = currentState.phone || customer.phone || (msg.channel === 'WHATSAPP' ? msg.senderId : null);
-    const guestEmail = currentState.email || customer.email;
-
-    // PMS API requires at least one of phone or email
-    const pmsPhone = guestPhone || (msg.channel === 'WHATSAPP' ? msg.senderId : `+977-98${Math.floor(10000000 + Math.random() * 90000000)}`);
-    const pmsEmail = guestEmail || `guest.${customer.id.slice(-6)}@hotelsherpasoul.com`;
-
-    // Call Hotel Sherpa Soul PMS directly for real-time room lock and reservation
-    let officialBookingCode: string | null = null;
-    let assignedRoomNumber: string | null = null;
-    let voucherUrl: string | null = null;
-    let pmsSuccess = false;
-
-    try {
-      const pmsResult = await createPmsBooking({
-        guestName: guestNameForBooking,
-        phone: pmsPhone,
-        email: pmsEmail,
-        channel: msg.channel,
-        checkInDate: checkInDate.toISOString().split('T')[0],
-        checkOutDate: checkOutDate.toISOString().split('T')[0],
-        roomTypeName: currentState.roomType || 'Deluxe Room',
-        adults: currentState.adults || 1,
-        children: currentState.children || 0,
-        specialRequests: `Direct booking via ${msg.channel} Chatbot`,
-        externalMessageId: msg.externalMessageId || `BOT-${Date.now()}`,
-        threadId: msg.senderId,
-      });
-
-      if (pmsResult.success && pmsResult.data?.reservationNumber) {
-        pmsSuccess = true;
-        officialBookingCode = pmsResult.data.reservationNumber;
-        assignedRoomNumber = pmsResult.data.roomNumber || null;
-        voucherUrl = pmsResult.data.voucherUrl || null;
-        console.log(`[PMS Integration] Successfully registered booking in PMS: ${officialBookingCode} for ${guestNameForBooking}`);
-      } else {
-        console.warn('[PMS Integration] PMS booking was not confirmed:', pmsResult.error);
-      }
-    } catch (pmsErr: any) {
-      console.error('[PMS Integration] Failed to connect to PMS API:', pmsErr.message);
-    }
-
-    if (pmsSuccess && officialBookingCode && matchedRoomType) {
-      await prisma.reservation.create({
-        data: {
-          bookingCode: officialBookingCode,
-          customerId: customer.id,
-          roomTypeId: matchedRoomType.id,
-          guestName: guestNameForBooking,
-          guestPhone,
-          guestEmail,
-          checkInDate,
-          checkOutDate,
-          adults: currentState.adults || 1,
-          children: currentState.children || 0,
-          totalPriceUsd,
-          status: 'CONFIRMED',
-          source: msg.channel,
-          notes: assignedRoomNumber
-            ? `Official PMS Reservation ${officialBookingCode} (Room ${assignedRoomNumber})`
-            : `PMS Reservation Reference: ${officialBookingCode}`,
-        },
-      });
-
-      // Human-feeling natural confirmation message
-      const lang = intentResult.language || 'en';
-      if (lang === 'ne') {
-        outbound.content = `धन्यवाद ${guestNameForBooking}! यहाँको बुकिङ होटल शेर्पा सोलमा आधिकारिक रूपमा दर्ता भएको छ।\n\n📌 बुकिङ कोड: ${officialBookingCode}${assignedRoomNumber ? ` (कोठा ${assignedRoomNumber})` : ''}\n🏨 कोठा: ${currentState.roomType || 'Deluxe Room'}\n📅 मिति: ${currentState.checkIn} देखि ${currentState.checkOut || 'भोलिपल्ट'} (${nights} रात)\n💰 दर: USD ${pricePerNight}/रात\n${voucherUrl ? `📲 डिजिटल चेक-इन: ${voucherUrl}\n` : ''}\nकुनै अग्रिम रकम तिर्नु पर्दैन, होटल आगमनमा भुक्तानी गर्न सकिन्छ। हामी यहाँलाई स्वागत गर्न उत्सुक छौँ!`;
-      } else if (lang === 'hi') {
-        outbound.content = `धन्यवाद ${guestNameForBooking}! आपकी बुकिंग होटल शेरपा सोल में दर्ज हो गई है।\n\n📌 बुकिंग कोड: ${officialBookingCode}${assignedRoomNumber ? ` (कमरा ${assignedRoomNumber})` : ''}\n🏨 कमरा: ${currentState.roomType || 'Deluxe Room'}\n📅 तारीख: ${currentState.checkIn} से ${currentState.checkOut || 'अगले दिन'} (${nights} रात)\n💰 दर: USD ${pricePerNight}/रात\n${voucherUrl ? `📲 डिजिटल वाउचर: ${voucherUrl}\n` : ''}\nअग्रिम भुगतान की आवश्यकता नहीं है, चेक-इन पर भुगतान करें। स्वागत है!`;
-      } else {
-        outbound.content = `Perfect. I've got your booking confirmed for ${nights} night${nights > 1 ? 's' : ''}, from ${currentState.checkIn} to ${currentState.checkOut || 'next day'}, for ${currentState.adults || 1} adult(s).\n\nYou're booked in a ${currentState.roomType || 'Deluxe Room'} at USD ${pricePerNight} per night.\nBooking Ref: ${officialBookingCode}${assignedRoomNumber ? ` (Room ${assignedRoomNumber})` : ''}\n${voucherUrl ? `Digital Check-in: ${voucherUrl}\n` : ''}\nNo advance deposit required—you can pay comfortably at check-in. We look forward to welcoming you!`;
-      }
-    } else {
-      // If PMS unavailable or room sold out, do NOT invent confirmation. Escalate to front desk!
-      outbound.step = 'HANDOVER';
-      outbound.triggerHandover = true;
-      leadStatus = 'BOOKING_REQUEST';
-      conversationStatus = 'HUMAN_REQUIRED';
-      scoreReason = 'PMS Confirmation Pending / Staff Assistance Required';
-
-      const lang = intentResult.language || 'en';
-      if (lang === 'ne') {
-        outbound.content = `धन्यवाद ${guestNameForBooking}! म हाम्रो फ्रन्ट डेस्क टिमसँग यो बुझेर यहाँको कोठा सुनिश्चित गर्छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सम्पर्क गर्नुहुनेछ 😊`;
-      } else if (lang === 'hi') {
-        outbound.content = `धन्यवाद ${guestNameForBooking}! मैं हमारी फ्रंट डेस्क टीम से पुष्टि करके आपका कमरा सुरक्षित करवाता हूँ। हमारे स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊`;
-      } else {
-        outbound.content = `Thank you, ${guestNameForBooking}! Let me check that with our front desk team so they can arrange your room personally. Someone from our staff will reach out to you shortly 😊`;
-      }
-    }
-  }
-
   if (existingLead) {
     await prisma.lead.update({
       where: { id: existingLead.id },
@@ -406,7 +379,7 @@ export async function processInboundMessage(
       buttons: outbound.suggestedReplies,
     });
     if (!waRes.success) {
-      console.error(`[WhatsApp Dispatch Failed] ${waRes.error} for phone ${phone}`);
+      console.error(`[WhatsApp Dispatch Failed] ${waRes.error} for recipient ${maskPhoneNumber(phone)}`);
       await prisma.message.update({
         where: { id: savedMsg.id },
         data: { status: 'FAILED' },
@@ -437,5 +410,11 @@ export async function processInboundMessage(
     }
   }
 
-  return { success: true, reply: outbound.content, outbound };
+  return {
+    success: true,
+    reply: outbound.content,
+    outbound,
+    conversationId: conversation?.id,
+    customerId: customer?.id,
+  };
 }

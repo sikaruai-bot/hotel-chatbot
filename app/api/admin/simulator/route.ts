@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processInboundMessage } from '@/lib/engine/chatDispatcher';
 import { Channel } from '@/lib/engine/types';
+import { validateAdminRequest } from '@/lib/auth/adminAuth';
 
 export async function POST(req: NextRequest) {
+  const auth = validateAdminRequest(req);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { channel, senderId, senderName, senderPhone, content, campaign } = body;
