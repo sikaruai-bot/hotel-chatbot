@@ -69,6 +69,7 @@ export interface IntentResult {
 
 export interface UnifiedInboundMessage {
   externalMessageId?: string;
+  conversationId?: string;
   channel: Channel;
   senderId: string; // Phone number or Meta PSID / IGSID
   senderName?: string;

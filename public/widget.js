@@ -36,6 +36,8 @@
 
   const STORAGE_KEY = 'hss_chat_session';
   let customerId = null;
+  let conversationId = null;
+  let sessionToken = null;
   let isOpen = false;
   let messages = [
     {
@@ -53,6 +55,8 @@
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed.customerId) customerId = parsed.customerId;
+      if (parsed.conversationId) conversationId = parsed.conversationId;
+      if (parsed.sessionToken) sessionToken = parsed.sessionToken;
       if (Array.isArray(parsed.messages) && parsed.messages.length > 0) {
         messages = parsed.messages;
       }
@@ -63,7 +67,7 @@
     try {
       sessionStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ customerId, messages: messages.slice(-20) })
+        JSON.stringify({ customerId, conversationId, sessionToken, messages: messages.slice(-20) })
       );
     } catch (e) {}
   }
@@ -551,6 +555,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerId: customerId,
+          conversationId: conversationId,
+          sessionToken: sessionToken,
           message: trimmed,
         }),
       });
@@ -558,6 +564,12 @@
       const data = await res.json();
       if (data.customerId) {
         customerId = data.customerId;
+      }
+      if (data.conversationId) {
+        conversationId = data.conversationId;
+      }
+      if (data.sessionToken) {
+        sessionToken = data.sessionToken;
       }
 
       // Remove typing indicator

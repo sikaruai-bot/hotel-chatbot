@@ -8,7 +8,8 @@ export async function sendMessengerMessage(options: SendMessengerOptions): Promi
   const token = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
   if (!token || token.startsWith('mock_')) {
-    console.log(`[MESSENGER MOCK DISPATCH] Recipient: ${options.recipientId} | Text: "${options.text}" | Quick Replies: ${options.quickReplies?.join(', ')}`);
+    const maskedId = options.recipientId.length > 4 ? `${options.recipientId.slice(0, 3)}****` : '****';
+    console.log(`[MESSENGER MOCK DISPATCH] Recipient: ${maskedId} | Msg len: ${options.text?.length || 0} | Quick Replies: ${options.quickReplies?.join(', ')}`);
     return { success: true, messageId: `mock_fb_${Date.now()}` };
   }
 
@@ -34,13 +35,13 @@ export async function sendMessengerMessage(options: SendMessengerOptions): Promi
 
     const data = await response.json();
     if (!response.ok) {
-      console.error('Messenger API Error:', data);
-      return { success: false, error: data.error?.message || 'Failed to send Messenger message' };
+      console.error('Messenger API Error:', data?.error?.message || data?.error?.code || 'API error');
+      return { success: false, error: data?.error?.message || 'Failed to send Messenger message' };
     }
 
     return { success: true, messageId: data.message_id };
   } catch (error: any) {
-    console.error('Messenger Send Error:', error);
+    console.error('Messenger Send Error:', error?.message || 'Network error');
     return { success: false, error: error.message };
   }
 }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   MessageSquare,
   Users,
@@ -13,10 +13,27 @@ import {
   ExternalLink,
   Hotel,
   Bell,
+  LogOut,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // If on login page, render children without admin navigation
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth/logout', { method: 'POST' });
+      router.push('/admin/login');
+      router.refresh();
+    } catch (e) {
+      router.push('/admin/login');
+    }
+  };
 
   const navItems = [
     { href: '/admin/inbox', label: 'Inbox', icon: MessageSquare },
@@ -62,6 +79,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <span className="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
                 Bot Active
               </span>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-1 text-xs bg-slate-800 hover:bg-rose-950/80 hover:text-rose-300 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700 hover:border-rose-800 transition cursor-pointer"
+                title="Sign out of Staff Portal"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </div>

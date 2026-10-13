@@ -36,7 +36,44 @@ export default function HotelWidget() {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Restore session from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem('hss_chat_session');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.conversationId && parsed.sessionToken) {
+          setConversationId(parsed.conversationId);
+          setSessionToken(parsed.sessionToken);
+
+          // Restore message history from server using authenticated sessionToken
+          fetch(`/api/chat/website?token=${encodeURIComponent(parsed.sessionToken)}`)
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && Array.isArray(data.messages) && data.messages.length > 0) {
+                setMessages(
+                  data.messages.map((m: any) => ({
+                    id: m.id,
+                    sender: m.sender,
+                    text: m.text,
+                    timestamp: new Date(m.createdAt),
+                  }))
+                );
+              }
+            })
+            .catch(() => {
+              // Silently fallback if unable to fetch
+            });
+        }
+      }
+    } catch {
+      // Ignore sessionStorage parse errors
+    }
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -62,12 +99,30 @@ export default function HotelWidget() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerId,
+          conversationId,
+          sessionToken,
           message: textToSend,
         }),
       });
 
       const data = await res.json();
       if (data.customerId) setCustomerId(data.customerId);
+
+      if (data.conversationId && data.sessionToken) {
+        setConversationId(data.conversationId);
+        setSessionToken(data.sessionToken);
+        try {
+          sessionStorage.setItem(
+            'hss_chat_session',
+            JSON.stringify({
+              conversationId: data.conversationId,
+              sessionToken: data.sessionToken,
+            })
+          );
+        } catch {
+          // Ignore sessionStorage quota error
+        }
+      }
 
       const botMsg: ChatMessage = {
         id: `bot_${Date.now()}`,

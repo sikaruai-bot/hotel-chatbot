@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { validateAdminRequest } from '@/lib/auth/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = validateAdminRequest(req);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const kb = await prisma.knowledgeBase.findMany({
       orderBy: [{ category: 'asc' }, { priority: 'desc' }],
@@ -18,6 +24,11 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = validateAdminRequest(req);
+  if (!auth.authenticated) {
+    return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { action, item, setting } = body;

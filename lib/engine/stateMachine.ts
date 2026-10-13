@@ -330,80 +330,89 @@ Would you like to check room availability for your dates?`;
       rawLower.match(/^(yes|ok|okay|fine|done)$/i);
 
     if (isConfirmOrLetter) {
-      let latestReservation = ctx.customerId
+      const confirmedReservation = ctx.customerId
         ? await prisma.reservation.findFirst({
-            where: { customerId: ctx.customerId },
+            where: { customerId: ctx.customerId, status: 'CONFIRMED' },
             orderBy: { createdAt: 'desc' },
             include: { roomType: true },
           })
         : null;
 
-      if (!latestReservation) {
-        latestReservation = await prisma.reservation.findFirst({
-          orderBy: { createdAt: 'desc' },
-          include: { roomType: true },
-        });
-      }
+      if (confirmedReservation) {
+        const bookingCode = confirmedReservation.bookingCode;
+        const roomName = confirmedReservation.roomType?.name || state.roomType || 'Deluxe Room';
+        const checkInStr = confirmedReservation.checkInDate.toISOString().split('T')[0];
+        const checkOutStr = confirmedReservation.checkOutDate.toISOString().split('T')[0];
+        const rawGuest = confirmedReservation.guestName || state.guestName || ctx.customerName || '';
+        const isAnon = !rawGuest || rawGuest === 'Guest' || rawGuest === 'Website Visitor';
+        const guestName = isAnon ? (lang === 'ne' ? 'आदरणीय पाहुना' : 'Valued Guest') : rawGuest;
+        const adultsCount = confirmedReservation.adults || state.adults || 1;
+        const childrenCount = confirmedReservation.children || state.children || 0;
+        const guestsStr =
+          lang === 'ne'
+            ? `${adultsCount} वयस्क${childrenCount > 0 ? ` + ${childrenCount} बालबालिका` : ''}`
+            : `${adultsCount} adult(s)${childrenCount > 0 ? ` + ${childrenCount} child${childrenCount > 1 ? 'ren' : ''}` : ''}`;
 
-      const bookingCode =
-        latestReservation?.bookingCode || `HSS-${Math.floor(100000 + Math.random() * 900000)}`;
-      const roomName = latestReservation?.roomType?.name || state.roomType || 'Deluxe Room';
-      const checkInStr = latestReservation?.checkInDate
-        ? latestReservation.checkInDate.toISOString().split('T')[0]
-        : state.checkIn || 'Confirmed';
-      const checkOutStr = latestReservation?.checkOutDate
-        ? latestReservation.checkOutDate.toISOString().split('T')[0]
-        : state.checkOut || 'Next day';
-      const rawGuest = latestReservation?.guestName || state.guestName || ctx.customerName || '';
-      const isAnon = !rawGuest || rawGuest === 'Guest' || rawGuest === 'Website Visitor';
-      const guestName = isAnon ? (lang === 'ne' ? 'आदरणीय पाहुना' : 'Valued Guest') : rawGuest;
-      const adultsCount = latestReservation?.adults || state.adults || 1;
-      const childrenCount = latestReservation?.children || state.children || 0;
-      const guestsStr =
-        lang === 'ne'
-          ? `${adultsCount} वयस्क${childrenCount > 0 ? ` + ${childrenCount} बालबालिका` : ''}`
-          : `${adultsCount} adult(s)${childrenCount > 0 ? ` + ${childrenCount} child${childrenCount > 1 ? 'ren' : ''}` : ''}`;
-
-      const reply =
-        lang === 'ne'
-          ? `🏨 होटल शेर्पा सोल — आधिकारिक बुकिङ पुष्टि विवरण (Booking Confirmation Slip)
+        const reply =
+          lang === 'ne'
+            ? `🏨 होटल शेर्पा सोल — आधिकारिक बुकिङ पुष्टि विवरण (Booking Confirmation Slip)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📌 बुकिङ कोड (Booking Ref): ${bookingCode}
 👤 पाहुनाको नाम: ${guestName}
 🏨 सुरक्षित कोठा: ${roomName}
-📅 आगमन (Check-in): ${checkInStr} (दिउँसो २:०० बजेदेखि)
-📅 प्रस्थान (Check-out): ${checkOutStr} (मध्यान्ह १२:०० बजेसम्म)
+📅 आगमन (Check-in): ${checkInStr} (दिउँसो १२:०० बजेदेखि)
+📅 प्रस्थान (Check-out): ${checkOutStr} (बिहान ११:०० बजेसम्म)
 👥 पाहुना संख्या: ${guestsStr}
 📍 होटल ठेगाना: २६ ठमेल भगवती मार्ग, काठमाडौँ
-📞 फ्रन्ट डेस्क: +९७७-१-४५३०३११ / ह्वाट्सएप: +९७७ ९८५१०६८२१९
-✉️ इमेल: info@hotelsherpasoul.com
+📞 फ्रन्ट डेस्क: +९७७-१-४५३०३११ / ह्वाट्सएप: ${whatsappPhone}
+✉️ इमेल: ${knowledge.hotelInfo.email}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ अवस्था: कोठा आधिकारिक रूपमा सुरक्षित (CONFIRMED & RESERVED)
-• कुनै अग्रिम रकम (Deposit) चाहिँदैन, होटल चेक-इनको समयमा भुक्तानी गर्न सकिन्छ।
-• आगमनको समयमा आफ्नो परिचयपत्र (नागरिकता/राहदानी) देखाउनुहोला।
-• यदि भिसा वा यात्रा प्रयोजनका लागि होटलको छाप (Official Stamp) सहितको औपचारिक PDF लेटर आवश्यक परेमा हाम्रो फ्रन्ट डेस्कको ह्वाट्सएप वा इमेल (info@hotelsherpasoul.com) मा तुरुन्त प्राप्त गर्न सक्नुहुन्छ!`
-          : `🏨 HOTEL SHERPA SOUL — OFFICIAL RESERVATION CONFIRMATION / LETTER
+• कुनै अग्रिम रकम चाहिँदैन, होटल चेक-इनको समयमा भुक्तानी गर्न सकिन्छ।
+• आगमनको समयमा आफ्नो परिचयपत्र (नागरिकता/राहदानी) देखाउनुहोला।`
+            : `🏨 HOTEL SHERPA SOUL — OFFICIAL RESERVATION CONFIRMATION / LETTER
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📌 Booking Ref: ${bookingCode}
 👤 Guest Name: ${guestName}
 🏨 Reserved Room: ${roomName}
-📅 Check-in: ${checkInStr} (from 14:00)
-📅 Check-out: ${checkOutStr} (until 12:00 noon)
+📅 Check-in: ${checkInStr} (from 12:00 PM)
+📅 Check-out: ${checkOutStr} (until 11:00 AM)
 👥 Guests: ${guestsStr}
 📍 Hotel Address: 26 Thamel Bhagwati Marg, Thamel, Kathmandu, Nepal
-📞 Front Desk: +977-1-4530311 / WhatsApp: +977-9851068219
-✉️ Email: info@hotelsherpasoul.com
+📞 Front Desk: +977-1-4530311 / WhatsApp: ${whatsappPhone}
+✉️ Email: ${knowledge.hotelInfo.email}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ Status: OFFICIALLY CONFIRMED & RESERVED
 • No advance deposit required. Pay comfortably at check-in (Cash / Card / QR).
-• Foreign guests present passport; Nepali/Indian guests present government ID upon arrival.
-• If you need a formal PDF confirmation letter on hotel letterhead with official company stamp for Nepal Tourist Visa or trek permits, our front desk can email (info@hotelsherpasoul.com) or WhatsApp it to you instantly!`;
+• Foreign guests present passport; Nepali/Indian guests present government ID upon arrival.`;
+
+        return {
+          content: reply,
+          suggestedReplies: ['Hotel Location', 'Check-in Time', 'Talk to Staff'],
+          intent: 'BOOKING_CONFIRMATION',
+          step: 'COMPLETE',
+          triggerHandover: false,
+        };
+      }
+
+      // If no confirmed reservation, check if guest has a pending inquiry
+      const pendingLead = ctx.customerId
+        ? await prisma.lead.findFirst({
+            where: { customerId: ctx.customerId },
+            orderBy: { createdAt: 'desc' },
+          })
+        : null;
+
+      const inquiryPendingReply =
+        lang === 'ne'
+          ? `⏳ यहाँको बुकिङ सोधपुछ हाल हाम्रो फ्रन्ट डेस्कको समीक्षा अवस्थामा (PENDING STAFF APPROVAL) छ।\n\nकोठा फ्रन्ट डेस्कले रुजु गरेपछि मात्र आधिकारिक रूपमा सुरक्षित हुन्छ। तत्काल कोठा निश्चित गर्न वा सम्पर्क गर्न: ${whatsappPhone} / ${frontdeskPhone} मा सम्पर्क गर्नुहोला 😊`
+          : `⏳ Your booking inquiry is currently PENDING review by our front desk.\n\nPlease note: A room is not officially confirmed until approved by our staff. For immediate confirmation, you can reach our front desk directly on WhatsApp at ${whatsappPhone} or call ${frontdeskPhone} 😊`;
 
       return {
-        content: reply,
-        suggestedReplies: ['Hotel Location', 'Check-in Time', 'ID Requirements', 'Talk to Staff'],
+        content: inquiryPendingReply,
+        suggestedReplies: ['Talk to Staff', 'Room Prices', 'Hotel Location'],
         intent: 'BOOKING_CONFIRMATION',
-        step: 'COMPLETE',
+        step: state.currentStep,
         triggerHandover: false,
       };
     }
@@ -587,11 +596,21 @@ Would you like to check room availability for your dates?`;
         };
       }
 
+      // Ensure customerName is used if available
+      if ((!state.guestName || state.guestName === 'Guest' || state.guestName === 'Website Visitor') && ctx.customerName && ctx.customerName !== 'Guest' && ctx.customerName !== 'Website Visitor') {
+        state.guestName = ctx.customerName;
+      }
+
       // Check if user is answering their name
-      const isBookingCommand = /\b(book|reserve|reservation|can i|how much|price|cost|confirm|yes|ok|okay|fine|done|sure|सक्छु|गरिदिनुहोस्|गर्नुहोस्)\b/i.test(rawText);
-      if (isAnonymous && !isBookingCommand) {
-        if (rawText.match(/^(my name is|i am|this is|नाम)\s+/i) || (rawText.length >= 3 && rawText.length <= 35 && !rawText.includes('?'))) {
-          state.guestName = rawText.replace(/^(my name is|i am|this is|name is|नाम)\s+/i, '').trim();
+      const nameMatch = rawText.match(/(?:my name is|i am|this is|name is|नाम)\s+([a-zA-Z\s]+)/i);
+      if (nameMatch && nameMatch[1]) {
+        state.guestName = nameMatch[1].trim();
+      } else {
+        const isBookingCommand = /\b(book|reserve|reservation|can i|how much|price|cost|confirm|yes|ok|okay|fine|done|sure|सक्छु|गरिदिनुहोस्|गर्नुहोस्)\b/i.test(rawText);
+        if (isAnonymous && !isBookingCommand) {
+          if (rawText.length >= 3 && rawText.length <= 35 && !rawText.includes('?')) {
+            state.guestName = rawText.trim();
+          }
         }
       }
 
@@ -611,12 +630,12 @@ Would you like to check room availability for your dates?`;
         };
       }
 
-      // Guest confirmed and name is present -> Proceed to COMPLETE (chatDispatcher will create in PMS)
+      // Guest confirmed and name is present -> Proceed to COMPLETE (chatDispatcher registers BOOKING_REQUEST inquiry)
       return {
         content:
           lang === 'ne'
-            ? `धन्यवाद ${state.guestName}! म यहाँको बुकिङ होटल शेर्पा सोलको सिस्टममा दर्ता गर्दैछु...`
-            : `Thank you, ${state.guestName}! Reserving your ${state.roomType} now...`,
+            ? `धन्यवाद ${state.guestName}! म यहाँको बुकिङ सोधपुछ होटल शेर्पा सोलको फ्रन्ट डेस्कमा दर्ता गर्दैछु...`
+            : `Thank you, ${state.guestName}! Submitting your booking inquiry to Hotel Sherpa Soul front desk...`,
         suggestedReplies: ['Talk to Staff'],
         intent: 'BOOKING',
         step: 'COMPLETE',
