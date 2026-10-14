@@ -601,7 +601,7 @@ export function detectIntent(rawText: string): IntentResult {
     return { intent: 'TRANSPORTATION', confidence: 0.95, language, entities };
   }
 
-  // 10. Check-in / Check-out Times
+  // 10. Check-in / Check-out Times & Policies
   if (
     lower.includes('check-in') ||
     lower.includes('check in') ||
@@ -609,13 +609,37 @@ export function detectIntent(rawText: string): IntentResult {
     lower.includes('check out') ||
     lower.includes('timing') ||
     lower.includes('early check') ||
-    lower.includes('late check')
+    lower.includes('late check') ||
+    lower.includes('early arrival') ||
+    lower.includes('flexible check')
   ) {
-    return { intent: 'CHECK_IN', confidence: 0.92, language, entities };
+    return { intent: 'CHECK_IN', confidence: 0.95, language, entities };
   }
 
-  // 11. Location / Directions
+  // 11. Location / Directions / City Guide & Nearby Attractions
   if (
+    lower.includes('what to do nearby') ||
+    lower.includes('what to do') ||
+    lower.includes('things to do nearby') ||
+    lower.includes('things to do') ||
+    lower.includes('nearby attractions') ||
+    lower.includes('attractions nearby') ||
+    lower.includes('attractions') ||
+    lower.includes('sightseeing') ||
+    lower.includes('places to visit') ||
+    lower.includes('places to see') ||
+    lower.includes('city guide') ||
+    lower.includes('explore') ||
+    lower.includes('nearby') ||
+    lower.includes('thamel heritage walk') ||
+    lower.includes('garden of dreams') ||
+    lower.includes('durbar square') ||
+    lower.includes('swayambhunath') ||
+    lower.includes('monkey temple') ||
+    lower.includes('tarebhir') ||
+    lower.includes('nagi gompa') ||
+    lower.includes('jamacho') ||
+    lower.includes('narayanhiti') ||
     lower.includes('location') ||
     lower.includes('where are you') ||
     lower.includes('address') ||
@@ -627,9 +651,12 @@ export function detectIntent(rawText: string): IntentResult {
     lower.includes('kata cha') ||
     lower.includes('kata ho') ||
     lower.includes('thamel ma') ||
-    lower.includes('hotel kata')
+    lower.includes('hotel kata') ||
+    lower.includes('नजिक के छ') ||
+    lower.includes('घुम्ने ठाउँ') ||
+    lower.includes('काठमाडौँ घुम्न')
   ) {
-    return { intent: 'LOCATION', confidence: 0.94, language, entities };
+    return { intent: 'LOCATION', confidence: 0.95, language, entities };
   }
 
   // 11.5. Luggage Storage

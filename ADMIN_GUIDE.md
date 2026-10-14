@@ -47,7 +47,8 @@ Above the message input box, you will find 1-click **Quick Reply** buttons:
 - **No Restaurant Info**: Explains our peaceful sleep philosophy.
 - **Location & Taxi**: Provides directions and offers airport pickup assistance.
 - **Shared Kitchen**: Explains Room 102 rules for stays of 2 weeks or more.
-- **Check-in Policy**: Check-in at 12:00 PM (noon), check-out at 11:00 AM.
+- **Check-in Policy**: Check-in: Flexible from 12:00 PM, subject to room availability. Early arrival: free luggage storage; early check-in subject to availability. Check-out: 11:00 AM; late check-out on request, subject to availability.
+- **City Guide**: Quick access to Thamel walking spots, 20-40 min walks, hikes, and cultural sites.
 
 ---
 

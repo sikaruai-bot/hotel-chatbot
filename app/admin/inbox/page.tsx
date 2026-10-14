@@ -69,8 +69,8 @@ export default function InboxPage() {
     { title: 'Room Prices', text: 'Our starting rates are Deluxe Room ($20/night), Budget Family ($20/night), and Family Room ($30/night). Would you like to check availability for your dates?' },
     { title: 'No Restaurant Info', text: 'At Hotel Sherpa Soul, our motto is "No Restaurant. No Noise. Sleep Well." We do not have an on-site restaurant to keep rooms peaceful, but dozens of top cafes & bakeries are within a 1-2 min walk in Thamel!' },
     { title: 'Location & Taxi', text: 'We are located at 26 Thamel Bhagwati Marg, central Thamel. We can assist in arranging airport taxi pickup at standard local rates. What is your flight arrival time?' },
-    { title: 'Shared Kitchen', text: 'Our Room 102 shared kitchen is available for guests staying 2 weeks or more. It has 2 mini fridges, oven, tables, and dining space for self-cooking.' },
-    { title: 'Check-in Policy', text: 'Standard check-in is from 12:00 PM (noon) and check-out is by 11:00 AM. Free luggage storage is available if you arrive early!' },
+    { title: 'Check-in Policy', text: 'Check-in: Flexible from 12:00 PM, subject to room availability. Early arrival: free luggage storage; early check-in subject to availability. Check-out: 11:00 AM; late check-out on request, subject to availability.' },
+    { title: 'City Guide', text: 'Explore Thamel & Kathmandu: Walking in Thamel (Garden of Dreams, Thamel Heritage Walk, local cafes & trekking shops), 20-40 min walk (Kathmandu Durbar Square, Ason Bazaar, Swayambhunath), half-day hikes (Tarebhir, Nagi Gompa, Jamacho), and culture (Narayanhiti Palace, Museum of Nepali Art, local temples).' },
   ];
 
   const fetchConversations = async () => {
