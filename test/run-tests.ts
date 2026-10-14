@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { detectLanguage, detectIntent, extractEntities } from '../lib/engine/intentDetector';
 import { processInboundMessage } from '../lib/engine/chatDispatcher';
 import { verifyWebhookChallenge, verifyMetaSignature } from '../lib/meta/verification';
@@ -298,6 +300,92 @@ async function runAllTests() {
     capturedLead?.campaign === 'Meta_Autumn_Nepal_Trek_2026' && capturedLead?.adId === 'ad_7788990011',
     'Attribution: Meta Ad Campaign and Ad ID saved to CRM Lead'
   );
+
+  // 8. Task-Specific Tests: Flexible Check-in Policy, City Guide & Nearby Attractions
+  console.log('\n[TEST GROUP 8: Flexible Check-in Policy, City Guide & Nearby Attractions]');
+
+  // 8.1. Check-in policy wording test (Website & Chatbot Knowledge Base)
+  const pageContent = fs.readFileSync(path.join(__dirname, '../app/page.tsx'), 'utf-8');
+  assert(
+    pageContent.includes('Check-in:</strong> Flexible from 12:00 PM, subject to room availability.') ||
+    pageContent.includes('Flexible from 12:00 PM, subject to room availability.'),
+    'Check-in policy wording test: "Flexible from 12:00 PM, subject to room availability." present in website'
+  );
+  assert(
+    pageContent.toLowerCase().includes('early arrival:') &&
+    pageContent.toLowerCase().includes('free luggage storage; early check-in subject to availability.'),
+    'Check-in policy wording test: "Early arrival: free luggage storage; early check-in subject to availability." present in website'
+  );
+  assert(
+    pageContent.includes('Check-out:</strong> 11:00 AM; late check-out on request, subject to availability.') ||
+    pageContent.includes('11:00 AM; late check-out on request, subject to availability.'),
+    'Check-in policy wording test: "Check-out: 11:00 AM; late check-out on request, subject to availability." present in website'
+  );
+
+  // Chatbot check-in policy response test
+  const resPolicy = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: `test_policy_${Date.now()}`,
+    content: 'What is your check-in and check-out policy?',
+    externalMessageId: `policy_${Date.now()}`,
+  });
+  assert(resPolicy.success === true, 'Check-in policy inquiry processed successfully');
+  assert(
+    resPolicy.reply?.includes('Flexible from 12:00 PM, subject to room availability') === true,
+    'Chatbot check-in policy test: mentions flexible check-in from 12:00 PM subject to room availability'
+  );
+  assert(
+    resPolicy.reply?.toLowerCase().includes('free luggage storage') === true,
+    'Chatbot check-in policy test: mentions free luggage storage for early arrivals'
+  );
+  assert(
+    resPolicy.reply?.includes('11:00 AM; late check-out on request, subject to availability') === true ||
+    (resPolicy.reply?.includes('11:00 AM') === true && resPolicy.reply?.includes('late check-out') === true),
+    'Chatbot check-in policy test: mentions 11:00 AM check-out and late check-out on request'
+  );
+
+  // 8.2. City guide content test (Website)
+  assert(pageContent.includes('Explore Thamel & Kathmandu'), 'City guide content test: "Explore Thamel & Kathmandu" header present');
+  assert(pageContent.includes('Walking (in Thamel)'), 'City guide content test: "Walking (in Thamel)" section present');
+  assert(pageContent.includes('Garden of Dreams'), 'City guide content test: "Garden of Dreams" present');
+  assert(pageContent.includes('Thamel Heritage Walk'), 'City guide content test: "Thamel Heritage Walk" present');
+  assert(pageContent.includes('Local cafes and trekking shops'), 'City guide content test: "Local cafes and trekking shops" present');
+  assert(pageContent.includes('Walking (20–40 min)'), 'City guide content test: "Walking (20–40 min)" section present');
+  assert(pageContent.includes('Kathmandu Durbar Square'), 'City guide content test: "Kathmandu Durbar Square" present');
+  assert(pageContent.includes('Ason Bazaar'), 'City guide content test: "Ason Bazaar" present');
+  assert(pageContent.includes('Swayambhunath (Monkey Temple)'), 'City guide content test: "Swayambhunath (Monkey Temple)" present');
+  assert(pageContent.includes('Half-day hikes'), 'City guide content test: "Half-day hikes" section present');
+  assert(pageContent.includes('Tarebhir Hike'), 'City guide content test: "Tarebhir Hike" present');
+  assert(pageContent.includes('Nagi Gompa (Shivapuri)'), 'City guide content test: "Nagi Gompa (Shivapuri)" present');
+  assert(pageContent.includes('Jamacho Gompa'), 'City guide content test: "Jamacho Gompa" present');
+  assert(pageContent.includes('Culture'), 'City guide content test: "Culture" section present');
+  assert(pageContent.includes('Narayanhiti Palace Museum'), 'City guide content test: "Narayanhiti Palace Museum" present');
+  assert(pageContent.includes('Museum of Nepali Art'), 'City guide content test: "Museum of Nepali Art" present');
+  assert(pageContent.includes('Local temples'), 'City guide content test: "Local temples" present');
+
+  // 8.3. Chatbot "what to do nearby" test
+  const nearbyIntent = detectIntent('what to do nearby');
+  assert(nearbyIntent.intent === 'LOCATION', 'Chatbot intent detection: "what to do nearby" -> LOCATION', nearbyIntent.intent);
+
+  const resNearby = await processInboundMessage({
+    channel: 'WHATSAPP',
+    senderId: `test_nearby_${Date.now()}`,
+    content: 'What to do nearby?',
+    externalMessageId: `nearby_${Date.now()}`,
+  });
+  assert(resNearby.success === true, 'Chatbot "what to do nearby" message processed successfully');
+  assert(resNearby.reply?.includes('Garden of Dreams') === true, 'Chatbot "what to do nearby" includes Garden of Dreams');
+  assert(resNearby.reply?.includes('Thamel Heritage Walk') === true, 'Chatbot "what to do nearby" includes Thamel Heritage Walk');
+  assert(resNearby.reply?.includes('Local cafes and trekking shops') === true, 'Chatbot "what to do nearby" includes Local cafes and trekking shops');
+  assert(resNearby.reply?.includes('Kathmandu Durbar Square') === true, 'Chatbot "what to do nearby" includes Kathmandu Durbar Square');
+  assert(resNearby.reply?.includes('Ason Bazaar') === true, 'Chatbot "what to do nearby" includes Ason Bazaar');
+  assert(resNearby.reply?.includes('Swayambhunath') === true, 'Chatbot "what to do nearby" includes Swayambhunath (Monkey Temple)');
+  assert(resNearby.reply?.includes('Tarebhir Hike') === true, 'Chatbot "what to do nearby" includes Tarebhir Hike');
+  assert(resNearby.reply?.includes('Nagi Gompa') === true, 'Chatbot "what to do nearby" includes Nagi Gompa (Shivapuri)');
+  assert(resNearby.reply?.includes('Jamacho Gompa') === true, 'Chatbot "what to do nearby" includes Jamacho Gompa');
+  assert(resNearby.reply?.includes('Narayanhiti Palace Museum') === true, 'Chatbot "what to do nearby" includes Narayanhiti Palace Museum');
+  assert(resNearby.reply?.includes('Museum of Nepali Art') === true, 'Chatbot "what to do nearby" includes Museum of Nepali Art');
+  assert(resNearby.reply?.includes('Local temples') === true, 'Chatbot "what to do nearby" includes Local temples');
 
   console.log('\n======================================================');
   console.log(`TEST SUMMARY: ${passed} Passed, ${failed} Failed`);

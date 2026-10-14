@@ -14,6 +14,10 @@ import {
   ChevronRight,
   Bed,
   Users,
+  Compass,
+  Footprints,
+  Mountain,
+  Landmark,
 } from 'lucide-react';
 import HotelWidget from '@/components/HotelWidget';
 import DirectBookingEngine from '@/components/DirectBookingEngine';
@@ -73,6 +77,7 @@ export default function HomePage() {
             <a href="#philosophy" className="hover:text-slate-950 transition">Our USP</a>
             <a href="#kitchen" className="hover:text-slate-950 transition">Shared Kitchen (102)</a>
             <a href="#location" className="hover:text-slate-950 transition">Location</a>
+            <a href="#city-guide" className="hover:text-slate-950 transition">City Guide</a>
           </nav>
 
           <a
@@ -326,11 +331,125 @@ export default function HomePage() {
               <span>Important Policies</span>
             </h3>
             <ul className="text-xs text-slate-600 space-y-1.5">
-              <li>• <strong>Check-in:</strong> 12:00 PM (Noon) | <strong>Check-out:</strong> 11:00 AM</li>
+              <li>• <strong>Check-in:</strong> Flexible from 12:00 PM, subject to room availability.</li>
+              <li>• <strong>Early arrival:</strong> Free luggage storage; early check-in subject to availability.</li>
+              <li>• <strong>Check-out:</strong> 11:00 AM; late check-out on request, subject to availability.</li>
               <li>• <strong>Quiet Hours:</strong> 10:00 PM – 7:00 AM (strictly enforced for restful sleep)</li>
               <li>• <strong>No Private Parking:</strong> Paid public parking lots are nearby outside the pedestrian zone.</li>
               <li>• <strong>No Pool / No Gym:</strong> Pure focus on peaceful, clean, and budget accommodation.</li>
             </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Explore Thamel & Kathmandu City Guide */}
+      <section id="city-guide" className="py-12 border-t border-slate-200 bg-white w-full">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="mb-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200/60 px-2.5 py-1 rounded-full mb-2">
+              <Compass className="w-3.5 h-3.5" />
+              <span>Local Guide & Excursions</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              Explore Thamel & Kathmandu
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+              Step outside Hotel Sherpa Soul into the vibrant heart of Kathmandu. From historic courtyards steps from our doorstep to panoramic Himalayan day hikes, here is our curated city guide.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Walking (in Thamel) */}
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-amber-300 transition-colors">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-3.5">
+                <Footprints className="w-4 h-4" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-sm mb-1.5">Walking (in Thamel)</h3>
+              <p className="text-[11px] text-slate-500 mb-3 font-medium">Under 5–10 mins walk from our doorstep</p>
+              <ul className="text-xs text-slate-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Garden of Dreams</strong> — Neo-classical historical garden & quiet oasis</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Thamel Heritage Walk</strong> — Traditional courtyards, stupas & alleys</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Local cafes and trekking shops</strong> — Artisan bakeries, coffee roasters & gear outfitters</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Walking (20–40 min) */}
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-amber-300 transition-colors">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-3.5">
+                <MapPin className="w-4 h-4" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-sm mb-1.5">Walking (20–40 min)</h3>
+              <p className="text-[11px] text-slate-500 mb-3 font-medium">Scenic strolls through old Kathmandu</p>
+              <ul className="text-xs text-slate-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Kathmandu Durbar Square</strong> — UNESCO ancient royal palaces & Kumari temple</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Ason Bazaar</strong> — Historic spice market & vibrant trading hub</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Swayambhunath (Monkey Temple)</strong> — Iconic hilltop stupa overlooking valley</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Half-day hikes */}
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-amber-300 transition-colors">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-3.5">
+                <Mountain className="w-4 h-4" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-sm mb-1.5">Half-day hikes</h3>
+              <p className="text-[11px] text-slate-500 mb-3 font-medium">Valley ridge trails & mountain views</p>
+              <ul className="text-xs text-slate-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Tarebhir Hike</strong> — Scenic cliffside trail with Himalayan vistas</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Nagi Gompa (Shivapuri)</strong> — Peaceful nunnery in national park forest</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Jamacho Gompa</strong> — Nagarjun forest ridge trail & hilltop monastery</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Culture */}
+            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-amber-300 transition-colors">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-3.5">
+                <Landmark className="w-4 h-4" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-sm mb-1.5">Culture</h3>
+              <p className="text-[11px] text-slate-500 mb-3 font-medium">Art, history & spiritual heritage</p>
+              <ul className="text-xs text-slate-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Narayanhiti Palace Museum</strong> — Royal palace museum minutes from Thamel</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Museum of Nepali Art</strong> — Contemporary and traditional fine art exhibits</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <span><strong>Local temples</strong> — Bhagwati Mandir (opposite hotel) & hidden neighborhood shrines</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>

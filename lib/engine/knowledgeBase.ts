@@ -221,11 +221,12 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
     category: 'CHECK_IN',
     keywords: [
       'check-in', 'check in', 'check-out', 'check out', 'reception', 'front desk', 'open',
-      'hours', 'early check in', 'late check out', 'timing', '24/7', 'समय', 'चेक इन', 'चेक आउट', 'रिसेप्सन'
+      'hours', 'early check in', 'late check out', 'timing', '24/7', 'समय', 'चेक इन', 'चेक आउट', 'रिसेप्सन',
+      'flexible check-in', 'flexible check in', 'early arrival', 'luggage storage', 'check-in policy', 'check in policy'
     ],
-    answerEn: "Our front desk is open 24 hours a day, 7 days a week 😊\n\n• Check-in time: from 14:00 (2:00 PM)\n• Check-out time: until 12:00 (12:00 PM noon)\n• Early check-in & late check-out: available upon request subject to room availability on the day.\n• Arriving early? You are welcome to store your luggage with us completely free of charge!",
-    answerNe: "हाम्रो फ्रन्ट डेस्क २४ सै घण्टा खुला रहन्छ 😊\n\n• चेक-इन समय: दिउँसो २:०० बजे (14:00) देखि\n• चेक-आउट समय: मध्यान्ह १२:०० बजे (12:00) सम्म\n• अर्ली चेक-इन वा लेट चेक-आउट: कोठा खाली भएको खण्डमा उपलब्ध गराइन्छ।\n• यदि यहाँ चाँडै आइपुग्नुभयो भने आफ्नो सामान फ्रन्ट डेस्कमा निःशुल्क राखेर घुम्न निस्कन सक्नुहुन्छ!",
-    answerHi: "हमारा फ्रंट डेस्क 24 घंटे खुला रहता है। चेक-इन दोपहर 2:00 बजे से और चेक-आउट दोपहर 12:00 बजे तक है। उपलब्धता के अनुसार जल्दी चेक-इन और मुफ्त लगेज स्टोरेज उपलब्ध है 😊"
+    answerEn: "Here are our check-in and check-out policies at Hotel Sherpa Soul 😊:\n\n• Check-in: Flexible from 12:00 PM, subject to room availability.\n• Early arrival: free luggage storage; early check-in subject to availability.\n• Check-out: 11:00 AM; late check-out on request, subject to availability.\n\nOur front desk is staffed 24 hours a day, 7 days a week to welcome you!",
+    answerNe: "होटल शेर्पा सोलको चेक-इन र चेक-आउट नीतिहरू 😊:\n\n• चेक-इन: दिउँसो १२:०० बजेदेखि लचिलो (Flexible from 12:00 PM), कोठा उपलब्धताको आधारमा।\n• सबेरै आगमन (Early arrival): निःशुल्क लगेज भण्डारण (free luggage storage); कोठा खाली भएमा अर्ली चेक-इन उपलब्ध।\n• चेक-आउट: बिहान ११:०० बजे; अनुरोधमा लेट चेक-आउट (कोठा उपलब्धताको आधारमा)।\n\nहाम्रो फ्रन्ट डेस्क यहाँलाई स्वागत गर्न २४ सै घण्टा खुला रहन्छ!",
+    answerHi: "होटल शेरपा सोल की चेक-इन और चेक-आउट नीतियां 😊:\n\n• चेक-इन: दोपहर 12:00 बजे से लचीला (कमरे की उपलब्धता पर निर्भर)।\n• जल्दी आगमन: मुफ्त लगेज स्टोरेज; उपलब्धता के अनुसार जल्दी चेक-इन।\n• चेक-आउट: सुबह 11:00 बजे; अनुरोध पर देर से चेक-आउट (उपलब्धता पर निर्भर)।\n\nहमारा फ्रंट डेस्क 24 घंटे खुला रहता है!"
   },
   {
     id: 'hotel_policies',
@@ -348,11 +349,11 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
     keywords: [
       'early check in', 'early morning', 'night bus', 'late check out', 'chaudo aayo vane',
       'chhito aayo vane', 'early arrival', 'छिटो आयो भने', 'सबेरै आएमा', 'चाँडै आएमा',
-      'early checkin', 'late checkout', 'morning check in', 'late arrival'
+      'early checkin', 'late checkout', 'morning check in', 'late arrival', 'flexible check-in', 'flexible check in'
     ],
-    answerEn: "If you arrive early in the morning (for example from an overnight flight or night bus), you are warmly welcome to come straight to Hotel Sherpa Soul 😊\n\n• If your room is already vacant and cleaned, we will gladly check you in early completely free of charge!\n• If previous guests are still in the room, you can safely store all your luggage at our 24/7 reception, freshen up, and relax on our rooftop terrace or reception lounge with free Wi-Fi until the room is ready.\n\nStandard check-in is 2:00 PM and check-out is 12:00 PM noon. Late check-out is also accommodated whenever room availability permits!",
-    answerNe: "यदि यहाँ बिहान सबेरै (जस्तै नाइट बस वा बिहानको उडानबाट) आइपुग्नुभयो भने सिधै होटल शेर्पा सोलमा आउन सक्नुहुन्छ 😊\n\n• यदि कोठा खाली र तयार छ भने हामी कुनै अतिरिक्त शुल्क बिना अर्ली चेक-इन (Early Check-in) गराइदिनेछौँ!\n• यदि कोठा खाली हुन बाँकी छ भने यहाँले आफ्नो सम्पूर्ण लगेज रिसेप्सनमा निःशुल्क सुरक्षित राखेर फ्रेस हुन सक्नुहुन्छ र हाम्रो रुफटप टेरेस वा लबीमा बसेर आराम वा वाइफाइ चलाउन सक्नुहुन्छ।\n\nसाधारण चेक-इन दिउँसो २:०० बजे र चेक-आउट मध्यान्ह १२:०० बजे हो। कोठा खाली भएको अवस्थामा लेट चेक-आउट पनि मिलाउन सकिन्छ!",
-    answerHi: "यदि आप सुबह जल्दी आते हैं और कमरा खाली है, तो हम बिना किसी शुल्क के जल्दी चेक-इन प्रदान करते हैं। यदि कमरा तैयार होने में समय है, तो आप अपना सामान रिसेप्शन पर रखकर रूफटॉप पर आराम कर सकते हैं 😊"
+    answerEn: "If you arrive early in the morning (for example from an overnight flight or night bus), you are warmly welcome to come straight to Hotel Sherpa Soul 😊\n\n• Check-in: Flexible from 12:00 PM, subject to room availability.\n• Early arrival: free luggage storage; early check-in subject to availability completely free of charge!\n• Check-out: 11:00 AM; late check-out on request, subject to availability.\n\nWhile waiting, you can safely store your bags at reception, freshen up, and relax on our rooftop terrace or lounge with free Wi-Fi.",
+    answerNe: "यदि यहाँ बिहान सबेरै (जस्तै नाइट बस वा बिहानको उडानबाट) आइपुग्नुभयो भने सिधै होटल शेर्पा सोलमा आउन सक्नुहुन्छ 😊\n\n• चेक-इन: दिउँसो १२:०० बजेदेखि लचिलो (Flexible from 12:00 PM), कोठा खाली भएको अवस्थामा।\n• सबेरै आगमन: हाम्रो २४/७ रिसेप्सनमा निःशुल्क लगेज सुरक्षित राख्न सक्नुहुन्छ र कोठा तयार भएमा कुनै अतिरिक्त शुल्क बिना अर्ली चेक-इन पाइन्छ!\n• चेक-आउट: बिहान ११:०० बजे; अनुरोधमा लेट चेक-आउट (उपलब्धताको आधारमा)।\n\nयहाँले हाम्रो रुफटप टेरेस वा लबीमा बसेर आराम वा निःशुल्क वाइफाइ चलाउन सक्नुहुन्छ।",
+    answerHi: "यदि आप सुबह जल्दी आते हैं, तो हम 24/7 रिसेप्शन पर मुफ्त लगेज स्टोरेज प्रदान करते हैं। कमरा खाली होने पर 12:00 बजे से पहले भी अर्ली चेक-इन संभव है। चेक-आउट 11:00 बजे है 😊"
   },
   {
     id: 'taxi_directions_landmark',
@@ -421,6 +422,25 @@ export const HOTEL_WEBSITE_KNOWLEDGE: WebsiteKnowledgeItem[] = [
     answerEn: "Hotel Sherpa Soul proudly holds a 4.9 / 5.0 guest review rating from over 128+ verified travelers exploring Nepal 😊!\n\nOur guests consistently highlight:\n• Exceptionally quiet rooms and deep, restful sleep in central Thamel ('No Restaurant. No Noise. Sleep Well.')\n• 24/7 high-pressure hot water showers in modern private bathrooms\n• Warm, authentic Himalayan Sherpa hospitality & trekking assistance\n• Reliable fiber-optic Wi-Fi and clean, comfortable bedding\n\nYou can read verified traveler reviews on our website at https://hotelsherpasoul.com!",
     answerNe: "होटल शेर्पा सोललाई विश्वभरका पाहुनाहरूले १२८+ भन्दा बढी प्रमाणित समीक्षाहरूमा ४.९ / ५.० (4.9/5.0) को उत्कृष्ट रेटिङ दिनुभएको छ 😊!\n\nपाहुनाहरूले विशेषगरी:\n• ठमेलको केन्द्रमा भए पनि कुनै कोलाहल नहुने शान्त वातावरण र मीठो निद्रा ('No Restaurant. No Noise. Sleep Well.')\n• २४ सै घण्टा उच्च प्रेसरको तातो पानीसहितको निजी आधुनिक बाथरुम\n• शेर्पा परिवारको हार्दिक आतिथ्यता र ट्रेकिङ सहयोग\n• कोठाको सफाइ र तीव्र गतिको फाइबर वाइफाइको उच्च प्रशंसा गर्नुभएको छ।\n\nथप समीक्षाहरू हाम्रो आधिकारिक वेबसाइट https://hotelsherpasoul.com मा हेर्न सक्नुहुन्छ!",
     answerHi: "होटल शेरपा सोल को 128+ से अधिक मेहमानों की समीक्षाओं के साथ 4.9/5.0 की उत्कृष्ट रेटिंग प्राप्त है 😊"
+  },
+  {
+    id: 'city_guide_explore',
+    category: 'LOCATION',
+    keywords: [
+      'what to do nearby', 'what to do', 'things to do nearby', 'things to do', 'nearby',
+      'nearby attractions', 'attractions', 'attractions nearby', 'sightseeing', 'places to visit',
+      'places to visit nearby', 'explore', 'city guide', 'explore thamel', 'explore kathmandu',
+      'thamel heritage walk', 'garden of dreams', 'kathmandu durbar square', 'durbar square',
+      'ason bazaar', 'swayambhunath', 'monkey temple', 'tarebhir', 'tarebhir hike',
+      'nagi gompa', 'jamacho', 'jamacho gompa', 'narayanhiti', 'narayanhiti palace museum',
+      'museum of nepali art', 'local temples', 'hikes', 'hike', 'half-day hikes', 'culture',
+      'नजिक के छ', 'घुम्ने ठाउँ', 'काठमाडौँ घुम्न', 'ठमेलमा के छ', 'kata ghumnu',
+      'ghumnu parne thaun', 'najik k cha', 'k garna sakincha', 'आसपास क्या देखें',
+      'घूमने की जगह', 'आसपास क्या करें', 'पास में क्या है'
+    ],
+    answerEn: "Here is our curated guide to exploring Thamel & Kathmandu right from Hotel Sherpa Soul 😊:\n\nWalking (in Thamel):\n• Garden of Dreams\n• Thamel Heritage Walk\n• Local cafes and trekking shops\n\nWalking (20–40 min):\n• Kathmandu Durbar Square\n• Ason Bazaar\n• Swayambhunath (Monkey Temple)\n\nHalf-day hikes:\n• Tarebhir Hike\n• Nagi Gompa (Shivapuri)\n• Jamacho Gompa\n\nCulture:\n• Narayanhiti Palace Museum\n• Museum of Nepali Art\n• Local temples\n\nOur 24/7 front desk is always happy to provide walking directions, local tips, or help arrange taxi transfers!",
+    answerNe: "होटल शेर्पा सोलबाट सजिलै घुम्न सकिने ठमेल तथा काठमाडौँका मुख्य पर्यटकीय स्थलहरू (City Guide) 😊:\n\nWalking (ठमेलभित्रै पैदल):\n• Garden of Dreams (गार्डन अफ ड्रिम्स)\n• Thamel Heritage Walk (ठमेल हेरिटेज वाक)\n• Local cafes and trekking shops (स्थानीय क्याफे तथा ट्रेकिङ पसलहरू)\n\nWalking (२०-४० मिनेट पैदल):\n• Kathmandu Durbar Square (काठमाडौँ दरबार स्क्वायर)\n• Ason Bazaar (असन बजार)\n• Swayambhunath (Monkey Temple / स्वयम्भुनाथ)\n\nHalf-day hikes (आधा-दिने पदयात्रा):\n• Tarebhir Hike (तारेभीर हाइक)\n• Nagi Gompa (Shivapuri / नागी गुम्बा)\n• Jamacho Gompa (जामाचो गुम्बा)\n\nCulture (संस्कृति र सम्पदा):\n• Narayanhiti Palace Museum (नारायणहिटी दरबार सङ्ग्रहालय)\n• Museum of Nepali Art (नेपाली कला सङ्ग्रहालय)\n• Local temples (स्थानीय मन्दिरहरू)\n\nहाम्रो फ्रन्ट डेस्कले यहाँलाई बाटो देखाउन र ट्याक्सी मिलाउन सधैँ सहयोग गर्नेछ!",
+    answerHi: "होटल शेरपा सोल से थमेल और काठमांडू घूमने के लिए हमारी सिटी गाइड (City Guide) 😊:\n\nWalking (थमेल में पैदल):\n• Garden of Dreams\n• Thamel Heritage Walk\n• Local cafes and trekking shops\n\nWalking (20–40 मिनट पैदल):\n• Kathmandu Durbar Square\n• Ason Bazaar\n• Swayambhunath (Monkey Temple)\n\nHalf-day hikes (हाइकिंग):\n• Tarebhir Hike\n• Nagi Gompa (Shivapuri)\n• Jamacho Gompa\n\nCulture (संस्कृति और कला):\n• Narayanhiti Palace Museum\n• Museum of Nepali Art\n• Local temples\n\nफ्रंट डेस्क आपको रास्ते और टैक्सी में मदद करने के लिए 24 घंटे उपलब्ध है!"
   }
 ];
 
