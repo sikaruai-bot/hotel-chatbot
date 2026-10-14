@@ -5,8 +5,12 @@ export function verifyWebhookChallenge(
   token: string | null,
   challenge: string | null
 ): { isValid: boolean; challenge?: string } {
-  const expectedToken = process.env.META_VERIFY_TOKEN;
-  if (expectedToken && mode === 'subscribe' && token === expectedToken && challenge) {
+  const expectedToken = (process.env.META_VERIFY_TOKEN || 'sherpa_soul_webhook_verify_token_2026')
+    .trim()
+    .replace(/^['"]|['"]$/g, '');
+  const cleanToken = token?.trim().replace(/^['"]|['"]$/g, '');
+
+  if (expectedToken && mode === 'subscribe' && cleanToken === expectedToken && challenge) {
     return { isValid: true, challenge };
   }
   return { isValid: false };
@@ -17,7 +21,9 @@ export function verifyMetaSignature(
   signatureHeader: string | null,
   appSecret?: string
 ): boolean {
-  const secret = appSecret || process.env.META_APP_SECRET;
+  const secret = (appSecret || process.env.META_APP_SECRET || '')
+    .trim()
+    .replace(/^['"]|['"]$/g, '');
   if (!secret) return true; // Skip if no secret set in local development
   if (!signatureHeader) return false;
 
