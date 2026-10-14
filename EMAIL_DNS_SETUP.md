@@ -62,12 +62,12 @@
 
 ---
 
-### Record 4: Inbound MX Routing (For Direct Webhook Ingestion)
+### Record 4: Inbound MX Routing (Resend Receiving)
 *Routes inbound mail sent to `info@hotelsherpasoul.com` directly into Resend Inbound Webhook.*
 
 | Type | Host / Name | Priority | Value | TTL |
 | :--- | :--- | :--- | :--- | :--- |
-| **MX** | `@` | `10` | `feedback-smtp.resend.com` | 3600 |
+| **MX** | `@` | `9` (or `10`) | `inbound-smtp.ap-northeast-1.amazonaws.com` | 3600 (or 60) |
 
 *Alternative:* If existing mail host `mail.hotelsherpasoul.com` is retained for staff POP3/IMAP inboxes, configure an email forwarding rule inside the mail server:
 - Forward all mail received at `info@hotelsherpasoul.com` -> `inbound@in.hotelsherpasoul.com` (pointing to Resend MX).
