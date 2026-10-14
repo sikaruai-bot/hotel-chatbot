@@ -1,4 +1,4 @@
-export type Channel = 'WHATSAPP' | 'MESSENGER' | 'INSTAGRAM' | 'WEBSITE' | 'META_LEAD_ADS';
+export type Channel = 'WHATSAPP' | 'MESSENGER' | 'INSTAGRAM' | 'WEBSITE' | 'META_LEAD_ADS' | 'EMAIL';
 
 export type Intent =
   | 'GREETING'

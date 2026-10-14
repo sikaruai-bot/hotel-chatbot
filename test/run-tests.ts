@@ -10,6 +10,12 @@ import { GET as getWhatsAppWebhook, POST as postWhatsAppWebhook } from '../app/a
 import { GET as getMessengerWebhook, POST as postMessengerWebhook } from '../app/api/webhooks/messenger/route';
 import { GET as getInstagramWebhook, POST as postInstagramWebhook } from '../app/api/webhooks/instagram/route';
 import { POST as postWebsiteChat } from '../app/api/chat/website/route';
+import { POST as postEmailWebhook } from '../app/api/webhooks/email/route';
+import { maskEmail } from '../lib/masking';
+import { verifyEmailWebhookSignature, generateTestSvixSignature } from '../lib/email/verification';
+import { analyzeEmailThreat } from '../lib/email/spamFilter';
+import { generateEmailReplyDraft, canSendReviewRequest, buildReservationNotification } from '../lib/engine/guestJourney';
+import { ParsedEmailMessage } from '../lib/email/types';
 
 let passed = 0;
 let failed = 0;
@@ -667,6 +673,344 @@ async function runAllTests() {
   // Safety Constraint: Zero PMS bookings created
   const reservationsAfter = await prisma.reservation.count();
   assert(reservationsAfter === reservationsBefore, 'Task 5: Strict PMS Safety confirmed (0 live reservations created)', `before=${reservationsBefore}, after=${reservationsAfter}`);
+
+  // =========================================================================
+  // TEST GROUP 10: Official Email Integration, Phishing & Spam Protection,
+  // Domain Authentication & Guest Journey Automation
+  // =========================================================================
+  console.log('\n[TEST GROUP 10: Official Email Integration, Spam Scoring & Guest Journey Automation]');
+
+  // 10.1 PII Masking Tests
+  const maskedOfficial = maskEmail('info@hotelsherpasoul.com');
+  assert(maskedOfficial === 'in***@hotelsherpasoul.com', 'PII Masking: Official email masked correctly');
+
+  const maskedGuest = maskEmail('traveler.john@gmail.com');
+  assert(maskedGuest === 'tr***@gmail.com', 'PII Masking: Guest email masked correctly');
+
+  const maskedShort = maskEmail('a@domain.com');
+  assert(maskedShort === '*@domain.com', 'PII Masking: Short local part masked safely');
+
+  // 10.2 Svix & HMAC Signature Verification
+  const testSecret = 'whsec_dGVzdF9zZWNyZXRfa2V5X2Zvcl9lbWFpbF93ZWJob29rc18xMjM0NQ==';
+  const testBody = JSON.stringify({
+    type: 'email.received',
+    data: {
+      email_id: 'em_test_sig_001',
+      from: 'Test Traveler <traveler@example.com>',
+      to: ['info@hotelsherpasoul.com'],
+      subject: 'Inquiry',
+      text: 'Hello from Nepal',
+    },
+  });
+
+  const svixSig = generateTestSvixSignature(testBody, testSecret);
+  const verifyEmailValid = verifyEmailWebhookSignature({
+    rawBody: testBody,
+    headers: svixSig,
+    secret: testSecret,
+  });
+  assert(verifyEmailValid.isValid === true, 'Webhook Verification: Valid Svix signature accepted');
+
+  const verifyEmailForged = verifyEmailWebhookSignature({
+    rawBody: testBody + 'tampered',
+    headers: svixSig,
+    secret: testSecret,
+  });
+  assert(verifyEmailForged.isValid === false, 'Webhook Verification: Tampered body signature rejected');
+
+  const expiredSig = generateTestSvixSignature(testBody, testSecret, Math.floor(Date.now() / 1000) - 600);
+  const verifyEmailExpired = verifyEmailWebhookSignature({
+    rawBody: testBody,
+    headers: expiredSig,
+    secret: testSecret,
+  });
+  assert(verifyEmailExpired.isValid === false, 'Webhook Verification: Expired timestamp outside tolerance window rejected');
+
+  // 10.3 Phishing & Spam Scoring Pipeline
+  const cleanEmail: ParsedEmailMessage = {
+    messageId: 'clean_001',
+    fromEmail: 'hiking.guest@gmail.com',
+    fromName: 'Sarah Jenkins',
+    to: ['info@hotelsherpasoul.com'],
+    subject: 'Room availability for November trek',
+    textBody: 'Hello Hotel Sherpa Soul, do you have a Deluxe Room available for 2 adults in November? We are hiking the Annapurna circuit afterwards.',
+    headers: {},
+    attachments: [],
+    authResults: { spf: 'pass', dkim: 'pass', dmarc: 'pass' },
+    receivedAt: new Date(),
+  };
+  const cleanAnalysis = analyzeEmailThreat(cleanEmail);
+  assert(cleanAnalysis.threatLevel === 'SAFE', 'Spam Filter: Clean guest inquiry evaluated as SAFE');
+  assert(cleanAnalysis.score < 20, 'Spam Filter: Clean inquiry score < 20');
+  assert(cleanAnalysis.autoReplyAllowed === true, 'Spam Filter: Safe authenticated sender allows auto-reply evaluation');
+
+  // Malicious attachments
+  const malwareEmail: ParsedEmailMessage = {
+    messageId: 'malware_001',
+    fromEmail: 'suspicious@freemail.ru',
+    to: ['info@hotelsherpasoul.com'],
+    subject: 'Booking Confirmation Receipt',
+    textBody: 'Please see attached confirmation executable for your reservation details.',
+    headers: {},
+    attachments: [{ filename: 'booking_receipt.exe', contentType: 'application/x-msdownload', size: 54000 }],
+    authResults: { spf: 'fail', dkim: 'fail' },
+    receivedAt: new Date(),
+  };
+  const malwareAnalysis = analyzeEmailThreat(malwareEmail);
+  assert(malwareAnalysis.threatLevel === 'PHISHING_SPAM', 'Spam Filter: Executable attachment flagged as PHISHING_SPAM');
+  assert(malwareAnalysis.score >= 70, 'Spam Filter: Malware attachment threat score >= 70');
+  assert(malwareAnalysis.autoReplyAllowed === false, 'Spam Filter: Auto-reply strictly prohibited for malware attachment');
+
+  // Shortened URLs & Wire fraud lures
+  const fraudEmail: ParsedEmailMessage = {
+    messageId: 'fraud_001',
+    fromEmail: 'agent@unknown.org',
+    to: ['info@hotelsherpasoul.com'],
+    subject: 'Urgent Wire Transfer Payment Confirmation',
+    textBody: 'Please send western union wire transfer funds to secure your room. Click short link: https://bit.ly/claim-room-payout',
+    headers: {},
+    attachments: [],
+    authResults: { spf: 'none', dkim: 'none' },
+    receivedAt: new Date(),
+  };
+  const fraudAnalysis = analyzeEmailThreat(fraudEmail);
+  assert(fraudAnalysis.threatLevel === 'PHISHING_SPAM', 'Spam Filter: Wire fraud lure + bit.ly shortener flagged as PHISHING_SPAM');
+  assert(fraudAnalysis.factors.some(f => f.signal === 'URL_SHORTENER_DETECTED'), 'Spam Filter: URL shortener detected in signal factors');
+  assert(fraudAnalysis.factors.some(f => f.signal === 'FINANCIAL_FRAUD_LURE'), 'Spam Filter: Financial fraud lure detected in signal factors');
+
+  // Lookalike domain spoofing
+  const spoofEmail: ParsedEmailMessage = {
+    messageId: 'spoof_001',
+    fromEmail: 'manager@hotelsherpasou1.com',
+    fromName: 'Hotel Sherpa Soul Manager',
+    to: ['info@hotelsherpasoul.com'],
+    subject: 'Internal Admin Update',
+    textBody: 'Please update database credentials immediately.',
+    headers: {},
+    attachments: [],
+    authResults: { spf: 'fail' },
+    receivedAt: new Date(),
+  };
+  const spoofAnalysis = analyzeEmailThreat(spoofEmail);
+  assert(spoofAnalysis.threatLevel === 'PHISHING_SPAM', 'Spam Filter: Lookalike domain (hotelsherpasou1.com) flagged as PHISHING_SPAM');
+  assert(spoofAnalysis.factors.some(f => f.signal === 'LOOKALIKE_DOMAIN_SPOOF'), 'Spam Filter: Lookalike domain spoof factor detected');
+
+  // 10.4 Webhook Endpoint POST /api/webhooks/email
+  process.env.RESEND_WEBHOOK_SECRET = testSecret;
+
+  // Test 10.4.1: Unauthorized request (no signature)
+  const unsignedReq = new NextRequest('http://localhost:3000/api/webhooks/email', {
+    method: 'POST',
+    body: JSON.stringify({ type: 'email.received', data: {} }),
+  });
+  const unsignedRes = await postEmailWebhook(unsignedReq);
+  assert(unsignedRes.status === 401, 'Email Webhook: Rejects unsigned request with HTTP 401');
+
+  // Test 10.4.2: Ingestion of genuine guest inquiry
+  const guestEmailAddress = `clara.oswald_${Date.now()}@gmail.com`;
+  const guestEmailId = `em_guest_${Date.now()}`;
+  const validGuestPayload = JSON.stringify({
+    type: 'email.received',
+    created_at: new Date().toISOString(),
+    data: {
+      email_id: guestEmailId,
+      from: `Clara Oswald <${guestEmailAddress}>`,
+      to: ['info@hotelsherpasoul.com'],
+      subject: 'Inquiry: Family Room rate and check-in time',
+      text: 'Hi Hotel Sherpa Soul, what is your Family Room price and when can we check in?',
+      headers: {
+        'message-id': `<${guestEmailId}@gmail.com>`,
+        'authentication-results': 'spf=pass dkim=pass dmarc=pass',
+      },
+      attachments: [],
+    },
+  });
+  const validSigHeaders = generateTestSvixSignature(validGuestPayload, testSecret);
+  const validEmailReq = new NextRequest('http://localhost:3000/api/webhooks/email', {
+    method: 'POST',
+    body: validGuestPayload,
+    headers: validSigHeaders,
+  });
+  const validEmailRes = await postEmailWebhook(validEmailReq);
+  assert(validEmailRes.status === 200, 'Email Webhook: Ingests valid inquiry and responds HTTP 200');
+
+  // Verify Customer, Conversation, Message, and Lead in CRM
+  const emailCustomer = await prisma.customer.findFirst({
+    where: { email: guestEmailAddress },
+  });
+  assert(Boolean(emailCustomer), 'Email Integration: CRM Customer created with guest email');
+  assert(emailCustomer?.firstChannel === 'EMAIL', 'Email Integration: Customer firstChannel set to EMAIL');
+
+  const emailConv = await prisma.conversation.findFirst({
+    where: { customerId: emailCustomer?.id, channel: 'EMAIL' },
+    orderBy: { createdAt: 'desc' },
+  });
+  assert(Boolean(emailConv), 'Email Integration: CRM Conversation created with channel EMAIL');
+  assert(emailConv?.mode === 'HUMAN', 'Safety Rule 10: Email conversation mode is HUMAN (human-in-the-loop first)');
+  assert(emailConv?.status === 'HUMAN_REQUIRED', 'Safety Rule 10: Conversation status set to HUMAN_REQUIRED for staff review');
+
+  const emailLead = await prisma.lead.findFirst({
+    where: { customerId: emailCustomer?.id },
+    orderBy: { createdAt: 'desc' },
+  });
+  assert(Boolean(emailLead), 'Email Integration: CRM Lead created for email inquiry');
+  assert(emailLead?.channel === 'EMAIL', 'Email Integration: CRM Lead channel strictly set to EMAIL');
+  assert(Boolean(emailLead?.source?.includes('Official Email')), 'Email Integration: CRM Lead source set to Official Email');
+
+  const emailMsg = await prisma.message.findFirst({
+    where: { conversationId: emailConv?.id, direction: 'INBOUND' },
+    orderBy: { createdAt: 'desc' },
+  });
+  assert(Boolean(emailMsg), 'Email Integration: Inbound message stored in DB');
+  assert(emailMsg?.channel === 'EMAIL', 'Email Integration: Message channel matches EMAIL');
+  assert(emailMsg?.externalMessageId === guestEmailId, 'Email Integration: External Message ID preserved');
+
+  // Test 10.4.3: Ingestion of Phishing attempt via Webhook -> Quarantined
+  const phishingEmailId = `em_phish_${Date.now()}`;
+  const phishingPayload = JSON.stringify({
+    type: 'email.received',
+    created_at: new Date().toISOString(),
+    data: {
+      email_id: phishingEmailId,
+      from: 'Account Security <security@hotelsherpasou1.com>',
+      to: ['info@hotelsherpasoul.com'],
+      subject: 'Urgent: Wire Transfer Suspended',
+      text: 'Send bank routing wire transfer immediately: https://bit.ly/urgent-pay',
+      headers: {
+        'message-id': `<${phishingEmailId}@malicious.net>`,
+        'authentication-results': 'spf=fail dkim=fail',
+      },
+      attachments: [{ filename: 'patch.exe', content_type: 'application/octet-stream', size: 1024 }],
+    },
+  });
+  const phishSigHeaders = generateTestSvixSignature(phishingPayload, testSecret);
+  const phishEmailReq = new NextRequest('http://localhost:3000/api/webhooks/email', {
+    method: 'POST',
+    body: phishingPayload,
+    headers: phishSigHeaders,
+  });
+  const phishEmailRes = await postEmailWebhook(phishEmailReq);
+  const phishResJson = await phishEmailRes.json();
+  assert(phishEmailRes.status === 200, 'Email Webhook: Quarantines phishing email and responds HTTP 200');
+  assert(phishResJson.quarantined === true, 'Safety Rule 5: Phishing email strictly quarantined');
+  assert(phishResJson.threatLevel === 'PHISHING_SPAM', 'Safety Rule 5: Threat level identified as PHISHING_SPAM');
+
+  // 10.5 Guest Journey Automation & Safety Guardrails
+  // Guardrail 10.5.1: Knowledge Base Grounding & Draft Generation
+  const inquiryDraft = await generateEmailReplyDraft({
+    messageId: 'draft_test_001',
+    fromEmail: 'clara.oswald@gmail.com',
+    fromName: 'Clara Oswald',
+    to: ['info@hotelsherpasoul.com'],
+    subject: 'Room availability and check-in policies',
+    textBody: 'Can you tell me about check-in time and Deluxe room prices?',
+    headers: {},
+    attachments: [],
+    authResults: { spf: 'pass', dkim: 'pass' },
+    receivedAt: new Date(),
+  });
+  assert(inquiryDraft.isDraftOnly === true, 'Safety Rule 10: Email reply generated as draft only (isDraftOnly=true)');
+  assert(inquiryDraft.requiresStaffApproval === true, 'Safety Rule 10: Requires staff approval before dispatch');
+  assert(inquiryDraft.humanContactIncluded === true, 'Safety Rule 9: Every automated message includes human contact');
+  assert(inquiryDraft.text.includes('+977 9818259472'), 'Safety Rule 9: Human contact footer includes Front Desk phone');
+  assert(inquiryDraft.text.includes('info@hotelsherpasoul.com'), 'Safety Rule 9: Human contact footer includes official email');
+  assert(inquiryDraft.text.includes('Flexible from 12:00 PM'), 'Safety Rule 6: Grounded check-in policy (12:00 PM flexible)');
+  assert(inquiryDraft.text.includes('Deluxe Double Room: USD $20'), 'Safety Rule 6: Grounded Deluxe room rate ($20)');
+  assert(!inquiryDraft.text.toLowerCase().includes('confirmed booking'), 'Safety Rule 7: Never says "confirmed booking" on inquiry stage');
+
+  // Guardrail 10.5.2: Shared Kitchen Policy Grounding
+  const kitchenDraft = await generateEmailReplyDraft({
+    messageId: 'draft_kitchen_001',
+    fromEmail: 'chef@traveler.com',
+    to: ['info@hotelsherpasoul.com'],
+    subject: 'Can I use the shared kitchen in room 102?',
+    textBody: 'I love cooking. Can I use the kitchen in room 102 for my 3-day stay?',
+    headers: {},
+    attachments: [],
+    authResults: { spf: 'pass' },
+    receivedAt: new Date(),
+  });
+  assert(kitchenDraft.text.includes('Room 102'), 'Knowledge Base: Explains Room 102 shared kitchen');
+  assert(kitchenDraft.text.includes('2 weeks'), 'Safety Rule 6: Enforces minimum stay requirement of 2 weeks for shared kitchen');
+
+  // Guardrail 10.5.3: Review Request Gatekeeper (Safety Rule 8)
+  const complaintCustomer = await prisma.customer.create({
+    data: {
+      name: 'Unhappy Guest',
+      email: `unhappy_${Date.now()}@example.com`,
+      phone: `98000${Math.floor(10000 + Math.random() * 90000)}`,
+      firstChannel: 'WEBSITE',
+    },
+  });
+  const complaintConv = await prisma.conversation.create({
+    data: {
+      customerId: complaintCustomer.id,
+      channel: 'WEBSITE',
+      status: 'HUMAN_REQUIRED',
+      mode: 'HUMAN',
+    },
+  });
+  await prisma.message.create({
+    data: {
+      conversationId: complaintConv.id,
+      customerId: complaintCustomer.id,
+      direction: 'INBOUND',
+      channel: 'WEBSITE',
+      content: 'I had a terrible experience with dirty bathroom and cold water. I want to file a complaint!',
+    },
+  });
+
+  const reviewBlocked = await canSendReviewRequest(complaintCustomer.id);
+  assert(reviewBlocked.allowed === false, 'Safety Rule 8: Review request strictly blocked for guest with negative feedback/complaint');
+  assert(Boolean(reviewBlocked.reason), 'Safety Rule 8: Block reason documented');
+
+  // Guardrail 10.5.4: Reservation Status Notification (Safety Rule 7)
+  const testRoomType = await prisma.roomType.findFirst();
+  if (testRoomType && emailCustomer) {
+    const pendingRes = await prisma.reservation.create({
+      data: {
+        bookingCode: `INQ-TEST-${Date.now()}`,
+        customerId: emailCustomer.id,
+        roomTypeId: testRoomType.id,
+        guestName: 'Clara Oswald',
+        guestEmail: 'clara.oswald@gmail.com',
+        checkInDate: new Date(),
+        checkOutDate: new Date(Date.now() + 86400000),
+        status: 'PENDING_REQUEST',
+      },
+    });
+
+    const pendingNotif = await buildReservationNotification(pendingRes.id);
+    assert(pendingNotif.allowedToClaimConfirmed === false, 'Safety Rule 7: PENDING_REQUEST reservation cannot claim confirmed booking');
+    assert(pendingNotif.messageText.includes('PENDING FRONT DESK APPROVAL'), 'Safety Rule 7: Clearly states pending status');
+    assert(!pendingNotif.messageText.toLowerCase().includes('is confirmed'), 'Safety Rule 7: Prohibits claiming confirmed booking when pending');
+
+    await prisma.reservation.update({
+      where: { id: pendingRes.id },
+      data: { status: 'CONFIRMED' },
+    });
+    const confirmedNotif = await buildReservationNotification(pendingRes.id);
+    assert(confirmedNotif.allowedToClaimConfirmed === true, 'Safety Rule 7: CONFIRMED reservation permits confirmed booking wording');
+    assert(confirmedNotif.messageText.includes('is CONFIRMED'), 'Safety Rule 7: States CONFIRMED when status is CONFIRMED');
+
+    // Clean up test reservation so count remains unchanged
+    await prisma.reservation.delete({ where: { id: pendingRes.id } });
+  }
+
+  // 10.6 DNS Setup Artifact Verification
+  const dnsSetupPath = path.join(process.cwd(), 'EMAIL_DNS_SETUP.md');
+  const dnsSetupExists = fs.existsSync(dnsSetupPath);
+  assert(dnsSetupExists, 'Domain Authentication: EMAIL_DNS_SETUP.md artifact exists');
+  if (dnsSetupExists) {
+    const dnsContent = fs.readFileSync(dnsSetupPath, 'utf8');
+    assert(dnsContent.includes('p=none'), 'Domain Authentication: DMARC record configured at p=none (monitor only)');
+    assert(dnsContent.includes('resend._domainkey'), 'Domain Authentication: DKIM selector specified');
+    assert(dnsContent.includes('v=spf1'), 'Domain Authentication: SPF record specified');
+  }
+
+  // Final Strict Safety Verification: Confirm zero live PMS bookings created during test suite
+  const finalReservationCount = await prisma.reservation.count();
+  assert(finalReservationCount === reservationsBefore, 'Strict Safety Rule 4: Zero live PMS bookings created across entire test suite');
 
   console.log('\n======================================================');
   console.log(`TEST SUMMARY: ${passed} Passed, ${failed} Failed`);

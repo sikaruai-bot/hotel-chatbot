@@ -34,3 +34,23 @@ export function maskSecret(secret?: string | null): string {
   if (secret.length <= 6) return '******';
   return `${secret.slice(0, 4)}...[REDACTED ${secret.length} chars]`;
 }
+
+/**
+ * Masks an email address for safe logging.
+ * Retains the first 2 characters of the local part and the domain name.
+ * Examples:
+ *   "info@hotelsherpasoul.com" -> "in***@hotelsherpasoul.com"
+ *   "guest@gmail.com"          -> "gu***@gmail.com"
+ *   "a@test.com"               -> "*@test.com"
+ */
+export function maskEmail(email?: string | null): string {
+  if (!email || typeof email !== 'string') return '***@***.***';
+  const clean = email.trim();
+  const parts = clean.split('@');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return '***@***.***';
+  const [local, domain] = parts;
+  if (local.length <= 2) {
+    return `*@${domain}`;
+  }
+  return `${local.slice(0, 2)}***@${domain}`;
+}
