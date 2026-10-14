@@ -5,7 +5,7 @@ import { processConversationStep } from './stateMachine';
 import { sendWhatsAppMessage } from '../meta/whatsapp';
 import { sendMessengerMessage } from '../meta/messenger';
 import { sendInstagramMessage } from '../meta/instagram';
-import { maskPhoneNumber } from '../masking';
+import { maskPhoneNumber, maskEmail } from '../masking';
 
 export async function processInboundMessage(
   msg: UnifiedInboundMessage
@@ -58,6 +58,13 @@ export async function processInboundMessage(
       customer = await prisma.customer.findFirst({
         where: { instagramId: msg.senderId },
       });
+    } else if (msg.channel === 'EMAIL' || msg.senderEmail) {
+      const email = msg.senderEmail || (msg.channel === 'EMAIL' ? msg.senderId : undefined);
+      if (email) {
+        customer = await prisma.customer.findFirst({
+          where: { email },
+        });
+      }
     } else if (msg.channel === 'WEBSITE' && msg.senderId) {
       customer = await prisma.customer.findUnique({
         where: { id: msg.senderId },
@@ -68,11 +75,12 @@ export async function processInboundMessage(
   // Create customer if not found
   if (!customer) {
     const phone = msg.senderPhone || (msg.channel === 'WHATSAPP' ? msg.senderId : undefined);
+    const email = msg.senderEmail || (msg.channel === 'EMAIL' ? msg.senderId : undefined);
     customer = await prisma.customer.create({
       data: {
         name: msg.senderName || 'Guest',
         phone,
-        email: msg.senderEmail,
+        email,
         whatsappId: msg.channel === 'WHATSAPP' ? msg.senderId : undefined,
         messengerId: msg.channel === 'MESSENGER' ? msg.senderId : undefined,
         instagramId: msg.channel === 'INSTAGRAM' ? msg.senderId : undefined,
@@ -423,6 +431,9 @@ export async function processInboundMessage(
         data: { status: 'FAILED' },
       });
     }
+  } else if (msg.channel === 'EMAIL') {
+    // Safety Rule 10: Default email auto-reply = OFF; human-in-the-loop first
+    console.log(`[EMAIL DISPATCH] Outbound email response queued as draft for staff review (Recipient: ${maskEmail(customer.email || msg.senderEmail || msg.senderId)})`);
   }
 
   return {
