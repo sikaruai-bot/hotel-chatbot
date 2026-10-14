@@ -19,7 +19,6 @@ import {
   Mountain,
   Landmark,
 } from 'lucide-react';
-import HotelWidget from '@/components/HotelWidget';
 import DirectBookingEngine from '@/components/DirectBookingEngine';
 import RoomSelectButton from '@/components/RoomSelectButton';
 
@@ -475,9 +474,6 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-
-      {/* Embedded Live Hotel Chat Widget */}
-      <HotelWidget />
     </div>
   );
 }

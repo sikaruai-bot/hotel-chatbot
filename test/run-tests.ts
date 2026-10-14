@@ -1,9 +1,15 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+import { NextRequest } from 'next/server';
 import { detectLanguage, detectIntent, extractEntities } from '../lib/engine/intentDetector';
 import { processInboundMessage } from '../lib/engine/chatDispatcher';
 import { verifyWebhookChallenge, verifyMetaSignature } from '../lib/meta/verification';
 import { prisma } from '../lib/prisma';
+import { GET as getWhatsAppWebhook, POST as postWhatsAppWebhook } from '../app/api/webhooks/whatsapp/route';
+import { GET as getMessengerWebhook, POST as postMessengerWebhook } from '../app/api/webhooks/messenger/route';
+import { GET as getInstagramWebhook, POST as postInstagramWebhook } from '../app/api/webhooks/instagram/route';
+import { POST as postWebsiteChat } from '../app/api/chat/website/route';
 
 let passed = 0;
 let failed = 0;
@@ -386,6 +392,281 @@ async function runAllTests() {
   assert(resNearby.reply?.includes('Narayanhiti Palace Museum') === true, 'Chatbot "what to do nearby" includes Narayanhiti Palace Museum');
   assert(resNearby.reply?.includes('Museum of Nepali Art') === true, 'Chatbot "what to do nearby" includes Museum of Nepali Art');
   assert(resNearby.reply?.includes('Local temples') === true, 'Chatbot "what to do nearby" includes Local temples');
+
+  // Helper for signed Meta webhook requests
+  function createSignedMetaRequest(url: string, payload: any) {
+    const rawBody = JSON.stringify(payload);
+    const secret = process.env.META_APP_SECRET || '';
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (secret) {
+      headers['x-hub-signature-256'] = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody, 'utf-8').digest('hex');
+    }
+    return new NextRequest(url, {
+      method: 'POST',
+      body: rawBody,
+      headers,
+    });
+  }
+
+  // 9. Omnichannel Verification (Website, WhatsApp, Messenger, Instagram, Cross-Channel CRM)
+  console.log('\n[TEST GROUP 9: Omnichannel Verification (Website, WhatsApp, Messenger, Instagram, CRM)]');
+  const reservationsBefore = await prisma.reservation.count();
+
+  // --- TASK 1: Website Widget Embed Verification ---
+  const widgetJsPath = path.join(__dirname, '../public/widget.js');
+  assert(fs.existsSync(widgetJsPath), 'Task 1: public/widget.js exists');
+  const widgetJsContent = fs.readFileSync(widgetJsPath, 'utf-8');
+  assert(widgetJsContent.includes('data-api'), 'Task 1: widget.js supports data-api attribute');
+  assert(widgetJsContent.includes('wa.me/9779818259472'), 'Task 1: widget.js includes WhatsApp notice link without UI collision');
+  assert(widgetJsContent.includes('max-width: 480px'), 'Task 1: widget.js has responsive mobile breakpoint');
+
+  const layoutPath = path.join(__dirname, '../app/layout.tsx');
+  const layoutContent = fs.readFileSync(layoutPath, 'utf-8');
+  assert(layoutContent.includes('HotelWidget'), 'Task 1: HotelWidget embedded in RootLayout to load on all pages');
+
+  const hotelWidgetPath = path.join(__dirname, '../components/HotelWidget.tsx');
+  const hotelWidgetContent = fs.readFileSync(hotelWidgetPath, 'utf-8');
+  assert(hotelWidgetContent.includes("pathname?.startsWith('/admin')"), 'Task 1: HotelWidget hides on admin and chat routes');
+
+  // Website Chat API POST & CORS verification
+  const webChatReq = new NextRequest('http://localhost:3000/api/chat/website', {
+    method: 'POST',
+    body: JSON.stringify({ message: 'Hello! I would like to check room availability for next week', name: 'Web Traveler' }),
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const webChatRes = await postWebsiteChat(webChatReq);
+  const webChatData = await webChatRes.json();
+  assert(webChatRes.status === 200, 'Task 1: Website Chat API POST returns HTTP 200');
+  assert(webChatRes.headers.get('Access-Control-Allow-Origin') === '*', 'Task 1: Website Chat API returns CORS *');
+  assert(Boolean(webChatData.reply), 'Task 1: Website Chat API returns valid bot reply');
+  assert(Boolean(webChatData.conversationId), 'Task 1: Website Chat API establishes conversationId');
+
+  // --- TASK 2: WhatsApp Verification ---
+  const verifyToken = process.env.META_VERIFY_TOKEN || 'sherpa_soul_webhook_verify_token_2026';
+  process.env.META_VERIFY_TOKEN = verifyToken;
+
+  // 1. WhatsApp Challenge
+  const waHandshakeReq = new NextRequest(`http://localhost:3000/api/webhooks/whatsapp?hub.mode=subscribe&hub.challenge=wa_challenge_ok_999&hub.verify_token=${verifyToken}`);
+  const waHandshakeRes = await getWhatsAppWebhook(waHandshakeReq);
+  assert(waHandshakeRes.status === 200, 'Task 2: WhatsApp Webhook Challenge returns HTTP 200');
+  assert((await waHandshakeRes.text()) === 'wa_challenge_ok_999', 'Task 2: WhatsApp Webhook returns challenge text');
+
+  // 2. WhatsApp Inbound message to +977 9818259472
+  const waInboundPayload = {
+    object: 'whatsapp_business_account',
+    entry: [{
+      id: 'waba_sherpa_soul_1',
+      changes: [{
+        value: {
+          messaging_product: 'whatsapp',
+          metadata: { phone_number_id: process.env.WHATSAPP_PHONE_NUMBER_ID || '123456789' },
+          contacts: [{ profile: { name: 'Dawa Sherpa' } }],
+          messages: [{
+            from: '9779818259472',
+            id: `wamid_inbound_${Date.now()}`,
+            timestamp: String(Math.floor(Date.now() / 1000)),
+            type: 'text',
+            text: { body: 'Namaste! Are Deluxe rooms available next week?' },
+          }],
+        },
+        field: 'messages',
+      }],
+    }],
+  };
+  const waInboundReq = createSignedMetaRequest('http://localhost:3000/api/webhooks/whatsapp', waInboundPayload);
+  const waInboundRes = await postWhatsAppWebhook(waInboundReq);
+  assert(waInboundRes.status === 200, 'Task 2: WhatsApp webhook receives inbound message from +977 9818259472');
+
+  // 3. WhatsApp Message Status Updates (delivered & read)
+  const existingWaCustomer = await prisma.customer.findFirst({ where: { OR: [{ phone: '9779818259472' }, { whatsappId: '9779818259472' }] } });
+  const waConv = await prisma.conversation.findFirst({ where: { customerId: existingWaCustomer!.id }, orderBy: { createdAt: 'desc' } });
+  const waOutboundMsg = await prisma.message.create({
+    data: {
+      conversationId: waConv!.id,
+      customerId: existingWaCustomer!.id,
+      channel: 'WHATSAPP',
+      direction: 'OUTBOUND',
+      content: 'Sure! What dates are you planning to stay?',
+      externalMessageId: `wamid_out_${Date.now()}`,
+      status: 'SENT',
+    },
+  });
+
+  const waDelivStatusPayload = {
+    object: 'whatsapp_business_account',
+    entry: [{
+      id: 'waba_sherpa_soul_1',
+      changes: [{
+        value: {
+          messaging_product: 'whatsapp',
+          metadata: { phone_number_id: '123456789' },
+          statuses: [{
+            id: waOutboundMsg.externalMessageId!,
+            status: 'delivered',
+            timestamp: String(Math.floor(Date.now() / 1000)),
+            recipient_id: '9779818259472',
+          }],
+        },
+        field: 'messages',
+      }],
+    }],
+  };
+  const waDelivStatusReq = createSignedMetaRequest('http://localhost:3000/api/webhooks/whatsapp', waDelivStatusPayload);
+  await postWhatsAppWebhook(waDelivStatusReq);
+  const updatedWaMsgDelivered = await prisma.message.findUnique({ where: { id: waOutboundMsg.id } });
+  assert(updatedWaMsgDelivered?.status === 'DELIVERED', 'Task 2: WhatsApp message status updated to DELIVERED');
+
+  const waReadStatusPayload = {
+    object: 'whatsapp_business_account',
+    entry: [{
+      id: 'waba_sherpa_soul_1',
+      changes: [{
+        value: {
+          messaging_product: 'whatsapp',
+          metadata: { phone_number_id: '123456789' },
+          statuses: [{
+            id: waOutboundMsg.externalMessageId!,
+            status: 'read',
+            timestamp: String(Math.floor(Date.now() / 1000)),
+            recipient_id: '9779818259472',
+          }],
+        },
+        field: 'messages',
+      }],
+    }],
+  };
+  const waReadStatusReq = createSignedMetaRequest('http://localhost:3000/api/webhooks/whatsapp', waReadStatusPayload);
+  await postWhatsAppWebhook(waReadStatusReq);
+  const updatedWaMsgRead = await prisma.message.findUnique({ where: { id: waOutboundMsg.id } });
+  assert(updatedWaMsgRead?.status === 'READ', 'Task 2: WhatsApp message status updated to READ');
+
+  // --- TASK 3: Messenger Verification ---
+  // 1. Messenger Handshake
+  const fbHandshakeReq = new NextRequest(`http://localhost:3000/api/webhooks/messenger?hub.mode=subscribe&hub.challenge=fb_challenge_ok_888&hub.verify_token=${verifyToken}`);
+  const fbHandshakeRes = await getMessengerWebhook(fbHandshakeReq);
+  assert(fbHandshakeRes.status === 200, 'Task 3: Messenger Webhook Challenge returns HTTP 200');
+  assert((await fbHandshakeRes.text()) === 'fb_challenge_ok_888', 'Task 3: Messenger Webhook returns challenge text');
+
+  // 2. Messenger Inbound message
+  const fbSenderId = `fb_user_${Date.now()}`;
+  const fbInboundPayload = {
+    object: 'page',
+    entry: [{
+      id: process.env.FACEBOOK_PAGE_ID || 'fb_page_sherpa_soul',
+      time: Date.now(),
+      messaging: [{
+        sender: { id: fbSenderId },
+        recipient: { id: process.env.FACEBOOK_PAGE_ID || 'fb_page_sherpa_soul' },
+        timestamp: Date.now(),
+        message: {
+          mid: `mid_fb_in_${Date.now()}`,
+          text: 'Hi! Do you have quiet rooms available in Thamel?',
+        },
+      }],
+    }],
+  };
+  const fbInboundReq = createSignedMetaRequest('http://localhost:3000/api/webhooks/messenger', fbInboundPayload);
+  const fbInboundRes = await postMessengerWebhook(fbInboundReq);
+  assert(fbInboundRes.status === 200, 'Task 3: Messenger Webhook receives message and responds HTTP 200');
+
+  // 3. Messenger Delivery & Read updates
+  const existingFbCustomer = await prisma.customer.findFirst({ where: { messengerId: fbSenderId } });
+  const fbConv = await prisma.conversation.findFirst({ where: { customerId: existingFbCustomer!.id }, orderBy: { createdAt: 'desc' } });
+  const fbOutboundMsg = await prisma.message.create({
+    data: {
+      conversationId: fbConv!.id,
+      customerId: existingFbCustomer!.id,
+      channel: 'MESSENGER',
+      direction: 'OUTBOUND',
+      content: 'Yes! We follow "No Restaurant. No Noise. Sleep Well."',
+      externalMessageId: `mid_fb_out_${Date.now()}`,
+      status: 'SENT',
+    },
+  });
+  const fbDelivPayload = {
+    object: 'page',
+    entry: [{
+      id: 'fb_page_sherpa_soul',
+      time: Date.now(),
+      messaging: [{
+        sender: { id: fbSenderId },
+        recipient: { id: 'fb_page_sherpa_soul' },
+        delivery: {
+          mids: [fbOutboundMsg.externalMessageId!],
+          watermark: Date.now(),
+        },
+      }],
+    }],
+  };
+  const fbDelivReq = createSignedMetaRequest('http://localhost:3000/api/webhooks/messenger', fbDelivPayload);
+  await postMessengerWebhook(fbDelivReq);
+  const updatedFbDelivered = await prisma.message.findUnique({ where: { id: fbOutboundMsg.id } });
+  assert(updatedFbDelivered?.status === 'DELIVERED', 'Task 3: Messenger message status updated to DELIVERED');
+
+  // --- TASK 4: Instagram DM Verification ---
+  // 1. Instagram Handshake
+  const igHandshakeReq = new NextRequest(`http://localhost:3000/api/webhooks/instagram?hub.mode=subscribe&hub.challenge=ig_challenge_ok_777&hub.verify_token=${verifyToken}`);
+  const igHandshakeRes = await getInstagramWebhook(igHandshakeReq);
+  assert(igHandshakeRes.status === 200, 'Task 4: Instagram Webhook Challenge returns HTTP 200');
+  assert((await igHandshakeRes.text()) === 'ig_challenge_ok_777', 'Task 4: Instagram Webhook returns challenge text');
+
+  // 2. Instagram Inbound DM
+  const igSenderId = `ig_user_${Date.now()}`;
+  const igInboundPayload = {
+    object: 'instagram',
+    entry: [{
+      id: process.env.INSTAGRAM_ACCOUNT_ID || 'ig_acc_sherpa_soul',
+      time: Date.now(),
+      messaging: [{
+        sender: { id: igSenderId },
+        recipient: { id: process.env.INSTAGRAM_ACCOUNT_ID || 'ig_acc_sherpa_soul' },
+        timestamp: Date.now(),
+        message: {
+          mid: `mid_ig_in_${Date.now()}`,
+          text: 'Hello from Instagram! How much is a Deluxe Room?',
+        },
+      }],
+    }],
+  };
+  const igInboundReq = createSignedMetaRequest('http://localhost:3000/api/webhooks/instagram', igInboundPayload);
+  const igInboundRes = await postInstagramWebhook(igInboundReq);
+  assert(igInboundRes.status === 200, 'Task 4: Instagram Webhook receives DM and responds HTTP 200');
+
+  // --- TASK 5: Cross-channel CRM Test ---
+  // Verify Leads created across all 4 channels
+  const leadsWebsite = await prisma.lead.findFirst({
+    where: { channel: 'WEBSITE' },
+    orderBy: { createdAt: 'desc' },
+  });
+  assert(Boolean(leadsWebsite), 'Task 5: CRM Lead created with channel WEBSITE');
+  assert(leadsWebsite?.channel === 'WEBSITE', 'Task 5: Lead channel strictly matches WEBSITE');
+
+  const leadsWhatsApp = await prisma.lead.findFirst({
+    where: { channel: 'WHATSAPP' },
+    orderBy: { createdAt: 'desc' },
+  });
+  assert(Boolean(leadsWhatsApp), 'Task 5: CRM Lead created with channel WHATSAPP');
+  assert(leadsWhatsApp?.channel === 'WHATSAPP', 'Task 5: Lead channel strictly matches WHATSAPP');
+
+  const leadsMessenger = await prisma.lead.findFirst({
+    where: { channel: 'MESSENGER' },
+    orderBy: { createdAt: 'desc' },
+  });
+  assert(Boolean(leadsMessenger), 'Task 5: CRM Lead created with channel MESSENGER');
+  assert(leadsMessenger?.channel === 'MESSENGER', 'Task 5: Lead channel strictly matches MESSENGER');
+
+  const leadsInstagram = await prisma.lead.findFirst({
+    where: { channel: 'INSTAGRAM' },
+    orderBy: { createdAt: 'desc' },
+  });
+  assert(Boolean(leadsInstagram), 'Task 5: CRM Lead created with channel INSTAGRAM');
+  assert(leadsInstagram?.channel === 'INSTAGRAM', 'Task 5: Lead channel strictly matches INSTAGRAM');
+
+  // Safety Constraint: Zero PMS bookings created
+  const reservationsAfter = await prisma.reservation.count();
+  assert(reservationsAfter === reservationsBefore, 'Task 5: Strict PMS Safety confirmed (0 live reservations created)', `before=${reservationsBefore}, after=${reservationsAfter}`);
 
   console.log('\n======================================================');
   console.log(`TEST SUMMARY: ${passed} Passed, ${failed} Failed`);

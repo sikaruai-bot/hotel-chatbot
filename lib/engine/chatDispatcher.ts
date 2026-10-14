@@ -378,7 +378,12 @@ export async function processInboundMessage(
       text: outbound.content,
       buttons: outbound.suggestedReplies,
     });
-    if (!waRes.success) {
+    if (waRes.success && waRes.messageId) {
+      await prisma.message.update({
+        where: { id: savedMsg.id },
+        data: { externalMessageId: waRes.messageId },
+      });
+    } else if (!waRes.success) {
       console.error(`[WhatsApp Dispatch Failed] ${waRes.error} for recipient ${maskPhoneNumber(phone)}`);
       await prisma.message.update({
         where: { id: savedMsg.id },
@@ -391,7 +396,12 @@ export async function processInboundMessage(
       text: outbound.content,
       quickReplies: outbound.suggestedReplies,
     });
-    if (!fbRes.success) {
+    if (fbRes.success && fbRes.messageId) {
+      await prisma.message.update({
+        where: { id: savedMsg.id },
+        data: { externalMessageId: fbRes.messageId },
+      });
+    } else if (!fbRes.success) {
       await prisma.message.update({
         where: { id: savedMsg.id },
         data: { status: 'FAILED' },
@@ -402,7 +412,12 @@ export async function processInboundMessage(
       recipientId: msg.senderId,
       text: outbound.content,
     });
-    if (!igRes.success) {
+    if (igRes.success && igRes.messageId) {
+      await prisma.message.update({
+        where: { id: savedMsg.id },
+        data: { externalMessageId: igRes.messageId },
+      });
+    } else if (!igRes.success) {
       await prisma.message.update({
         where: { id: savedMsg.id },
         data: { status: 'FAILED' },

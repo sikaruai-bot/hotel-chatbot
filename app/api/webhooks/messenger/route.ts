@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhookChallenge, verifyMetaSignature } from '@/lib/meta/verification';
 import { processInboundMessage } from '@/lib/engine/chatDispatcher';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -33,6 +34,30 @@ export async function POST(req: NextRequest) {
           const senderId = messagingItem.sender?.id;
           const messageId = messagingItem.message?.mid;
           const text = messagingItem.message?.text || messagingItem.message?.quick_reply?.payload;
+
+          // Handle delivery receipts
+          if (messagingItem.delivery?.mids && Array.isArray(messagingItem.delivery.mids)) {
+            for (const mid of messagingItem.delivery.mids) {
+              await prisma.message.updateMany({
+                where: { externalMessageId: mid },
+                data: { status: 'DELIVERED' },
+              });
+            }
+          }
+
+          // Handle read receipts
+          if (messagingItem.read?.watermark && senderId) {
+            const readDate = new Date(messagingItem.read.watermark);
+            await prisma.message.updateMany({
+              where: {
+                channel: 'MESSENGER',
+                direction: 'OUTBOUND',
+                createdAt: { lte: readDate },
+                status: { not: 'READ' },
+              },
+              data: { status: 'READ' },
+            });
+          }
 
           if (senderId && text) {
             await processInboundMessage({
