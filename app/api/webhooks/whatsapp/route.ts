@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhookChallenge, verifyMetaSignature } from '@/lib/meta/verification';
 import { processInboundMessage } from '@/lib/engine/chatDispatcher';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -33,6 +34,28 @@ export async function POST(req: NextRequest) {
       for (const entry of data.entry) {
         for (const change of entry.changes || []) {
           const value = change.value;
+
+          // Handle message status updates (sent, delivered, read, failed)
+          if (value?.statuses && Array.isArray(value.statuses)) {
+            for (const statusUpdate of value.statuses) {
+              const externalMessageId = statusUpdate.id;
+              const rawStatus = (statusUpdate.status || '').toUpperCase();
+              const statusMap: Record<string, string> = {
+                SENT: 'SENT',
+                DELIVERED: 'DELIVERED',
+                READ: 'READ',
+                FAILED: 'FAILED',
+              };
+              const mappedStatus = statusMap[rawStatus];
+              if (externalMessageId && mappedStatus) {
+                await prisma.message.updateMany({
+                  where: { externalMessageId },
+                  data: { status: mappedStatus },
+                });
+              }
+            }
+          }
+
           if (value?.messages) {
             for (const msg of value.messages) {
               const senderPhone = msg.from; // Sender phone number

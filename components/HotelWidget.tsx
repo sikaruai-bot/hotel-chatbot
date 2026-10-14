@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   MessageSquare,
   X,
@@ -23,6 +24,11 @@ interface ChatMessage {
 }
 
 export default function HotelWidget() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin') || pathname === '/chat') {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
