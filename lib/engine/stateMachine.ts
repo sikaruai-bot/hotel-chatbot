@@ -634,7 +634,7 @@ Would you like to check room availability for your dates?`;
 
       // If name is still missing, ask for guest name
       if (!state.guestName || state.guestName === 'Guest' || state.guestName === 'Website Visitor') {
-        const askNameMsg = {
+        const askNameMsg: Record<string, string> = {
           en: `Great! For the reservation, what is your full name and the best phone number to reach you?`,
           ne: `हुन्छ हजुर! बुकिङ सुरक्षित गर्नको लागि यहाँको पूरा नाम र फोन नम्बर बताइदिनुहोला?`,
           hi: `बिल्कुल! बुकिंग के लिए आपका पूरा नाम और फोन नंबर क्या है?`,
@@ -663,7 +663,7 @@ Would you like to check room availability for your dates?`;
     }
 
     // First time presenting the room recommendation
-    const recommendationMsg = {
+    const recommendationMsg: Record<string, string> = {
       en: `For ${guestsDisplay}, our ${state.roomType} is available at USD ${price} per night for ${datesStr}. Would you like me to reserve this for you?`,
       ne: `${guestsDisplay}को लागि हाम्रो ${state.roomType} प्रति रात USD ${price} मा उपलब्ध छ (${datesStr})। के म यो कोठा यहाँको लागि बुक गरूँ?`,
       hi: `${guestsDisplay} के लिए हमारा ${state.roomType} USD ${price} प्रति रात उपलब्ध है (${datesStr})। क्या आप इसे बुक करना चाहेंगे?`,

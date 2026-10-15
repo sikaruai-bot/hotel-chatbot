@@ -208,6 +208,9 @@ export async function runMultilingualTests(assert: (cond: boolean, name: string,
     to: ['info@hotelsherpasoul.com'],
     subject: 'Demande de tarif et réservation pour chambre familiale à Katmandou',
     textBody: 'Bonjour, quel est le prix pour une chambre familiale au mois de novembre ? Merci beaucoup.',
+    headers: {},
+    attachments: [],
+    authResults: { spf: 'pass', dkim: 'pass', dmarc: 'pass' },
     receivedAt: new Date(),
   };
 
