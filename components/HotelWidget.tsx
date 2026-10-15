@@ -45,6 +45,25 @@ export default function HotelWidget() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-expand textarea from 56px to 120px as user types
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(e.target.value);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const clampedHeight = Math.min(Math.max(scrollHeight, 56), 120);
+      textareaRef.current.style.height = `${clampedHeight}px`;
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(inputValue);
+    }
+  };
 
   // Restore session from sessionStorage on mount
   useEffect(() => {
@@ -97,6 +116,9 @@ export default function HotelWidget() {
 
     setMessages((prev) => [...prev, guestMsg]);
     setInputValue('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = '56px';
+    }
     setLoading(true);
 
     try {
@@ -174,7 +196,7 @@ export default function HotelWidget() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="w-[360px] sm:w-[390px] h-[540px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-200">
+        <div className="w-[75vw] max-w-[75vw] sm:w-[410px] sm:max-w-[420px] h-[560px] max-h-[calc(100dvh-4.5rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-200">
           {/* Header */}
           <div className="bg-slate-950 text-white p-4 flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2.5">
@@ -278,21 +300,34 @@ export default function HotelWidget() {
           </div>
 
           {/* Input Bar */}
-          <div className="p-2.5 border-t border-slate-200 bg-white flex items-center gap-2">
-            <input
-              type="text"
+          <div className="p-3 sm:p-3.5 border-t border-slate-200 bg-white flex items-end gap-2.5">
+            <label htmlFor="website-chat-textarea" className="sr-only">
+              Type your message to Hotel Sherpa Soul
+            </label>
+            <textarea
+              ref={textareaRef}
+              id="website-chat-textarea"
+              aria-label="Type your message to Hotel Sherpa Soul"
               placeholder="Ask about dates, rooms, or prices..."
+              rows={1}
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage(inputValue)}
-              className="flex-1 text-xs border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-slate-900 text-slate-900"
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => {
+                setTimeout(() => {
+                  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }, 150);
+              }}
+              className="flex-1 text-[16px] border border-slate-300 rounded-2xl p-3 sm:px-3.5 sm:py-3 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 text-slate-900 placeholder:text-slate-500 resize-none min-h-[56px] max-h-[120px] overflow-y-auto leading-snug transition-all"
             />
             <button
               onClick={() => sendMessage(inputValue)}
               disabled={loading || !inputValue.trim()}
-              className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white p-2 rounded-xl transition"
+              aria-label="Send message"
+              title="Send message (Enter)"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 mb-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5 text-amber-400" />
             </button>
           </div>
         </div>
