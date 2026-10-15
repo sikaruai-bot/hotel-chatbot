@@ -545,7 +545,7 @@ export async function searchKnowledgeBase(
 }
 
 // Format the dynamic Room Price response
-export function formatRoomPricesMessage(rates: GroundedKnowledge['roomPrices'], lang: 'en' | 'ne' | 'hi' = 'en'): string {
+export function formatRoomPricesMessage(rates: GroundedKnowledge['roomPrices'], lang: string = 'en'): string {
   if (lang === 'ne') {
     return `हाम्रो हालको सुरुवाती दर र कोठाका प्रकारहरू निम्नानुसार छन्:
 • डिलक्स कोठा (Deluxe Room) — USD ${rates.deluxe}/रात — एयर कन्डिसनिङ (AC) सहित, २ वयस्क + १ बच्चा सम्म
@@ -568,6 +568,54 @@ export function formatRoomPricesMessage(rates: GroundedKnowledge['roomPrices'], 
 2 सप्ताह (14 दिन) या अधिक रुकने वाले मेहमानों के लिए हम कमरा 102 में पूरी तरह सुसज्जित शेयर्ड किचन बिल्कुल मुफ़्त उपलब्ध कराते हैं!
 
 यदि आप अपनी तारीखें और मेहमानों की संख्या बताएंगे, तो मैं उपलब्धता की जाँच कर सकता हूँ 😊`;
+  }
+
+  if (lang === 'zh-CN' || lang === 'zh-TW') {
+    return `我们目前的客房类型与直订起步价格如下：
+• 豪华房 (Deluxe Room) — USD ${rates.deluxe}/晚 — 配备空调 (AC)，适合 2 位成人 + 1 位儿童
+• 经济家庭房 (Budget Family Room) — USD ${rates.budgetFamily}/晚 — 无空调（配风扇，其他设施与豪华房相同），适合 3 位成人 + 1 位儿童
+• 豪华家庭房 (Family Room) — USD ${rates.family}/晚 — 配备空调 (AC)，宽敞布局适合 3 位成人 + 1 位儿童
+
+✨ 长期住宿特权（免费共用厨房）：
+对于入住 2 周（14 晚）或以上的宾客，我们位于 102 号房的设备齐全共用厨房 (Shared Kitchen) 完全免费提供！
+
+如果您告知我们您的旅行日期和入住人数，我将为您查询房间空余情况 😊`;
+  }
+
+  if (lang === 'ja') {
+    return `ホテル・シェルパ・ソウルの現在の客室タイプと料金は以下の通りです：
+• デラックスルーム (Deluxe Room) — 1泊 USD ${rates.deluxe} — エアコン (AC) 完備、大人2名様＋子供1名様まで
+• バジェットファミリールーム (Budget Family Room) — 1泊 USD ${rates.budgetFamily} — ノンエアコン（扇風機付、他設備共通）、大人3名様＋子供1名様まで
+• ファミリールーム (Family Room) — 1泊 USD ${rates.family} — エアコン (AC) 完備、広々としたお部屋、大人3名様＋子供1名様まで
+
+✨ 長期滞在特別特典（無料の共用キッチン）：
+2週間（14泊）以上ご滞在のお客様には、102号室の共用キッチン（Shared Kitchen）を完全無料でご利用いただけます！
+
+ご旅行の日程と人数をお知らせいただければ、空室状況をお調べいたします 😊`;
+  }
+
+  if (lang === 'fr') {
+    return `Nos catégories de chambres actuelles et tarifs directs sont les suivants :
+• Chambre Deluxe (Deluxe Room) — USD ${rates.deluxe}/nuit — avec climatisation (AC), jusqu'à 2 adultes + 1 enfant
+• Chambre Familiale Budget (Budget Family Room) — USD ${rates.budgetFamily}/nuit — sans climatisation (avec ventilateur), jusqu'à 3 adultes + 1 enfant
+• Chambre Familiale (Family Room) — USD ${rates.family}/nuit — avec climatisation (AC), spacieuse jusqu'à 3 adultes + 1 enfant
+
+✨ Avantage spécial long séjour (Cuisine commune GRATUITE) :
+Pour les séjours de 2 semaines (14 nuits) ou plus, notre cuisine partagée entièrement équipée (Chambre 102) est mise à disposition entièrement GRATUITEMENT !
+
+Indiquez-nous vos dates de voyage et le nombre de personnes pour vérifier la disponibilité 😊`;
+  }
+
+  if (lang === 'es') {
+    return `Nuestras categorías de habitaciones y tarifas directas son las siguientes:
+• Habitación Deluxe (Deluxe Room) — USD ${rates.deluxe}/noche — con aire acondicionado (AC), hasta 2 adultos + 1 niño
+• Habitación Familiar Económica (Budget Family Room) — USD ${rates.budgetFamily}/noche — sin aire acondicionado (con ventilador), hasta 3 adultos + 1 niño
+• Habitación Familiar (Family Room) — USD ${rates.family}/noche — con aire acondicionado (AC), espaciosa hasta 3 adultos + 1 niño
+
+✨ Ventaja especial para estancias largas (Cocina compartida GRATIS):
+Para estancias de 2 semanas (14 noches) o más, ¡ofrecemos nuestra cocina compartida (Habitación 102) completamente GRATIS!
+
+Si nos indica sus fechas de viaje y número de huéspedes, comprobaré la disponibilidad para usted 😊`;
   }
 
   return `Our current room categories and starting rates are:

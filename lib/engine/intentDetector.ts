@@ -2,16 +2,60 @@ import { Intent, IntentResult, SupportedLanguage, ExtractedEntities } from './ty
 
 // Language detection
 export function detectLanguage(text: string): SupportedLanguage {
-  // Devanagari script detection (Unicode range U+0900 to U+097F)
+  if (!text || typeof text !== 'string') return 'en';
+  const trimmed = text.trim();
+  if (!trimmed) return 'en';
+
+  // 1. Japanese (Hiragana & Katakana are uniquely Japanese; Kanji may overlap with Hanzi)
+  const japaneseKanaRegex = /[\u3040-\u309F\u30A0-\u30FF]/;
+  if (japaneseKanaRegex.test(trimmed)) {
+    return 'ja';
+  }
+
+  // 2. Korean (Hangul syllables & jamo)
+  const koreanRegex = /[\uAC00-\uD7AF\u1100-\u11FF]/;
+  if (koreanRegex.test(trimmed)) {
+    return 'ko';
+  }
+
+  // 3. Chinese (Hanzi without Japanese Kana)
+  const chineseRegex = /[\u4E00-\u9FFF]/;
+  if (chineseRegex.test(trimmed)) {
+    // Check traditional markers
+    const traditionalMarkers = ['預訂', '護照', '繁體', '房間', '多少錢', '謝謝', '飯店', '閣下', '聯絡'];
+    const isTraditional = traditionalMarkers.some((m) => trimmed.includes(m));
+    if (isTraditional) return 'zh-TW';
+    return 'zh-CN';
+  }
+
+  // 4. Thai script
+  const thaiRegex = /[\u0E00-\u0E7F]/;
+  if (thaiRegex.test(trimmed)) {
+    return 'th';
+  }
+
+  // 5. Arabic script
+  const arabicRegex = /[\u0600-\u06FF]/;
+  if (arabicRegex.test(trimmed)) {
+    return 'ar';
+  }
+
+  // 6. Russian / Cyrillic script
+  const cyrillicRegex = /[\u0400-\u04FF]/;
+  if (cyrillicRegex.test(trimmed)) {
+    return 'ru';
+  }
+
+  // 7. Devanagari script (Nepali vs Hindi vs Mixed)
   const devanagariRegex = /[\u0900-\u097F]/;
-  if (devanagariRegex.test(text)) {
+  if (devanagariRegex.test(trimmed)) {
     // Check specific Hindi markers first (words distinct to Hindi)
-    const hindiMarkers = ['क्या', 'कमरा', 'किराया', 'कितना', 'चाहिए', 'बात', 'हूँ', 'हैं', 'है'];
-    const hasHindi = hindiMarkers.some(m => text.includes(m));
+    const hindiMarkers = ['क्या', 'कमरा', 'किराया', 'कितना', 'चाहिए', 'बात', 'हूँ', 'हैं', 'है', 'नमस्ते क्या'];
+    const hasHindi = hindiMarkers.some((m) => trimmed.includes(m));
 
     // Check specific Nepali markers (words distinct to Nepali)
-    const nepaliMarkers = ['छ', 'हुनुहुन्छ', 'हजुर', 'कति', 'पर्यो', 'पर्छ', 'राम्रो', 'ठाउँ', 'कोठा', 'गर्नुहोस्', 'गर्छु'];
-    const hasNepali = nepaliMarkers.some(m => text.includes(m));
+    const nepaliMarkers = ['छ', 'हुनुहुन्छ', 'हजुर', 'कति', 'पर्यो', 'पर्छ', 'राम्रो', 'ठाउँ', 'कोठा', 'गर्नुहोस्', 'गर्छु', 'मेरो', 'बुकिङ', 'बुकिंग', 'होटलमा', 'मिति'];
+    const hasNepali = nepaliMarkers.some((m) => trimmed.includes(m));
 
     if (hasHindi && !hasNepali) return 'hi';
     if (hasNepali) return 'ne';
@@ -19,14 +63,54 @@ export function detectLanguage(text: string): SupportedLanguage {
     return 'ne'; // Default to Nepali in Kathmandu hotel context
   }
 
-  // Romanized Nepali and Hindi detection
-  const lower = text.toLowerCase();
-  const romanNepaliStrong = /\b(chha|chhaina|cha|chaina|tapai|tapaiko|hamro|saman|rakhna|milchha|milla|kasto|hunchha|hune|paryo|parchha|kotha|jana|dinus|garnus|gardinus|garne|bhane|pauchha|kati|kata|ho|ma|k k|subidha|khana|tato|malai|chahiyo|chaiyo|chahincha|chainchha|gareko|kun|tala|paisa|pathaunus|bhetna|din|dina|lagi|raat|bholi|aaja|parsi|chahi|pani)\b/i;
+  const lower = trimmed.toLowerCase();
+
+  // 8. French
+  const frenchStrong = /\b(bonjour|bonsoir|merci|chambre|chambres|hôtel|combien|coûte|coûtera|prix|réservation|réserver|disponibilité|disponible|s'il vous plaît|s il vous plait|pourriez-vous|salut|tarifs?|veuillez)\b/i;
+  if (frenchStrong.test(lower)) {
+    return 'fr';
+  }
+
+  // 9. German
+  const germanStrong = /\b(hallo|guten tag|danke|bitte|zimmer|preis|preise|kosten|buchen|buchung|verfügbar|verfügbarkeit|nacht|nächte)\b/i;
+  if (germanStrong.test(lower)) {
+    return 'de';
+  }
+
+  // 10. Spanish
+  const spanishStrong = /\b(hola|gracias|habitación|habitaciones|precio|precios|cuánto|cuanto|cuesta|reserva|reservar|disponible|disponibilidad|por favor|buenas tardes|noches)\b/i;
+  if (spanishStrong.test(lower) || /^[¿¡]/.test(trimmed)) {
+    return 'es';
+  }
+
+  // 11. Italian
+  const italianStrong = /\b(ciao|buongiorno|buonasera|grazie|camera|camere|prezzo|prezzi|quanto|costa|prenotazione|prenotare|disponibilità|per favore)\b/i;
+  if (italianStrong.test(lower)) {
+    return 'it';
+  }
+
+  // 12. Vietnamese (specific diacritics / markers)
+  const uniquelyVietnamese = /[đĐơƠưƯảẢãÃạẠằẰắẮẳẲẵẴặẶầẦấẤẩẨẫẪậẬẻẺẽẼẹẸềỀếẾểỂễỄệỆỉỈĩĨịỊỏỎõÕọỌồỒốỐổỔỗỖộỘờỜớỚởỞỡỠợỢủỦũŨụỤừỪứỨửỬữỮựỰỳỲỷỶỹỸỵỴ]/;
+  const vietnameseWords = /\b(xin chào|khách sạn|bao nhiêu|đặt phòng|cảm ơn|phòng)\b/i;
+  if (uniquelyVietnamese.test(trimmed) || vietnameseWords.test(lower)) {
+    return 'vi';
+  }
+
+  // 13. Romanized Nepali and Hindi detection
+  const romanNepaliStrong = /\b(chha|chhaina|cha|chaina|tapai|tapaiko|hamro|saman|rakhna|milchha|milla|kasto|hunchha|hune|paryo|parchha|kotha|jana|dinus|garnus|gardinus|garne|bhane|pauchha|kati|kata|subidha|khana|tato|malai|chahiyo|chaiyo|chahincha|chainchha|gareko|kun|tala|paisa|pathaunus|bhetna|din|dina|lagi|raat|bholi|aaja|parsi|chahi|pani)\b/i;
+  const romanHindiStrong = /\b(chahiye|kitna|karein|baat karni|humko|aapka kamra|kiraya kitna)\b/i;
+
+  // Dominant calculation for mixed English-Romanized Nepali
   if (romanNepaliStrong.test(lower)) {
+    const nepaliTokens = (lower.match(/\b(chha|chhaina|cha|chaina|tapai|tapaiko|hamro|saman|rakhna|milchha|milla|kasto|hunchha|hune|paryo|parchha|kotha|jana|dinus|garnus|gardinus|garne|bhane|pauchha|kati|kata|subidha|khana|tato|malai|chahiyo|chaiyo|chahincha|chainchha|gareko|kun|tala|paisa|pathaunus|bhetna|din|dina|lagi|raat|bholi|aaja|parsi|chahi|pani|ko|ma|ho)\b/gi) || []).length;
+    const englishTokens = (lower.match(/\b(hello|hi|i|want|to|book|reserve|a|the|deluxe|family|budget|room|rooms|for|two|three|one|night|nights|is|are|hotel|price|prices|need|help|with|please|can|how|much|have|you|we)\b/gi) || []).length;
+
+    if (englishTokens > nepaliTokens * 1.5) {
+      return 'en';
+    }
     return 'ne';
   }
 
-  const romanHindiStrong = /\b(chahiye|kitna|karein|baat karni|humko|aapka kamra|kiraya kitna)\b/i;
   if (romanHindiStrong.test(lower)) {
     return 'hi';
   }
@@ -548,8 +632,22 @@ export function detectIntent(rawText: string): IntentResult {
     lower.includes('rate') ||
     lower.includes('how much') ||
     lower.includes('tariff') ||
+    lower.includes('tarif') ||
     lower.includes('room prices') ||
     lower.includes('charge') ||
+    lower.includes('prix') ||
+    lower.includes('combien coûte') ||
+    lower.includes('quel est le prix') ||
+    lower.includes('precio') ||
+    lower.includes('cuanto cuesta') ||
+    lower.includes('cuánto cuesta') ||
+    lower.includes('preise') ||
+    lower.includes('prezzo') ||
+    lower.includes('quanto costa') ||
+    lower.includes('价格') ||
+    lower.includes('多少钱') ||
+    lower.includes('料金') ||
+    lower.includes('いくら') ||
     lower.includes('कति पर्छ') ||
     lower.includes('मूल्य') ||
     lower.includes('भाडा') ||

@@ -6,6 +6,9 @@ import { sendWhatsAppMessage } from '../meta/whatsapp';
 import { sendMessengerMessage } from '../meta/messenger';
 import { sendInstagramMessage } from '../meta/instagram';
 import { maskPhoneNumber, maskEmail } from '../masking';
+import { isMultilingualEnabled } from './featureFlags';
+import { getMessageLanguage } from './language';
+import { recordMessageLanguage, getConversationCurrentLanguage } from './conversationMetadata';
 
 export async function processInboundMessage(
   msg: UnifiedInboundMessage
@@ -160,6 +163,20 @@ export async function processInboundMessage(
   // 6. Natural Intent Classification & Progressive State Machine
   const intentResult = detectIntent(msg.content);
 
+  // Multilingual auto-detection per incoming message
+  const previousLang = conversation?.id
+    ? getConversationCurrentLanguage(conversation.id) || conversation.language
+    : undefined;
+  const detectedLang = await getMessageLanguage(msg.content, previousLang);
+
+  if (conversation?.id) {
+    recordMessageLanguage(conversation.id, detectedLang, msg.externalMessageId, msg.content);
+  }
+
+  if (isMultilingualEnabled()) {
+    intentResult.language = detectedLang as any;
+  }
+
   // Initialize or retrieve state object
   const currentState = {
     currentStep: (conversation.state?.currentStep as any) || 'GREETING',
@@ -291,6 +308,51 @@ export async function processInboundMessage(
 • धन्यवाद! आपकी पूछताछ हमारे फ्रंट डेस्क को भेज दी गई है।
 • हमारे स्टाफ सदस्य उपलब्धता की जांच कर जल्द ही आपसे संपर्क करेंगे।
 • चेक-इन पर ही भुगतान मान्य है। तत्काल पुष्टि के लिए +977-9818259472 पर संपर्क करें!`;
+    } else if (lang === 'zh-CN' || lang === 'zh-TW') {
+      outbound.content = `🛎️ 喜马拉雅夏尔巴之魂酒店 (Hotel Sherpa Soul) — 预订咨询已受理 😊
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 预订参考编号: ${inquiryCode}
+👤 宾客姓名: ${guestNameForInquiry}
+🏨 预留房型: ${currentState.roomType || 'Deluxe Room'}
+📅 入住日期: ${currentState.checkIn || '待定'} 至 ${currentState.checkOut || '次日'} (${nights} 晚)
+👥 宾客人数: ${currentState.adults || 1} 位成人${currentState.children ? ` + ${currentState.children} 位儿童` : ''}
+💰 预估总额: USD $${estimatedTotal}（已享10%直订优惠）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏳ 状态: 等待前台审核与排房 (PENDING FRONT DESK APPROVAL)
+• 感谢您的咨询！您的预订需求已直接送达前台团队。
+• 我们的工作人员将核对房态，并尽快与您联络以确认行程。
+• 入住时付款即可，直订免预付订金。
+• 如需紧急协助，请联系前台微信/WhatsApp: +977-9818259472。`;
+    } else if (lang === 'ja') {
+      outbound.content = `🛎️ ホテル・シェルパ・ソウル — ご予約リクエストを受付いたしました 😊
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 予約リファレンス: ${inquiryCode}
+👤 お客様のお名前: ${guestNameForInquiry}
+🏨 ご希望の客室: ${currentState.roomType || 'Deluxe Room'}
+📅 ご宿泊日程: ${currentState.checkIn || '未定'} から ${currentState.checkOut || '翌日'} (${nights} 泊)
+👥 人数: 大人 ${currentState.adults || 1} 名様${currentState.children ? ` ＋ お子様 ${currentState.children} 名様` : ''}
+💰 概算合計金額: USD $${estimatedTotal}（直販10%割引適用）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏳ ステータス: フロントデスク確認待ち (PENDING APPROVAL)
+• ありがとうございます！予約リクエストをフロントに送信しました。
+• スタッフが空室状況を確認し、すぐにご案内いたします。
+• チェックイン時のお支払いでOK、事前デポジットは不要です。
+• お急ぎの場合はフロントデスク（+977-9818259472）までご連絡ください。`;
+    } else if (lang === 'fr') {
+      outbound.content = `🛎️ HÔTEL SHERPA SOUL — DEMANDE DE RÉSERVATION REÇUE 😊
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 Référence : ${inquiryCode}
+👤 Nom du client : ${guestNameForInquiry}
+🏨 Chambre souhaitée : ${currentState.roomType || 'Deluxe Room'}
+📅 Dates : du ${currentState.checkIn || 'En attente'} au ${currentState.checkOut || 'Lendemain'} (${nights} nuit(s))
+👥 Voyageurs : ${currentState.adults || 1} adulte(s)${currentState.children ? ` + ${currentState.children} enfant(s)` : ''}
+💰 Total estimé : USD $${estimatedTotal} (Remise directe de 10% appliquée)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⏳ Statut : EN ATTENTE DE CONFIRMATION DE LA RÉCEPTION
+• Merci ! Votre demande a été transmise à notre équipe de réception.
+• Nous vérifions les disponibilités et reviendrons vers vous très rapidement.
+• Aucun acompte requis — paiement à l'arrivée lors du check-in.
+• Contact direct WhatsApp réception : +977-9818259472.`;
     } else {
       outbound.content = `🛎️ HOTEL SHERPA SOUL — BOOKING INQUIRY RECEIVED 😊
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -317,7 +379,7 @@ export async function processInboundMessage(
       lastMessageAt: new Date(),
       unreadStaff: outbound.triggerHandover,
       summary,
-      language: intentResult.language,
+      language: isMultilingualEnabled() ? detectedLang : intentResult.language,
     },
   });
 

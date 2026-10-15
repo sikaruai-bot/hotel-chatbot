@@ -45,7 +45,23 @@ export type ConversationStep =
   | 'HANDOVER'
   | 'COMPLETE';
 
-export type SupportedLanguage = 'en' | 'ne' | 'hi';
+export type SupportedLanguage =
+  | 'en'
+  | 'ne'
+  | 'hi'
+  | 'zh-CN'
+  | 'zh-TW'
+  | 'ja'
+  | 'ko'
+  | 'fr'
+  | 'de'
+  | 'es'
+  | 'it'
+  | 'ru'
+  | 'ar'
+  | 'th'
+  | 'vi'
+  | (string & {});
 
 export interface ExtractedEntities {
   checkIn?: string;
