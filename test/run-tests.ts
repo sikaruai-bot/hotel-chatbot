@@ -16,6 +16,7 @@ import { verifyEmailWebhookSignature, generateTestSvixSignature } from '../lib/e
 import { analyzeEmailThreat } from '../lib/email/spamFilter';
 import { generateEmailReplyDraft, canSendReviewRequest, buildReservationNotification } from '../lib/engine/guestJourney';
 import { ParsedEmailMessage } from '../lib/email/types';
+import { runMultilingualTests } from './multilingual.test';
 
 let passed = 0;
 let failed = 0;
@@ -1007,6 +1008,9 @@ async function runAllTests() {
     assert(dnsContent.includes('resend._domainkey'), 'Domain Authentication: DKIM selector specified');
     assert(dnsContent.includes('v=spf1'), 'Domain Authentication: SPF record specified');
   }
+
+  // 11. Multilingual Detection & Omni-Channel Replies (All 14 Scenarios)
+  await runMultilingualTests(assert);
 
   // Final Strict Safety Verification: Confirm zero live PMS bookings created during test suite
   const finalReservationCount = await prisma.reservation.count();
