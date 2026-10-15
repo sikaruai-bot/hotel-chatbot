@@ -1,6 +1,8 @@
 import { prisma } from '../prisma';
 import { detectIntent } from './intentDetector';
 import { EmailDraftResponse, ParsedEmailMessage } from '../email/types';
+import { isMultilingualEnabled } from './featureFlags';
+import { getMessageLanguage } from './language';
 
 /**
  * Standard Front Desk Contact & Human Contact Footer
@@ -34,7 +36,12 @@ export async function generateEmailReplyDraft(
   email: ParsedEmailMessage,
   customerId?: string
 ): Promise<EmailDraftResponse> {
-  const intentResult = detectIntent(`${email.subject} ${email.textBody}`);
+  const rawEmailContent = `${email.subject} ${email.textBody}`;
+  const intentResult = detectIntent(rawEmailContent);
+  const detectedLang = isMultilingualEnabled()
+    ? await getMessageLanguage(rawEmailContent)
+    : intentResult.language || 'en';
+  const lang = detectedLang || 'en';
   const guestName = email.fromName && email.fromName !== 'Guest' ? email.fromName : 'Valued Guest';
 
   const groundedKnowledge: string[] = [];
@@ -50,7 +57,49 @@ export async function generateEmailReplyDraft(
       groundedKnowledge.push('Flexible check-in from 12:00 PM, check-out 11:00 AM');
       groundedKnowledge.push('Direct booking discount: 10% instant direct saving');
 
-      bodyContentText = `Thank you for contacting Hotel Sherpa Soul regarding room availability and rates in Thamel, Kathmandu.
+      if (lang === 'fr' && isMultilingualEnabled()) {
+        bodyContentText = `Merci d'avoir contacté l'Hôtel Sherpa Soul concernant nos disponibilités et tarifs à Thamel, Katmandou.
+
+Voici nos options officielles de chambres et tarifs directs :
+• Chambre Double Deluxe : USD $20 / nuit (Salle de bain privée, balcon, vue montagne/ville)
+• Chambre Familiale Budget : USD $25 / nuit (Espace confortable pour familles ou petits groupes)
+• Suite Familiale : USD $30 / nuit (Aménagement spacieux avec plusieurs lits)
+
+Avantages exclusifs en réservation directe :
+• 10% de remise immédiate pour réservation directe
+• Enregistrement (Check-in) : flexible dès 12h00 (selon disponibilité)
+• Arrivée anticipée : bagagerie gratuite à la réception
+• Départ (Check-out) : 11h00 (départ tardif sur demande)
+• Wi-Fi haut débit et eau chaude 24h/24 inclus
+• Terrasse panoramique paisible sur le toit donnant sur la vallée
+
+Statut : DEMANDE DE RÉSERVATION REÇUE (En attente d'attribution par la réception)
+Veuillez nous indiquer vos dates de séjour et le nombre de voyageurs afin que notre équipe puisse préparer votre chambre.`;
+
+        bodyContentHtml = `
+<p>Cher/Chère ${escapeHtml(guestName)},</p>
+<p>Merci d'avoir contacté l'<strong>Hôtel Sherpa Soul</strong> concernant nos disponibilités et tarifs à Thamel, Katmandou.</p>
+<p>Voici nos options officielles de chambres et tarifs directs :</p>
+<ul>
+  <li><strong>Chambre Double Deluxe :</strong> USD $20 / nuit (Salle de bain privée, balcon, vue montagne/ville)</li>
+  <li><strong>Chambre Familiale Budget :</strong> USD $25 / nuit (Espace confortable pour familles ou petits groupes)</li>
+  <li><strong>Suite Familiale :</strong> USD $30 / nuit (Aménagement spacieux avec plusieurs lits)</li>
+</ul>
+<p><strong>Avantages exclusifs en réservation directe :</strong></p>
+<ul>
+  <li>10% de réduction immédiate pour réservation directe</li>
+  <li>Enregistrement flexible dès 12h00 (selon disponibilité)</li>
+  <li>Consigne à bagages gratuite à l'arrivée</li>
+  <li>Départ à 11h00 (départ tardif sur demande)</li>
+  <li>Wi-Fi haut débit et eau chaude solaire/électrique 24h/24</li>
+  <li>Terrasse panoramique sur le toit donnant sur la vallée de Katmandou</li>
+</ul>
+<p style="background: #ebf8ff; border-left: 4px solid #3182ce; padding: 10px 14px; font-weight: 500;">
+  <strong>Statut :</strong> DEMANDE DE RÉSERVATION REÇUE (En attente d'attribution par la réception)<br>
+  Veuillez nous indiquer vos dates de voyage et le nombre de voyageurs afin que notre équipe puisse réserver votre chambre.
+</p>`;
+      } else {
+        bodyContentText = `Thank you for contacting Hotel Sherpa Soul regarding room availability and rates in Thamel, Kathmandu.
 
 Here are our official room options and direct rates:
 • Deluxe Double Room: USD $20 / night (Private bathroom, balcony, mountain/city view)
@@ -68,7 +117,7 @@ Special Direct Perks:
 Status: BOOKING INQUIRY RECEIVED (Pending Front Desk Room Allocation)
 Please let us know your planned arrival and departure dates, along with the number of guests. Our front desk manager will gladly allocate your room and finalize your stay.`;
 
-      bodyContentHtml = `
+        bodyContentHtml = `
 <p>Dear ${escapeHtml(guestName)},</p>
 <p>Thank you for contacting <strong>Hotel Sherpa Soul</strong> regarding room availability and rates in Thamel, Kathmandu.</p>
 <p>Here are our official room options and direct rates:</p>
@@ -90,6 +139,7 @@ Please let us know your planned arrival and departure dates, along with the numb
   <strong>Status:</strong> BOOKING INQUIRY RECEIVED (Pending Front Desk Room Allocation)<br>
   Please let us know your travel dates and guest count so our team can hold your preferred room.
 </p>`;
+      }
       break;
     }
 
@@ -215,9 +265,17 @@ Our front desk team is reviewing your message and will provide you with all requ
   ${STAFF_CONTACT_FOOTER_HTML}
 </div>`;
 
+  let draftSubject = email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`;
+  if (isMultilingualEnabled() && lang !== 'en') {
+    const langTag = `[${lang.toUpperCase()}]`;
+    if (!draftSubject.includes(langTag)) {
+      draftSubject = `${langTag} ${draftSubject}`;
+    }
+  }
+
   return {
     to: email.fromEmail,
-    subject: email.subject.startsWith('Re:') ? email.subject : `Re: ${email.subject}`,
+    subject: draftSubject,
     text: fullText,
     html: fullHtml,
     isDraftOnly: true, // Safety Rule 10: Default email auto-reply = OFF; human-in-the-loop first

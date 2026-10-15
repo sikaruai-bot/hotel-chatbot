@@ -13,6 +13,7 @@ Hotel Sherpa Soul's omnichannel messaging relies on high-throughput, secure webh
 | `/api/webhooks/instagram` | GET / POST | Instagram Direct Messaging conversations |
 | `/api/webhooks/meta-leads` | GET / POST | Meta Lead Ads instant form submission ingestion |
 | `/api/chat/website` | POST | Hotel website chat widget communication |
+| `/api/webhooks/email` | POST | Resend Inbound Email (`email.received`) with Svix signature verification |
 
 ---
 
@@ -63,6 +64,16 @@ export function verifyMetaSignature(rawBody: string, signatureHeader: string | n
   );
 }
 ```
+
+---
+
+### Resend Inbound Email Webhook Verification (`/api/webhooks/email`)
+
+Resend uses standard **Svix** webhook signatures for inbound email delivery events (`email.received`):
+- Headers: `svix-id`, `svix-timestamp`, `svix-signature`
+- Signing Secret format: `whsec_...` configured in `RESEND_WEBHOOK_SECRET`
+- Timestamp freshness validation: Rejects payloads older than 300 seconds
+- Secret decoding: Base64-decoded `whsec_` secret signed with HMAC-SHA256 (`${svixId}.${svixTimestamp}.${rawBody}`)
 
 ---
 

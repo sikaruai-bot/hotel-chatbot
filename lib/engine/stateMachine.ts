@@ -2,6 +2,9 @@ import { ConversationStep, ExtractedEntities, IntentResult, UnifiedOutboundRespo
 import { getGroundedKnowledge, formatRoomPricesMessage, searchKnowledgeBase } from './knowledgeBase';
 import { checkPmsAvailability } from '../pmsClient';
 import { prisma } from '../prisma';
+import { isMultilingualEnabled } from './featureFlags';
+import { getFallbackMessage } from './fallbackMessages';
+import { generateGroundedAnswer } from './ragAnswerGenerator';
 
 export interface StateMachineContext {
   state: {
@@ -62,10 +65,15 @@ export async function processConversationStep(
 
   // 0. AI Identity Query ("Are you a real person?", "Are you an AI/bot?")
   if (intentResult.intent === 'AI_IDENTITY') {
-    const aiIdentityMsg = {
+    const aiIdentityMsg: Record<string, string> = {
       en: "I'm the hotel's chat assistant, but I can also connect you with our staff if you'd prefer.",
       ne: "म होटलको च्याट सहायक हुँ, तर यहाँ चाहनुहुन्छ भने म हाम्रा कर्मचारी साथीसँग पनि तुरुन्त जोडिदिन सक्छु 😊",
       hi: "मैं होटल का चैट असिस्टेंट हूँ, लेकिन अगर आप चाहें तो मैं आपको हमारे स्टाफ से भी जोड़ सकता हूँ 😊",
+      'zh-CN': "我是酒店的智能聊天助手，如果您需要，我也随时可以为您转接人工前台工作人员 😊",
+      'zh-TW': "我是酒店的智能聊天助手，如果您需要，我也隨時可以為您轉接人工前台工作人員 😊",
+      ja: "ホテルのチャットアシスタントです。ご希望の場合は、フロントスタッフに直接おつなぎすることも可能です 😊",
+      fr: "Je suis l'assistant virtuel de l'hôtel, mais je peux également vous mettre en relation avec notre personnel si vous le souhaitez 😊",
+      es: "Soy el asistente virtual del hotel, pero también puedo ponerle en contacto con nuestro personal si lo prefiere 😊",
     };
     return {
       content: aiIdentityMsg[lang] || aiIdentityMsg.en,
@@ -82,10 +90,15 @@ export async function processConversationStep(
     intentResult.intent === 'COMPLAINT' ||
     intentResult.intent === 'CANCELLATION'
   ) {
-    const handoverMessages = {
+    const handoverMessages: Record<string, string> = {
       en: `I've informed our front desk team. A staff member will assist you shortly 😊\n\nYou can also contact our front desk directly:\nWhatsApp: ${whatsappPhone}\nPhone: ${frontdeskPhone}\nEmail: ${knowledge.hotelInfo.email}`,
       ne: `मैले हाम्रो फ्रन्ट डेस्क टिमलाई खबर गरिसकेको छु। हाम्रा कर्मचारी साथीले छिट्टै यहाँलाई सिधै सहयोग गर्नुहुनेछ 😊\n\nयहाँले सिधै हाम्रो फ्रन्ट डेस्कमा पनि सम्पर्क गर्न सक्नुहुन्छ:\nह्वाट्सएप: ${whatsappPhone}\nफोन: ${frontdeskPhone}\nइमेल: ${knowledge.hotelInfo.email}`,
       hi: `मैंने हमारी फ्रंट डेस्क टीम को सूचित कर दिया है। हमारे स्टाफ सदस्य जल्द ही आपसे संपर्क करेंगे 😊\n\nआप सीधे हमारे फ्रंट डेस्क से संपर्क कर सकते हैं:\nWhatsApp: ${whatsappPhone}\nफोन: ${frontdeskPhone}\nईमेल: ${knowledge.hotelInfo.email}`,
+      'zh-CN': `我已通知前台团队，工作人员将很快为您提供协助 😊\n\n您也可以直接联系前台：\nWhatsApp: ${whatsappPhone}\n电话: ${frontdeskPhone}\n邮箱: ${knowledge.hotelInfo.email}`,
+      'zh-TW': `我已通知前台團隊，工作人員將很快為您提供協助 😊\n\n您也可以直接聯繫前台：\nWhatsApp: ${whatsappPhone}\n電話: ${frontdeskPhone}\n郵箱: ${knowledge.hotelInfo.email}`,
+      ja: `フロントデスクチームに連絡いたしました。まもなくスタッフが対応いたします 😊\n\nフロントデスクへ直接のお問い合わせも可能です：\nWhatsApp: ${whatsappPhone}\n電話: ${frontdeskPhone}\nEメール: ${knowledge.hotelInfo.email}`,
+      fr: `J'ai informé notre équipe de réception. Un membre du personnel vous aidera sous peu 😊\n\nVous pouvez également contacter notre réception directement :\nWhatsApp : ${whatsappPhone}\nTéléphone : ${frontdeskPhone}\nEmail : ${knowledge.hotelInfo.email}`,
+      es: `He informado a nuestro equipo de recepción. Un miembro del personal le atenderá en breve 😊\n\nTambién puede contactar directamente con nuestra recepción:\nWhatsApp: ${whatsappPhone}\nTeléfono: ${frontdeskPhone}\nEmail: ${knowledge.hotelInfo.email}`,
     };
     return {
       content: handoverMessages[lang] || handoverMessages.en,
@@ -106,10 +119,15 @@ export async function processConversationStep(
           : state.roomType === 'Budget Family Room'
           ? rates.budgetFamily
           : rates.deluxe;
-      const priceMsg = {
+      const priceMsg: Record<string, string> = {
         en: `Our ${state.roomType} is USD ${roomPrice} per night${state.checkIn ? ` for ${state.checkIn}${state.checkOut ? ` to ${state.checkOut}` : ''}` : ''}. Would you like to reserve it?`,
         ne: `हाम्रो ${state.roomType} प्रति रात USD ${roomPrice} हो${state.checkIn ? ` (${state.checkIn}${state.checkOut ? ` देखि ${state.checkOut}` : ''})` : ''}। के म यो कोठा यहाँको लागि सुरक्षित गरूँ?`,
         hi: `हमारा ${state.roomType} USD ${roomPrice} प्रति रात है${state.checkIn ? ` (${state.checkIn}${state.checkOut ? ` से ${state.checkOut}` : ''})` : ''}। क्या आप इसे बुक करना चाहेंगे?`,
+        'zh-CN': `我们的 ${state.roomType} 为每晚 USD ${roomPrice}${state.checkIn ? `（从 ${state.checkIn}${state.checkOut ? ` 至 ${state.checkOut}` : ''}）` : ''}。您希望现在为您预订吗？`,
+        'zh-TW': `我們的 ${state.roomType} 為每晚 USD ${roomPrice}${state.checkIn ? `（從 ${state.checkIn}${state.checkOut ? ` 至 ${state.checkOut}` : ''}）` : ''}。您希望現在為您預訂嗎？`,
+        ja: `当ホテルの${state.roomType}は1泊 USD ${roomPrice}です${state.checkIn ? `（${state.checkIn}${state.checkOut ? ` から ${state.checkOut}` : ''}）` : ''}。ご予約されますか？`,
+        fr: `Notre ${state.roomType} est à USD ${roomPrice} par nuit${state.checkIn ? ` pour la période du ${state.checkIn}${state.checkOut ? ` au ${state.checkOut}` : ''}` : ''}. Souhaitez-vous la réserver ?`,
+        es: `Nuestra ${state.roomType} cuesta USD ${roomPrice} por noche${state.checkIn ? ` para ${state.checkIn}${state.checkOut ? ` hasta ${state.checkOut}` : ''}` : ''}. ¿Desea reservarla?`,
       };
       return {
         content: priceMsg[lang] || priceMsg.en,
@@ -696,6 +714,26 @@ Would you like to check room availability for your dates?`;
 
   // 8. General Knowledge Base Fallback using Raw User Message
   if (rawQuery) {
+    if (isMultilingualEnabled() && lang !== 'en' && lang !== 'ne' && lang !== 'hi') {
+      const grounded = await generateGroundedAnswer({
+        query: rawQuery,
+        targetLang: lang,
+        intent: intentResult.intent,
+        roomType: state.roomType,
+        checkIn: state.checkIn,
+        checkOut: state.checkOut,
+      });
+      if (grounded.isGrounded) {
+        return {
+          content: grounded.reply,
+          suggestedReplies: ['Check Room Availability', 'Room Prices', 'Talk to Staff'],
+          intent: intentResult.intent !== 'OTHER' ? intentResult.intent : 'HOTEL_INFORMATION',
+          step: state.currentStep,
+          triggerHandover: false,
+        };
+      }
+    }
+
     const generalAnswer = await searchKnowledgeBase(rawQuery, lang);
     if (generalAnswer) {
       return {
@@ -710,10 +748,14 @@ Would you like to check room availability for your dates?`;
 
   // 8.4. Meta Ads Inquiry (Click-to-WhatsApp Ads)
   if (intentResult.intent === 'AD_INQUIRY') {
-    const adWelcome = {
+    const adWelcome: Record<string, string> = {
       en: "Hi! Thanks for checking out our ad 😊 We're a peaceful hotel in central Thamel with clean rooms starting at USD 20/night. What dates are you looking at?",
       ne: "नमस्ते! हाम्रो विज्ञापन हेरेर सम्पर्क गर्नुभएकोमा धन्यवाद 😊 हामी ठमेलमा अवस्थित शान्त होटल हौँ, कोठाको सुरुवाती दर USD २०/रात छ। यहाँ कुन मितिको लागि कोठा हेर्दै हुनुहुन्छ?",
       hi: "नमस्ते! हमारा विज्ञापन देखकर संपर्क करने के लिए धन्यवाद 😊 हम थमेल में स्थित एक शांत होटल हैं, कमरों का किराया USD 20/रात से शुरू है। आप किन तारीखों के लिए देख रहे हैं?",
+      'zh-CN': "您好！感谢关注我们的广告 😊 我们位于加德满都泰米尔中心，环境安静，客房 USD 20/晚起。请问您计划什么日期入住？",
+      'zh-TW': "您好！感謝關注我們的廣告 😊 我們位於加德滿都泰米爾中心，環境安靜，客房 USD 20/晚起。請問您計劃什麼日期入住？",
+      ja: "こんにちは！広告をご覧いただきありがとうございます 😊 タメル中心部に位置する静かなホテルで、1泊 USD 20からです。ご希望の日程はいつですか？",
+      fr: "Bonjour ! Merci d'avoir consulté notre annonce 😊 Nous sommes un hôtel paisible au cœur de Thamel avec des chambres à partir de 20 USD/nuit. Quelles dates envisagez-vous ?",
     };
     return {
       content: adWelcome[lang] || adWelcome.en,
@@ -726,10 +768,22 @@ Would you like to check room availability for your dates?`;
 
   // 8.5. Greeting Fallback
   if (intentResult.intent === 'GREETING') {
-    const greetings = {
+    const greetings: Record<string, string> = {
       en: "Hi! Welcome to Hotel Sherpa Soul 😊 What dates are you looking at?",
       ne: "नमस्ते! होटल शेर्पा सोलमा यहाँलाई स्वागत छ 😊 यहाँ कुन मितिको लागि कोठा खोज्दै हुनुहुन्छ?",
       hi: "नमस्ते! होटल शेरपा सोल में आपका स्वागत है 😊 आप किन तारीखों के लिए कमरा देख रहे हैं?",
+      'zh-CN': "您好！欢迎光临 Hotel Sherpa Soul 😊 请问您计划什么日期入住？",
+      'zh-TW': "您好！歡迎光臨 Hotel Sherpa Soul 😊 請問您計劃什麼日期入住？",
+      ja: "こんにちは！ホテル・シェルパ・ソウルへようこそ 😊 ご希望のご宿泊日程はいつですか？",
+      ko: "안녕하세요! 호텔 셰르파 소울에 오신 것을 환영합니다 😊 투숙을 원하시는 일정이 언제이신가요?",
+      fr: "Bonjour ! Bienvenue à l'Hôtel Sherpa Soul 😊 Quelles dates de séjour envisagez-vous ?",
+      de: "Hallo! Willkommen im Hotel Sherpa Soul 😊 Welche Reisedaten haben Sie im Blick?",
+      es: "¡Hola! Bienvenido al Hotel Sherpa Soul 😊 ¿Qué fechas tiene pensadas para su estancia?",
+      it: "Ciao! Benvenuto all'Hotel Sherpa Soul 😊 Per quali date vorresti prenotare?",
+      ru: "Здравствуйте! Добро пожаловать в Hotel Sherpa Soul 😊 На какие даты вы планируете поездку?",
+      ar: "مرحباً بكم في فندق شيربا سول 😊 ما هي التواريخ التي تبحث عنها؟",
+      th: "สวัสดีครับ/ค่ะ! ยินดีต้อนรับสู่ Hotel Sherpa Soul 😊 คุณกำลังมองหาวันที่เข้าพักช่วงไหนคะ/ครับ?",
+      vi: "Xin chào! Chào mừng quý khách đến với Hotel Sherpa Soul 😊 Quý khách dự định đặt phòng vào ngày nào ạ?",
     };
     return {
       content: greetings[lang] || greetings.en,
@@ -741,14 +795,18 @@ Would you like to check room availability for your dates?`;
   }
 
   // 9. Unknown / Unsure Question -> Safe Front Desk Handover
-  const fallbackMessages = {
+  const fallbackMessages: Record<string, string> = {
     en: `I don't want to give you the wrong information on this one. I'll pass this to our staff so they can help you 😊\n\nYou can also contact our front desk directly:\nWhatsApp: ${whatsappPhone}\nPhone: ${frontdeskPhone}\nEmail: ${knowledge.hotelInfo.email}`,
     ne: `म यहाँलाई गलत जानकारी दिन चाहन्नँ। म हाम्रो टिमलाई यो जिम्मा दिन्छु ताकि यहाँले सही जानकारी पाउन सक्नुहोस् 😊\n\nयहाँले सिधै हाम्रो फ्रन्ट डेस्कमा पनि सम्पर्क गर्न सक्नुहुन्छ:\nह्वाट्सएप: ${whatsappPhone}\nफोन: ${frontdeskPhone}\nइमेल: ${knowledge.hotelInfo.email}`,
     hi: `मैं आपको गलत जानकारी नहीं देना चाहता। मैं इसे हमारे स्टाफ को भेज देता हूँ ताकि वे आपकी पूरी मदद कर सकें 😊\n\nआप सीधे हमारे फ्रंट डेस्क से संपर्क कर सकते हैं:\nWhatsApp: ${whatsappPhone}\nफोन: ${frontdeskPhone}\nईमेल: ${knowledge.hotelInfo.email}`,
   };
 
+  const finalFallback = isMultilingualEnabled()
+    ? getFallbackMessage(lang)
+    : (fallbackMessages[lang] || fallbackMessages.en);
+
   return {
-    content: fallbackMessages[lang] || fallbackMessages.en,
+    content: finalFallback,
     suggestedReplies: ['Talk to Staff', 'Room Prices', 'Check Availability'],
     intent: 'OTHER',
     step: 'HANDOVER',
