@@ -224,3 +224,19 @@ model FollowUpSchedule {
   status         String    @default("PENDING") // PENDING, SENT, CANCELLED
   createdAt      DateTime  @default(now())
 }
+
+model InboundEmailLog {
+  id          String   @id @default(cuid())
+  messageId   String   @unique
+  senderEmail String
+  senderName  String?
+  senderPhone String?
+  subject     String?
+  snippet     String?
+  status      String   @default("PROCESSED") // PROCESSED, SKIPPED_LOOP, ERROR
+  receivedAt  DateTime
+  processedAt DateTime @default(now())
+
+  @@index([messageId])
+  @@index([senderEmail])
+}
