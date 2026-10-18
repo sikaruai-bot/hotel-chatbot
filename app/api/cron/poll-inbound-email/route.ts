@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
@@ -69,6 +69,10 @@ function isIgnoredSender(fromAddress: string, headers: Map<string, any>): boolea
 }
 
 export async function POST(req: NextRequest) {
+  if (process.env.ENABLE_EMAIL_INGESTION !== 'true') {
+    return NextResponse.json({ skipped: true, reason: 'Email ingestion disabled' }, { status: 200 });
+  }
+
   const startTime = Date.now();
 
   // 1. Timing-safe CRON_SECRET verification

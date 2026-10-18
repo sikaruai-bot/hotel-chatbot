@@ -28,10 +28,10 @@ export async function GET(req: NextRequest) {
 
     if (search) {
       where.OR = [
-        { customer: { name: { contains: search } } },
-        { customer: { phone: { contains: search } } },
-        { customer: { email: { contains: search } } },
-        { summary: { contains: search } },
+        { customer: { name: { contains: search, mode: 'insensitive' } } },
+        { customer: { phone: { contains: search, mode: 'insensitive' } } },
+        { customer: { email: { contains: search, mode: 'insensitive' } } },
+        { summary: { contains: search, mode: 'insensitive' } },
       ];
     }
 
